@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/glass_card.dart';
 
 class BookmarksScreen extends StatelessWidget {
   const BookmarksScreen({super.key});
@@ -7,14 +8,19 @@ class BookmarksScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bookmarks'), backgroundColor: AppColors.primary),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: ListView(
-          children: const [
-            Card(child: ListTile(title: Text('Saved article 1'), subtitle: Text('AI summary...'))),
-            Card(child: ListTile(title: Text('Saved article 2'), subtitle: Text('AI summary...'))),
-          ],
+      body: Container(
+        decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF07243A), Color(0xFF0B4F6A)])),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: ListView(
+              children: const [
+                GlassCard(child: ListTile(title: Text('Saved article 1', style: TextStyle(color: Colors.white)), subtitle: Text('AI summary...', style: TextStyle(color: Colors.white70)))),
+                SizedBox(height: 12),
+                GlassCard(child: ListTile(title: Text('Saved article 2', style: TextStyle(color: Colors.white)), subtitle: Text('AI summary...', style: TextStyle(color: Colors.white70)))),
+              ],
+            ),
+          ),
         ),
       ),
     );
