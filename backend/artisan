@@ -1,0 +1,5 @@
+#!/usr/bin/env php
+<?php
+// Minimal artisan stub to allow basic artisan commands until full Laravel installed.
+// This file is a placeholder; running real artisan requires full framework files.
+echo "Artisan placeholder - install full Laravel via Composer to use artisan commands.\n";
