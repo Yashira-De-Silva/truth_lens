@@ -12,3 +12,7 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Ignore generated resource values files
+**/app/src/**/res/values-*.xml
+**/app/src/**/res/values-*/

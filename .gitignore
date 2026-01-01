@@ -43,3 +43,21 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Ignore Android generated resource value files (locales, alternate configs)
+**/android/**/res/values-*.xml
+**/apps/**/android/**/res/values-*.xml
+
+# Ignore Android generated directories often created by build or tooling
+**/android/**/res/values-*/
+
+# Flutter generated
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Flutter & platform build outputs
+**/build/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/.gradle/
+**/.idea/
