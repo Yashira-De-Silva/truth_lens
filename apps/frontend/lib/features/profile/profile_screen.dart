@@ -176,13 +176,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: Column(
                     children: [
                       _buildSettingTile(
-                        icon: Icons.person_outline,
-                        title: 'Edit Profile',
-                        subtitle: 'Update your information',
-                        onTap: () {},
-                      ),
-                      _buildDivider(),
-                      _buildSettingTile(
                         icon: Icons.security,
                         title: 'Privacy & Security',
                         subtitle: 'Manage your privacy settings',
