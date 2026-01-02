@@ -2,6 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'article_model.dart';
+import 'bookmarks_provider.dart';
+import '../article/article_details_screen.dart';
 
 class NewsFeedScreen extends StatelessWidget {
   const NewsFeedScreen({super.key});
@@ -97,9 +101,18 @@ class NewsFeedScreen extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                TextButton(onPressed: () {}, style: TextButton.styleFrom(foregroundColor: Colors.white70), child: const Text('Save')),
+                                Consumer(builder: (context, ref, _) {
+                                  return TextButton(onPressed: () async {
+                                    final article = Article(id: index, title: 'Sample headline #$index', summary: 'This article analyzes the main points...', source: 'BBC News');
+                                    await ref.read(bookmarksProvider.notifier).add(article);
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved')));
+                                  }, style: TextButton.styleFrom(foregroundColor: Colors.white70), child: const Text('Save'));
+                                }),
                                 const SizedBox(width: 8),
-                                ElevatedButton(onPressed: () {}, style: ElevatedButton.styleFrom(backgroundColor: Colors.white24, foregroundColor: Colors.white), child: const Text('Read')),
+                                ElevatedButton(onPressed: () {
+                                  // navigate to article
+                                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ArticleDetailsScreen()));
+                                }, style: ElevatedButton.styleFrom(backgroundColor: Colors.white24, foregroundColor: Colors.white), child: const Text('Read')),
                               ],
                             )
                           ],
