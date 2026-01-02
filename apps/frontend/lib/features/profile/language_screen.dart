@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
+import '../../core/localization/localizations_provider.dart';
 import 'settings_provider.dart';
 
 class LanguageScreen extends ConsumerWidget {
@@ -11,6 +12,7 @@ class LanguageScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentLanguage = ref.watch(settingsProvider).language;
+    final l10n = ref.watch(localizationsProvider);
 
     return Scaffold(
       body: Container(
@@ -56,7 +58,7 @@ class LanguageScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      'Language',
+                      l10n.language,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -70,7 +72,7 @@ class LanguageScreen extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
-                  'Select your preferred language',
+                  l10n.selectLanguage,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.7),
                   ),
@@ -131,9 +133,10 @@ class LanguageScreen extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         ref.read(settingsProvider.notifier).setLanguage(languageCode);
+        final l10n = ref.read(localizationsProvider);
         AppSnackbar.showSuccess(
           context,
-          'Language changed to $languageName',
+          '${l10n.languageChanged} $languageName',
         );
       },
       child: Container(

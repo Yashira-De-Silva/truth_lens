@@ -1,12 +1,16 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/localization/localizations_provider.dart';
 
-class PrivacySecurityScreen extends StatelessWidget {
+class PrivacySecurityScreen extends ConsumerWidget {
   const PrivacySecurityScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(localizationsProvider);
+    
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -51,7 +55,7 @@ class PrivacySecurityScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      'Privacy & Security',
+                      l10n.privacySecurity,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -65,7 +69,7 @@ class PrivacySecurityScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
-                  'Manage your privacy and security settings',
+                  l10n.managePrivacy,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.7),
                   ),

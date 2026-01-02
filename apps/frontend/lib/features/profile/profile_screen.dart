@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/localization/localizations_provider.dart';
 import 'edit_profile_screen.dart';
 import 'language_screen.dart';
 import 'privacy_security_screen.dart';
@@ -19,6 +20,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(localizationsProvider);
+    
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -36,7 +39,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               children: [
                 // Header
                 Text(
-                  'Profile',
+                  l10n.profile,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -44,7 +47,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Manage your account settings',
+                  l10n.manageAccount,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.7),
                   ),
@@ -115,7 +118,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                'Premium User',
+                                l10n.premiumUser,
                                 style: TextStyle(
                                   color: AppColors.accent,
                                   fontSize: 11,
@@ -147,23 +150,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(height: 24),
 
                 // Preferences Section
-                _buildSectionHeader('Preferences'),
+                _buildSectionHeader(l10n.preferences),
                 const SizedBox(height: 12),
                 _buildGlassContainer(
                   child: Column(
                     children: [
                       _buildSwitchTile(
                         icon: Icons.notifications_active,
-                        title: 'Notifications',
-                        subtitle: 'Get latest news alerts',
+                        title: l10n.notifications,
+                        subtitle: l10n.notificationsSubtitle,
                         value: ref.watch(settingsProvider).notifications,
                         onChanged: (v) => ref.read(settingsProvider.notifier).setNotifications(v),
                       ),
                       _buildDivider(),
                       _buildSettingTile(
                         icon: Icons.category,
-                        title: 'Preferred Categories',
-                        subtitle: 'Customize your news feed',
+                        title: l10n.preferredCategories,
+                        subtitle: l10n.customizeNewsFeed,
                         onTap: () {},
                       ),
                     ],
@@ -172,15 +175,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(height: 24),
 
                 // Account Section
-                _buildSectionHeader('Account'),
+                _buildSectionHeader(l10n.account),
                 const SizedBox(height: 12),
                 _buildGlassContainer(
                   child: Column(
                     children: [
                       _buildSettingTile(
                         icon: Icons.security,
-                        title: 'Privacy & Security',
-                        subtitle: 'Manage your privacy settings',
+                        title: l10n.privacySecurity,
+                        subtitle: l10n.privacySettings,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -193,7 +196,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       _buildDivider(),
                       _buildSettingTile(
                         icon: Icons.language,
-                        title: 'Language',
+                        title: l10n.language,
                         subtitle: ref.watch(settingsProvider).languageDisplayName,
                         onTap: () {
                           Navigator.push(
@@ -210,29 +213,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(height: 24),
 
                 // About Section
-                _buildSectionHeader('About'),
+                _buildSectionHeader(l10n.about),
                 const SizedBox(height: 12),
                 _buildGlassContainer(
                   child: Column(
                     children: [
                       _buildSettingTile(
                         icon: Icons.help_outline,
-                        title: 'Help & Support',
-                        subtitle: 'Get help with the app',
+                        title: l10n.help,
+                        subtitle: l10n.getHelp,
                         onTap: () {},
                       ),
                       _buildDivider(),
                       _buildSettingTile(
                         icon: Icons.info_outline,
-                        title: 'About TruthLens',
-                        subtitle: 'Version 1.0.0',
+                        title: l10n.aboutApp,
+                        subtitle: l10n.appInfo,
                         onTap: () {},
                       ),
                       _buildDivider(),
                       _buildSettingTile(
                         icon: Icons.logout,
-                        title: 'Log Out',
-                        subtitle: 'Sign out of your account',
+                        title: l10n.logout,
+                        subtitle: l10n.logoutAccount,
                         iconColor: AppColors.error,
                         titleColor: AppColors.error,
                         onTap: () {},
