@@ -21,7 +21,10 @@ class GlassCard extends StatelessWidget {
             border: Border.all(color: Colors.white.withOpacity(0.06)),
             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 12, offset: const Offset(0, 6))],
           ),
-          child: child,
+          child: DefaultTextStyle(
+            style: const TextStyle(color: Colors.white, height: 1.4),
+            child: IconTheme(data: const IconThemeData(color: Colors.white70), child: child),
+          ),
         ),
       ),
     );

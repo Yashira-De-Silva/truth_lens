@@ -30,7 +30,14 @@ class _ArticleDetailsScreenState extends State<ArticleDetailsScreen> {
                 children: [
                   Row(
                     children: [
-                      Expanded(child: Text('Sample headline', style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white))),
+                      Expanded(
+                        child: Text(
+                          'Sample headline',
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white, height: 1.05),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                       // status badge
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -44,16 +51,24 @@ class _ArticleDetailsScreenState extends State<ArticleDetailsScreen> {
                     borderRadius: BorderRadius.circular(12),
                     isSelected: [showSummary, !showSummary],
                     onPressed: (i) => setState(() => showSummary = i == 0),
-                    children: const [Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Text('AI Summary')), Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Text('Full Article'))],
+                    selectedColor: Colors.white,
+                    fillColor: Colors.white12,
+                    color: Colors.white70,
+                    textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    constraints: const BoxConstraints(minHeight: 42, minWidth: 120),
+                    children: const [
+                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Text('AI Summary')),
+                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Text('Full Article')),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   LinearProgressIndicator(value: 1 - fakeProbability, color: fakeProbability < 0.3 ? AppColors.success : (fakeProbability < 0.7 ? AppColors.accent : AppColors.error)),
                   const SizedBox(height: 8),
-                  Text('Misinformation Confidence: ${(fakeProbability * 100).toStringAsFixed(0)}%', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                  Text('Misinformation Confidence: ${(fakeProbability * 100).toStringAsFixed(0)}%', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, height: 1.4)),
                   const SizedBox(height: 12),
                   Expanded(
                     child: SingleChildScrollView(
-                      child: Text(showSummary ? 'AI generated 3-4 line summary...' : 'Full article content... (mock).', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white)),
+                      child: Text(showSummary ? 'AI generated 3-4 line summary...' : 'Full article content... (mock).', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white, height: 1.6)),
                     ),
                   ),
                   const SizedBox(height: 8),
