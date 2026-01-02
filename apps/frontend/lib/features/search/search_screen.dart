@@ -41,6 +41,13 @@ class _SearchScreenState extends State<SearchScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Initialize with all articles
+    _searchResults = _mockArticles;
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -310,11 +317,7 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    if (_searchQuery.isEmpty && _searchResults.isEmpty) {
-      return _buildEmptyState();
-    }
-
-    if (_searchResults.isEmpty) {
+    if (_searchResults.isEmpty && _searchQuery.isNotEmpty) {
       return _buildNoResults();
     }
 
@@ -324,45 +327,6 @@ class _SearchScreenState extends State<SearchScreen> {
       itemBuilder: (context, index) {
         return _buildResultCard(_searchResults[index]);
       },
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.secondary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.search,
-              size: 64,
-              color: AppColors.secondary.withValues(alpha: 0.6),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Start Exploring',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Search for articles or select a category',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.6),
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

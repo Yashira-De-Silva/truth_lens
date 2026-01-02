@@ -1,6 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/widgets/app_snackbar.dart';
-import '../../core/widgets/glass_card.dart';
+import '../../core/theme/app_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../news/bookmarks_provider.dart';
 import '../article/article_details_screen.dart';
@@ -14,29 +15,246 @@ class BookmarksScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF07243A), Color(0xFF0B4F6A)])),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF020617), Color(0xFF0A2540)],
+          ),
+        ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Consumer(builder: (context, ref, _) {
-              final list = ref.watch(bookmarksProvider);
-              if (list.isEmpty) return const Center(child: Text('No bookmarks', style: TextStyle(color: Colors.white70)));
-              return ListView.separated(
-                itemCount: list.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, i) => GlassCard(
-                  child: ListTile(
-                    title: Text(list[i].title, style: const TextStyle(color: Colors.white)),
-                    subtitle: Text(list[i].summary, style: const TextStyle(color: Colors.white70)),
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ArticleDetailsScreen(article: list[i]))),
-                    trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.white70), onPressed: () async {
-                      await ref.read(bookmarksProvider.notifier).removeById(list[i].id);
-                      AppSnackbar.showSuccess(context, 'Removed');
-                    }),
-                  ),
-                ),
-              );
-            }),
+          child: Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Consumer(builder: (context, ref, _) {
+                  final list = ref.watch(bookmarksProvider);
+                  return Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.bookmark,
+                          color: AppColors.accent,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Saved Articles',
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '${list.length} ${list.length == 1 ? 'article' : 'articles'} saved',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+              ),
+
+              // Bookmarks List
+              Expanded(
+                child: Consumer(builder: (context, ref, _) {
+                  final list = ref.watch(bookmarksProvider);
+                  if (list.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0B1220).withValues(alpha: 0.6),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.1),
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.bookmark_outline,
+                              size: 60,
+                              color: Colors.white.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            'No saved articles',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Articles you bookmark will appear here',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                    itemBuilder: (context, i) => GestureDetector(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => ArticleDetailsScreen(article: list[i])),
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0B1220).withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.secondary.withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            list[i].source,
+                                            style: TextStyle(
+                                              color: AppColors.secondary,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      GestureDetector(
+                                        onTap: () async {
+                                          await ref.read(bookmarksProvider.notifier).removeById(list[i].id);
+                                          if (context.mounted) {
+                                            AppSnackbar.showSuccess(context, 'Removed from bookmarks');
+                                          }
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.error.withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(
+                                            Icons.bookmark_remove,
+                                            color: AppColors.error,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    list[i].title,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    list[i].summary,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.8),
+                                      fontSize: 14,
+                                      height: 1.5,
+                                    ),
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.access_time,
+                                        size: 14,
+                                        color: Colors.white.withValues(alpha: 0.6),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Saved',
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(alpha: 0.6),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        'Read Article',
+                                        style: TextStyle(
+                                          color: AppColors.secondary,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(
+                                        Icons.arrow_forward,
+                                        size: 16,
+                                        color: AppColors.secondary,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
           ),
         ),
       ),
