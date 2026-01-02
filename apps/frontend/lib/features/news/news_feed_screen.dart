@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/widgets/app_snackbar.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'article_model.dart';
 import 'bookmarks_provider.dart';
@@ -53,6 +54,8 @@ class NewsFeedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       // gradient background to match design
       body: Container(
@@ -99,7 +102,7 @@ class NewsFeedScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'News',
+                              l10n.newsFeed,
                               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -248,12 +251,12 @@ class NewsFeedScreen extends StatelessWidget {
                                         if (isSaved) {
                                           await ref.read(bookmarksProvider.notifier).removeById(article.id);
                                           if (context.mounted) {
-                                            AppSnackbar.showSuccess(context, 'Removed from bookmarks');
+                                            AppSnackbar.showSuccess(context, l10n.removedFromBookmarks);
                                           }
                                         } else {
                                           await ref.read(bookmarksProvider.notifier).add(article);
                                           if (context.mounted) {
-                                            AppSnackbar.showSuccess(context, 'Saved to bookmarks');
+                                            AppSnackbar.showSuccess(context, l10n.savedToBookmarks);
                                           }
                                         }
                                       },
@@ -283,14 +286,17 @@ class NewsFeedScreen extends StatelessWidget {
                                                 size: 16,
                                               ),
                                               const SizedBox(width: 6),
-                                              Text(
-                                                isSaved ? 'Saved' : 'Save',
-                                                style: TextStyle(
-                                                  color: isSaved
-                                                      ? AppColors.accent
-                                                      : Colors.white.withValues(alpha: 0.9),
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
+                                              Flexible(
+                                                child: Text(
+                                                  isSaved ? l10n.unsave : l10n.save,
+                                                  style: TextStyle(
+                                                    color: isSaved
+                                                        ? AppColors.accent
+                                                        : Colors.white.withValues(alpha: 0.9),
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                               ),
                                             ],
@@ -328,10 +334,10 @@ class NewsFeedScreen extends StatelessWidget {
                                           ),
                                         ],
                                       ),
-                                      child: const Center(
+                                      child: Center(
                                         child: Text(
-                                          'Read',
-                                          style: TextStyle(
+                                          l10n.read,
+                                          style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,

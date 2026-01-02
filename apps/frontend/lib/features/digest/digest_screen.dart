@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../news/article_model.dart';
 import '../article/article_details_screen.dart';
 
@@ -31,6 +32,8 @@ class DigestScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -78,14 +81,14 @@ class DigestScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Daily Digest',
+                                l10n.digest,
                                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                'Top verified news today',
+                                l10n.todayDigest,
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   color: Colors.white.withValues(alpha: 0.7),
                                 ),

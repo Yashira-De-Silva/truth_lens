@@ -226,4 +226,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get edit => 'Edit';
+
+  @override
+  String get savedToBookmarks => 'Saved to bookmarks';
+
+  @override
+  String get removedFromBookmarks => 'Removed from bookmarks';
+
+  @override
+  String get noResultsFound => 'No results found for';
+
+  @override
+  String get imagePickerComingSoon => 'Image picker coming soon!';
 }

@@ -537,6 +537,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit'**
   String get edit;
+
+  /// No description provided for @savedToBookmarks.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to bookmarks'**
+  String get savedToBookmarks;
+
+  /// No description provided for @removedFromBookmarks.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from bookmarks'**
+  String get removedFromBookmarks;
+
+  /// No description provided for @noResultsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found for'**
+  String get noResultsFound;
+
+  /// No description provided for @imagePickerComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Image picker coming soon!'**
+  String get imagePickerComingSoon;
 }
 
 class _AppLocalizationsDelegate

@@ -228,4 +228,16 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get edit => 'සංස්කරණය';
+
+  @override
+  String get savedToBookmarks => 'පිටු සලකුණු වලට එකතු කරන ලදී';
+
+  @override
+  String get removedFromBookmarks => 'පිටු සලකුණු වලින් ඉවත් කරන ලදී';
+
+  @override
+  String get noResultsFound => 'සඳහා ප්‍රතිඵල හමු නොවීය';
+
+  @override
+  String get imagePickerComingSoon => 'පින්තූර තෝරන්නා ඉක්මනින් එනවා!';
 }

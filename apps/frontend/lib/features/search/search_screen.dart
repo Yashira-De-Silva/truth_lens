@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
+import '../../l10n/app_localizations.dart';
 import '../news/article_model.dart';
 import '../news/bookmarks_provider.dart';
 import '../article/article_details_screen.dart';
@@ -82,7 +83,8 @@ class _SearchScreenState extends State<SearchScreen> {
       });
 
       if (_searchResults.isEmpty && _searchQuery.isNotEmpty) {
-        AppSnackbar.showError(context, 'No results found for "$_searchQuery"');
+        final l10n = AppLocalizations.of(context)!;
+        AppSnackbar.showError(context, '${l10n.noResultsFound} "$_searchQuery"');
       }
     });
   }
@@ -98,6 +100,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -142,7 +146,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Explore News',
+                            l10n.explore,
                             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -446,15 +450,16 @@ class _SearchScreenState extends State<SearchScreen> {
                             
                             return GestureDetector(
                               onTap: () async {
+                                final l10n = AppLocalizations.of(context)!;
                                 if (isSaved) {
                                   await ref.read(bookmarksProvider.notifier).removeById(article.id);
                                   if (context.mounted) {
-                                    AppSnackbar.showSuccess(context, 'Removed from bookmarks');
+                                    AppSnackbar.showSuccess(context, l10n.removedFromBookmarks);
                                   }
                                 } else {
                                   await ref.read(bookmarksProvider.notifier).add(article);
                                   if (context.mounted) {
-                                    AppSnackbar.showSuccess(context, 'Saved to bookmarks');
+                                    AppSnackbar.showSuccess(context, l10n.savedToBookmarks);
                                   }
                                 }
                               },

@@ -84,5 +84,10 @@
   "cancel": "අවලංගු කරන්න",
   "confirm": "තහවුරු කරන්න",
   "delete": "මකන්න",
-  "edit": "සංස්කරණය"
+  "edit": "සංස්කරණය",
+  
+  "savedToBookmarks": "පිටු සලකුණු වලට එකතු කරන ලදී",
+  "removedFromBookmarks": "පිටු සලකුණු වලින් ඉවත් කරන ලදී",
+  "noResultsFound": "සඳහා ප්‍රතිඵල හමු නොවීය",
+  "imagePickerComingSoon": "පින්තූර තෝරන්නා ඉක්මනින් එනවා!"
 }

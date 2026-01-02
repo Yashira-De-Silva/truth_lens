@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
+import '../../l10n/app_localizations.dart';
 import 'profile_provider.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -41,6 +42,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
+      final l10n = AppLocalizations.of(context)!;
       // Update profile using the provider
       ref.read(profileProvider.notifier).updateProfile(
         name: _nameController.text,
@@ -49,7 +51,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         bio: _bioController.text,
       );
       
-      AppSnackbar.showSuccess(context, 'Profile updated successfully!');
+      AppSnackbar.showSuccess(context, l10n.profileUpdated);
       Navigator.pop(context);
     }
   }
@@ -152,8 +154,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               right: 0,
                               child: GestureDetector(
                                 onTap: () {
+                                  final l10n = AppLocalizations.of(context)!;
                                   // TODO: Implement image picker
-                                  AppSnackbar.showError(context, 'Image picker coming soon!');
+                                  AppSnackbar.showError(context, l10n.imagePickerComingSoon);
                                 },
                                 child: Container(
                                   width: 36,

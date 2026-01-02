@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/widgets/app_snackbar.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../news/bookmarks_provider.dart';
 import '../article/article_details_screen.dart';
@@ -13,6 +14,8 @@ class BookmarksScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -50,7 +53,7 @@ class BookmarksScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Saved Articles',
+                              l10n.savedArticles,
                               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -97,7 +100,7 @@ class BookmarksScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 24),
                           Text(
-                            'No saved articles',
+                            l10n.noBookmarks,
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -105,7 +108,7 @@ class BookmarksScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Articles you bookmark will appear here',
+                            l10n.startSaving,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Colors.white.withValues(alpha: 0.6),
                             ),
@@ -172,7 +175,7 @@ class BookmarksScreen extends StatelessWidget {
                                         onTap: () async {
                                           await ref.read(bookmarksProvider.notifier).removeById(list[i].id);
                                           if (context.mounted) {
-                                            AppSnackbar.showSuccess(context, 'Removed from bookmarks');
+                                            AppSnackbar.showSuccess(context, l10n.removedFromBookmarks);
                                           }
                                         },
                                         child: Container(

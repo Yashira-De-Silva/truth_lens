@@ -229,4 +229,16 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get edit => 'திருத்து';
+
+  @override
+  String get savedToBookmarks => 'புத்தகக்குறிகளில் சேமிக்கப்பட்டது';
+
+  @override
+  String get removedFromBookmarks => 'புத்தகக்குறிகளிலிருந்து அகற்றப்பட்டது';
+
+  @override
+  String get noResultsFound => 'முடிவுகள் எதுவும் கிடைக்கவில்லை';
+
+  @override
+  String get imagePickerComingSoon => 'படத் தேர்வி விரைவில் வருகிறது!';
 }
