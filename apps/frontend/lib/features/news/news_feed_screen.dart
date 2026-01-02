@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import '../../core/widgets/app_snackbar.dart';
 import '../../core/theme/app_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'article_model.dart';
@@ -105,13 +106,15 @@ class NewsFeedScreen extends StatelessWidget {
                                   return TextButton(onPressed: () async {
                                     final article = Article(id: index, title: 'Sample headline #$index', summary: 'This article analyzes the main points...', source: 'BBC News');
                                     await ref.read(bookmarksProvider.notifier).add(article);
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved')));
+                                    // Use AppSnackbar for consistent glass-style toasts
+                                    AppSnackbar.showSuccess(context, 'Saved');
                                   }, style: TextButton.styleFrom(foregroundColor: Colors.white70), child: const Text('Save'));
                                 }),
                                 const SizedBox(width: 8),
                                 ElevatedButton(onPressed: () {
                                   // navigate to article
-                                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ArticleDetailsScreen()));
+                                  final article = Article(id: index, title: 'Sample headline #$index', summary: 'This article analyzes the main points...', source: 'BBC News');
+                                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => ArticleDetailsScreen(article: article)));
                                 }, style: ElevatedButton.styleFrom(backgroundColor: Colors.white24, foregroundColor: Colors.white), child: const Text('Read')),
                               ],
                             )

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_snackbar.dart';
 import '../../core/widgets/glass_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../news/bookmarks_provider.dart';
+import '../article/article_details_screen.dart';
 
 // ...existing code...
 
@@ -27,9 +28,10 @@ class BookmarksScreen extends StatelessWidget {
                   child: ListTile(
                     title: Text(list[i].title, style: const TextStyle(color: Colors.white)),
                     subtitle: Text(list[i].summary, style: const TextStyle(color: Colors.white70)),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ArticleDetailsScreen(article: list[i]))),
                     trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.white70), onPressed: () async {
                       await ref.read(bookmarksProvider.notifier).removeById(list[i].id);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Removed')));
+                      AppSnackbar.showSuccess(context, 'Removed');
                     }),
                   ),
                 ),

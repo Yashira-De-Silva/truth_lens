@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_card.dart';
+import '../../core/widgets/back_button_widget.dart';
+import '../news/article_model.dart';
 
 class ArticleDetailsScreen extends StatefulWidget {
-  const ArticleDetailsScreen({super.key});
+  final Article? article;
+  const ArticleDetailsScreen({this.article, super.key});
 
   @override
   State<ArticleDetailsScreen> createState() => _ArticleDetailsScreenState();
@@ -30,9 +33,11 @@ class _ArticleDetailsScreenState extends State<ArticleDetailsScreen> {
                 children: [
                   Row(
                     children: [
+                      const BackButtonWidget(),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Sample headline',
+                          widget.article?.title ?? 'Sample headline',
                           style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white, height: 1.05),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
