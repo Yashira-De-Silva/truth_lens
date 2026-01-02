@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
-import '../../core/localization/localizations_provider.dart';
+import '../../l10n/app_localizations.dart';
 import 'settings_provider.dart';
 
 class LanguageScreen extends ConsumerWidget {
@@ -12,7 +12,7 @@ class LanguageScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentLanguage = ref.watch(settingsProvider).language;
-    final l10n = ref.watch(localizationsProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: Container(
@@ -133,7 +133,7 @@ class LanguageScreen extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         ref.read(settingsProvider.notifier).setLanguage(languageCode);
-        final l10n = ref.read(localizationsProvider);
+        final l10n = AppLocalizations.of(context)!;
         AppSnackbar.showSuccess(
           context,
           '${l10n.languageChanged} $languageName',

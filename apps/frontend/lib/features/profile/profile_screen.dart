@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/localization/localizations_provider.dart';
+import '../../l10n/app_localizations.dart';
 import 'edit_profile_screen.dart';
 import 'language_screen.dart';
 import 'privacy_security_screen.dart';
@@ -20,7 +20,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = ref.watch(localizationsProvider);
+    final l10n = AppLocalizations.of(context)!;
     
     return Scaffold(
       body: Container(
