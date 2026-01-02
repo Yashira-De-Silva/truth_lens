@@ -1,21 +1,34 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
+import 'profile_provider.dart';
 
-class EditProfileScreen extends StatefulWidget {
+class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
   @override
-  State<EditProfileScreen> createState() => _EditProfileScreenState();
+  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
+class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController(text: 'User Name');
-  final _emailController = TextEditingController(text: 'user@example.com');
-  final _phoneController = TextEditingController();
-  final _bioController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _bioController;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controllers with current profile data
+    final profile = ref.read(profileProvider);
+    _nameController = TextEditingController(text: profile.name);
+    _emailController = TextEditingController(text: profile.email);
+    _phoneController = TextEditingController(text: profile.phone);
+    _bioController = TextEditingController(text: profile.bio);
+  }
 
   @override
   void dispose() {
@@ -28,7 +41,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implement actual save logic
+      // Update profile using the provider
+      ref.read(profileProvider.notifier).updateProfile(
+        name: _nameController.text,
+        email: _emailController.text,
+        phone: _phoneController.text,
+        bio: _bioController.text,
+      );
+      
       AppSnackbar.showSuccess(context, 'Profile updated successfully!');
       Navigator.pop(context);
     }
