@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import 'edit_profile_screen.dart';
+import 'language_screen.dart';
+import 'privacy_security_screen.dart';
 import 'profile_provider.dart';
+import 'settings_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -13,7 +16,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  bool notifications = true;
 
   @override
   Widget build(BuildContext context) {
@@ -154,8 +156,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         icon: Icons.notifications_active,
                         title: 'Notifications',
                         subtitle: 'Get latest news alerts',
-                        value: notifications,
-                        onChanged: (v) => setState(() => notifications = v),
+                        value: ref.watch(settingsProvider).notifications,
+                        onChanged: (v) => ref.read(settingsProvider.notifier).setNotifications(v),
                       ),
                       _buildDivider(),
                       _buildSettingTile(
@@ -179,14 +181,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         icon: Icons.security,
                         title: 'Privacy & Security',
                         subtitle: 'Manage your privacy settings',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PrivacySecurityScreen(),
+                            ),
+                          );
+                        },
                       ),
                       _buildDivider(),
                       _buildSettingTile(
                         icon: Icons.language,
                         title: 'Language',
-                        subtitle: 'English',
-                        onTap: () {},
+                        subtitle: ref.watch(settingsProvider).languageDisplayName,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LanguageScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
