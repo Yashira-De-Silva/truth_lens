@@ -11,7 +11,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool dark = false;
   bool notifications = true;
 
   @override
@@ -149,14 +148,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildGlassContainer(
                   child: Column(
                     children: [
-                      _buildSwitchTile(
-                        icon: Icons.dark_mode,
-                        title: 'Dark Theme',
-                        subtitle: 'Enable dark mode',
-                        value: dark,
-                        onChanged: (v) => setState(() => dark = v),
-                      ),
-                      _buildDivider(),
                       _buildSwitchTile(
                         icon: Icons.notifications_active,
                         title: 'Notifications',
