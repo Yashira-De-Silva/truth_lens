@@ -56,12 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         height: 80,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.secondary,
-                              AppColors.primary,
-                            ],
-                          ),
+                          color: Colors.white,
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.secondary.withValues(alpha: 0.3),
@@ -70,10 +65,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 40,
+                        child: ClipOval(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Image.asset(
+                              'assets/logo/truthlenslogo.png',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 16),
