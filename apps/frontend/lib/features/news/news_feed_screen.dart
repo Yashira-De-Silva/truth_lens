@@ -213,31 +213,61 @@ class NewsFeedScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Consumer(builder: (context, ref, _) {
+                                  final bookmarks = ref.watch(bookmarksProvider);
+                                  final isSaved = bookmarks.any((a) => a.id == article.id);
+                                  
                                   return Flexible(
                                     child: GestureDetector(
                                       onTap: () async {
-                                        await ref.read(bookmarksProvider.notifier).add(article);
-                                        if (context.mounted) {
-                                          AppSnackbar.showSuccess(context, 'Saved to bookmarks');
+                                        if (isSaved) {
+                                          await ref.read(bookmarksProvider.notifier).removeById(article.id);
+                                          if (context.mounted) {
+                                            AppSnackbar.showSuccess(context, 'Removed from bookmarks');
+                                          }
+                                        } else {
+                                          await ref.read(bookmarksProvider.notifier).add(article);
+                                          if (context.mounted) {
+                                            AppSnackbar.showSuccess(context, 'Saved to bookmarks');
+                                          }
                                         }
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withValues(alpha: 0.1),
+                                          color: isSaved
+                                              ? AppColors.accent.withValues(alpha: 0.2)
+                                              : Colors.white.withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(12),
                                           border: Border.all(
-                                            color: Colors.white.withValues(alpha: 0.2),
+                                            color: isSaved
+                                                ? AppColors.accent.withValues(alpha: 0.5)
+                                                : Colors.white.withValues(alpha: 0.2),
+                                            width: isSaved ? 1.5 : 1,
                                           ),
                                         ),
                                         child: Center(
-                                          child: Text(
-                                            'Save',
-                                            style: TextStyle(
-                                              color: Colors.white.withValues(alpha: 0.9),
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                isSaved ? Icons.bookmark : Icons.bookmark_outline,
+                                                color: isSaved
+                                                    ? AppColors.accent
+                                                    : Colors.white.withValues(alpha: 0.9),
+                                                size: 16,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                isSaved ? 'Saved' : 'Save',
+                                                style: TextStyle(
+                                                  color: isSaved
+                                                      ? AppColors.accent
+                                                      : Colors.white.withValues(alpha: 0.9),
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ),

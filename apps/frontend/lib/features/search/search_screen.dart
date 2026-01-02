@@ -1,8 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
 import '../news/article_model.dart';
+import '../news/bookmarks_provider.dart';
 import '../article/article_details_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -409,10 +411,37 @@ class _SearchScreenState extends State<SearchScreen> {
                           ),
                         ),
                         const Spacer(),
-                        Icon(
-                          Icons.bookmark_outline,
-                          size: 20,
-                          color: Colors.white.withValues(alpha: 0.6),
+                        Consumer(
+                          builder: (context, ref, _) {
+                            final bookmarks = ref.watch(bookmarksProvider);
+                            final isSaved = bookmarks.any((a) => a.id == article.id);
+                            
+                            return GestureDetector(
+                              onTap: () async {
+                                if (isSaved) {
+                                  await ref.read(bookmarksProvider.notifier).removeById(article.id);
+                                  if (context.mounted) {
+                                    AppSnackbar.showSuccess(context, 'Removed from bookmarks');
+                                  }
+                                } else {
+                                  await ref.read(bookmarksProvider.notifier).add(article);
+                                  if (context.mounted) {
+                                    AppSnackbar.showSuccess(context, 'Saved to bookmarks');
+                                  }
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  isSaved ? Icons.bookmark : Icons.bookmark_outline,
+                                  size: 20,
+                                  color: isSaved 
+                                      ? AppColors.accent 
+                                      : Colors.white.withValues(alpha: 0.6),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
