@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -56,7 +57,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         height: 80,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.secondary.withValues(alpha: 0.3),
+                              AppColors.primary.withValues(alpha: 0.3),
+                            ],
+                          ),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            width: 2,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.secondary.withValues(alpha: 0.3),
@@ -65,14 +77,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ],
                         ),
-                        child: ClipOval(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Image.asset(
-                              'assets/logo/truthlenslogo.png',
-                              fit: BoxFit.contain,
-                            ),
-                          ),
+                        child: const Icon(
+                          Icons.person,
+                          size: 40,
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -115,10 +123,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                       ),
-                      Icon(
-                        Icons.edit,
-                        color: Colors.white.withValues(alpha: 0.6),
-                        size: 20,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const EditProfileScreen(),
+                            ),
+                          );
+                        },
+                        child: Icon(
+                          Icons.edit,
+                          color: Colors.white.withValues(alpha: 0.6),
+                          size: 20,
+                        ),
                       ),
                     ],
                   ),
