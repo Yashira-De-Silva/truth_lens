@@ -54,11 +54,15 @@ class PrivacySecurityScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    Text(
-                      l10n.privacySecurity,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Text(
+                        l10n.privacySecurity,
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -83,58 +87,58 @@ class PrivacySecurityScreen extends ConsumerWidget {
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
-                    _buildSectionHeader(context, 'Privacy'),
+                    _buildSectionHeader(context, l10n.privacy),
                     const SizedBox(height: 12),
                     _buildGlassContainer(
                       child: Column(
                         children: [
                           _buildSettingTile(
                             icon: Icons.visibility_outlined,
-                            title: 'Profile Visibility',
-                            subtitle: 'Control who can see your profile',
+                            title: l10n.profileVisibility,
+                            subtitle: l10n.controlVisibility,
                             onTap: () {},
                           ),
                           _buildDivider(),
                           _buildSettingTile(
                             icon: Icons.history,
-                            title: 'Reading History',
-                            subtitle: 'Manage your article history',
+                            title: l10n.readingHistory,
+                            subtitle: l10n.manageHistory,
                             onTap: () {},
                           ),
                           _buildDivider(),
                           _buildSettingTile(
                             icon: Icons.delete_outline,
-                            title: 'Clear Data',
-                            subtitle: 'Remove cached articles and data',
+                            title: l10n.clearData,
+                            subtitle: l10n.removeCachedData,
                             onTap: () {},
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
-                    _buildSectionHeader(context, 'Security'),
+                    _buildSectionHeader(context, l10n.security),
                     const SizedBox(height: 12),
                     _buildGlassContainer(
                       child: Column(
                         children: [
                           _buildSettingTile(
                             icon: Icons.lock_outline,
-                            title: 'Change Password',
-                            subtitle: 'Update your password',
+                            title: l10n.changePassword,
+                            subtitle: l10n.updatePassword,
                             onTap: () {},
                           ),
                           _buildDivider(),
                           _buildSettingTile(
                             icon: Icons.fingerprint,
-                            title: 'Biometric Authentication',
-                            subtitle: 'Use fingerprint or face ID',
+                            title: l10n.biometricAuth,
+                            subtitle: l10n.useBiometric,
                             onTap: () {},
                           ),
                           _buildDivider(),
                           _buildSettingTile(
                             icon: Icons.devices,
-                            title: 'Manage Devices',
-                            subtitle: 'See devices where you\'re logged in',
+                            title: l10n.manageDevices,
+                            subtitle: l10n.seeDevices,
                             onTap: () {},
                           ),
                         ],
