@@ -238,4 +238,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagePickerComingSoon => 'Image picker coming soon!';
+
+  @override
+  String get categoriesSelected => 'categories selected';
+
+  @override
+  String get categorySelected => 'category selected';
 }

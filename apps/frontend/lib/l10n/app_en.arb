@@ -89,5 +89,8 @@
   "savedToBookmarks": "Saved to bookmarks",
   "removedFromBookmarks": "Removed from bookmarks",
   "noResultsFound": "No results found for",
-  "imagePickerComingSoon": "Image picker coming soon!"
+  "imagePickerComingSoon": "Image picker coming soon!",
+  
+  "categoriesSelected": "categories selected",
+  "categorySelected": "category selected"
 }

@@ -89,5 +89,8 @@
   "savedToBookmarks": "புத்தகக்குறிகளில் சேமிக்கப்பட்டது",
   "removedFromBookmarks": "புத்தகக்குறிகளிலிருந்து அகற்றப்பட்டது",
   "noResultsFound": "முடிவுகள் எதுவும் கிடைக்கவில்லை",
-  "imagePickerComingSoon": "படத் தேர்வி விரைவில் வருகிறது!"
+  "imagePickerComingSoon": "படத் தேர்வி விரைவில் வருகிறது!",
+  
+  "categoriesSelected": "வகைகள் தேர்ந்தெடுக்கப்பட்டன",
+  "categorySelected": "வகை தேர்ந்தெடுக்கப்பட்டது"
 }

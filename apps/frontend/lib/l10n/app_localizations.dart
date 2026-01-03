@@ -561,6 +561,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Image picker coming soon!'**
   String get imagePickerComingSoon;
+
+  /// No description provided for @categoriesSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'categories selected'**
+  String get categoriesSelected;
+
+  /// No description provided for @categorySelected.
+  ///
+  /// In en, this message translates to:
+  /// **'category selected'**
+  String get categorySelected;
 }
 
 class _AppLocalizationsDelegate

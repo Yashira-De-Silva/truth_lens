@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import 'edit_profile_screen.dart';
 import 'language_screen.dart';
 import 'privacy_security_screen.dart';
+import 'categories_screen.dart';
 import 'profile_provider.dart';
 import 'settings_provider.dart';
 
@@ -167,7 +168,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         icon: Icons.category,
                         title: l10n.preferredCategories,
                         subtitle: l10n.customizeNewsFeed,
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const CategoriesScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),

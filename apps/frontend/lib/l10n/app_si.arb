@@ -89,5 +89,8 @@
   "savedToBookmarks": "පිටු සලකුණු වලට එකතු කරන ලදී",
   "removedFromBookmarks": "පිටු සලකුණු වලින් ඉවත් කරන ලදී",
   "noResultsFound": "සඳහා ප්‍රතිඵල හමු නොවීය",
-  "imagePickerComingSoon": "පින්තූර තෝරන්නා ඉක්මනින් එනවා!"
+  "imagePickerComingSoon": "පින්තූර තෝරන්නා ඉක්මනින් එනවා!",
+  
+  "categoriesSelected": "ප්‍රවර්ග තෝරා ඇත",
+  "categorySelected": "ප්‍රවර්ගය තෝරා ඇත"
 }

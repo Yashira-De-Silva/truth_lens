@@ -240,4 +240,10 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get imagePickerComingSoon => 'පින්තූර තෝරන්නා ඉක්මනින් එනවා!';
+
+  @override
+  String get categoriesSelected => 'ප්‍රවර්ග තෝරා ඇත';
+
+  @override
+  String get categorySelected => 'ප්‍රවර්ගය තෝරා ඇත';
 }

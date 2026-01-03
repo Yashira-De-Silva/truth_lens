@@ -241,4 +241,10 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get imagePickerComingSoon => 'படத் தேர்வி விரைவில் வருகிறது!';
+
+  @override
+  String get categoriesSelected => 'வகைகள் தேர்ந்தெடுக்கப்பட்டன';
+
+  @override
+  String get categorySelected => 'வகை தேர்ந்தெடுக்கப்பட்டது';
 }

@@ -32,6 +32,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = state.copyWith(notifications: enabled);
     await _save();
   }
+
+  Future<void> setPreferredCategories(Set<String> categories) async {
+    state = state.copyWith(preferredCategories: categories);
+    await _save();
+  }
 }
 
 final settingsProvider =
