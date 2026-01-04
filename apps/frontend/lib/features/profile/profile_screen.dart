@@ -14,6 +14,7 @@ import '../search/user_search_screen.dart';
 import 'subscription_screen.dart';
 import '../game/fact_fiction_game_screen.dart';
 import '../game/news_quiz_game_screen.dart';
+import '../game/chess_game_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -364,6 +365,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => const NewsQuizGameScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildDivider(),
+                      _buildSettingTile(
+                        icon: Icons.extension,
+                        title: 'Chess Game',
+                        subtitle: 'Play a classic game of chess',
+                        iconColor: const Color(0xFF8B5CF6),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ChessGameScreen(),
                             ),
                           );
                         },
