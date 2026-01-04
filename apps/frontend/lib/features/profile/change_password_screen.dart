@@ -22,17 +22,80 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
 
+  double _passwordStrength = 0.0;
+  String _passwordStrengthText = '';
+  Color _passwordStrengthColor = Colors.grey;
+
+  @override
+  void initState() {
+    super.initState();
+    _newPasswordController.addListener(_checkPasswordStrength);
+    _currentPasswordController.addListener(() => setState(() {}));
+  }
+
   @override
   void dispose() {
+    _newPasswordController.removeListener(_checkPasswordStrength);
+    _currentPasswordController.removeListener(() => setState(() {}));
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
+  void _checkPasswordStrength() {
+    final password = _newPasswordController.text;
+    double strength = 0.0;
+    String strengthText = '';
+    Color strengthColor = Colors.grey;
+
+    if (password.isEmpty) {
+      setState(() {
+        _passwordStrength = 0.0;
+        _passwordStrengthText = '';
+        _passwordStrengthColor = Colors.grey;
+      });
+      return;
+    }
+
+    // Calculate strength based on criteria
+    if (password.length >= 6) strength += 0.2;
+    if (password.length >= 10) strength += 0.1;
+    if (password.contains(RegExp(r'[a-z]'))) strength += 0.2;
+    if (password.contains(RegExp(r'[A-Z]'))) strength += 0.2;
+    if (password.contains(RegExp(r'[0-9]'))) strength += 0.15;
+    if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) strength += 0.15;
+
+    // Determine strength label and color
+    if (strength <= 0.3) {
+      strengthText = 'Weak';
+      strengthColor = AppColors.error;
+    } else if (strength <= 0.6) {
+      strengthText = 'Fair';
+      strengthColor = AppColors.accent;
+    } else if (strength <= 0.8) {
+      strengthText = 'Good';
+      strengthColor = const Color(0xFF3B82F6);
+    } else {
+      strengthText = 'Strong';
+      strengthColor = AppColors.success;
+    }
+
+    setState(() {
+      _passwordStrength = strength;
+      _passwordStrengthText = strengthText;
+      _passwordStrengthColor = strengthColor;
+    });
+  }
+
   void _changePassword() {
-    if (_currentPasswordController.text.isEmpty ||
-        _newPasswordController.text.isEmpty ||
+    // Check if current password is entered first
+    if (_currentPasswordController.text.isEmpty) {
+      AppSnackbar.showSuccess(context, 'Please enter your current password');
+      return;
+    }
+
+    if (_newPasswordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty) {
       AppSnackbar.showSuccess(context, 'Please fill all fields');
       return;
@@ -48,6 +111,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         context,
         'Password must be at least 6 characters',
       );
+      return;
+    }
+
+    if (_passwordStrength < 0.4) {
+      AppSnackbar.showSuccess(context, 'Please use a stronger password');
       return;
     }
 
@@ -155,6 +223,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                           () => _obscureNewPassword = !_obscureNewPassword,
                         ),
                       ),
+                      if (_newPasswordController.text.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildPasswordStrengthMeter(),
+                      ],
                       const SizedBox(height: 20),
                       _buildPasswordField(
                         controller: _confirmPasswordController,
@@ -171,18 +243,28 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _changePassword,
+                          onPressed: _currentPasswordController.text.isEmpty
+                              ? null
+                              : _changePassword,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.secondary,
+                            backgroundColor:
+                                _currentPasswordController.text.isEmpty
+                                ? Colors.grey.withValues(alpha: 0.3)
+                                : AppColors.secondary,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
+                            disabledBackgroundColor: Colors.grey.withValues(
+                              alpha: 0.3,
+                            ),
                           ),
                           child: Text(
                             l10n.saveChanges,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: _currentPasswordController.text.isEmpty
+                                  ? Colors.white.withValues(alpha: 0.5)
+                                  : Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -196,6 +278,63 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordStrengthMeter() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0B1220).withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _passwordStrengthColor.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Password Strength',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                _passwordStrengthText,
+                style: TextStyle(
+                  color: _passwordStrengthColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: _passwordStrength,
+              backgroundColor: Colors.white.withValues(alpha: 0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(_passwordStrengthColor),
+              minHeight: 6,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Use 8+ characters with a mix of uppercase, lowercase, numbers & symbols',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.5),
+              fontSize: 11,
+            ),
+          ),
+        ],
       ),
     );
   }
