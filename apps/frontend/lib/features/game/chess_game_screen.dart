@@ -414,7 +414,10 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
                       const Icon(Icons.history, color: Colors.white, size: 18),
@@ -534,7 +537,10 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
                           color: Colors.white.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.arrow_back, color: Colors.white),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -612,7 +618,12 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
     );
   }
 
-  Widget _buildColorOption(String label, String symbol, bool isWhite, Color color) {
+  Widget _buildColorOption(
+    String label,
+    String symbol,
+    bool isWhite,
+    Color color,
+  ) {
     return GestureDetector(
       onTap: () => _selectColor(isWhite),
       child: ClipRRect(
@@ -631,7 +642,10 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 2,
+              ),
             ),
             child: Column(
               children: [
@@ -664,118 +678,6 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
                     color: Colors.white.withOpacity(0.7),
                     fontSize: 14,
                   ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSidebar() {
-    return Container(
-      margin: const EdgeInsets.only(right: 16, top: 16, bottom: 16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withOpacity(0.15),
-                  Colors.white.withOpacity(0.05),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
-            ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.history, color: Colors.white, size: 20),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Move History',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(color: Colors.white24, height: 1),
-                Expanded(
-                  child: moveHistory.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No moves yet',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 12,
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(8),
-                          itemCount: moveHistory.length,
-                          reverse: true,
-                          itemBuilder: (context, index) {
-                            final reversedIndex =
-                                moveHistory.length - 1 - index;
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 4),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '${reversedIndex + 1}',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      moveHistory[reversedIndex],
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
                 ),
               ],
             ),
