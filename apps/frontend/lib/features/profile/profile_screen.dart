@@ -157,6 +157,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 fontSize: 14,
                               ),
                             ),
+                            if (ref.watch(profileProvider).bio.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                ref.watch(profileProvider).bio,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  fontSize: 13,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                             const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(

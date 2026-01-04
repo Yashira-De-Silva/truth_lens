@@ -5,10 +5,7 @@ import 'profile_model.dart';
 
 class ProfileNotifier extends StateNotifier<UserProfile> {
   ProfileNotifier()
-      : super(UserProfile(
-          name: 'User Name',
-          email: 'user@example.com',
-        )) {
+    : super(UserProfile(name: 'User Name', email: 'user@example.com')) {
     _load();
   }
 
@@ -27,21 +24,12 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
     await prefs.setString(_key, jsonEncode(state.toJson()));
   }
 
-  Future<void> updateProfile({
-    String? name,
-    String? email,
-    String? phone,
-    String? bio,
-  }) async {
-    state = state.copyWith(
-      name: name,
-      email: email,
-      phone: phone,
-      bio: bio,
-    );
+  Future<void> updateProfile({String? name, String? email, String? bio}) async {
+    state = state.copyWith(name: name, email: email, bio: bio);
     await _save();
   }
 }
 
-final profileProvider =
-    StateNotifierProvider<ProfileNotifier, UserProfile>((ref) => ProfileNotifier());
+final profileProvider = StateNotifierProvider<ProfileNotifier, UserProfile>(
+  (ref) => ProfileNotifier(),
+);

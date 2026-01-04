@@ -17,7 +17,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
-  late final TextEditingController _phoneController;
   late final TextEditingController _bioController;
 
   @override
@@ -27,7 +26,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final profile = ref.read(profileProvider);
     _nameController = TextEditingController(text: profile.name);
     _emailController = TextEditingController(text: profile.email);
-    _phoneController = TextEditingController(text: profile.phone);
     _bioController = TextEditingController(text: profile.bio);
   }
 
@@ -35,7 +33,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
     _bioController.dispose();
     super.dispose();
   }
@@ -44,13 +41,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (_formKey.currentState!.validate()) {
       final l10n = AppLocalizations.of(context)!;
       // Update profile using the provider
-      ref.read(profileProvider.notifier).updateProfile(
-        name: _nameController.text,
-        email: _emailController.text,
-        phone: _phoneController.text,
-        bio: _bioController.text,
-      );
-      
+      ref
+          .read(profileProvider.notifier)
+          .updateProfile(
+            name: _nameController.text,
+            email: _emailController.text,
+            bio: _bioController.text,
+          );
+
       AppSnackbar.showSuccess(context, l10n.profileUpdated);
       Navigator.pop(context);
     }
@@ -103,10 +101,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     const SizedBox(width: 16),
                     Text(
                       'Edit Profile',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ],
                 ),
@@ -121,7 +120,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     child: Column(
                       children: [
                         const SizedBox(height: 8),
-                        
+
                         // Profile Picture
                         Stack(
                           children: [
@@ -156,7 +155,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 onTap: () {
                                   final l10n = AppLocalizations.of(context)!;
                                   // TODO: Implement image picker
-                                  AppSnackbar.showError(context, l10n.imagePickerComingSoon);
+                                  AppSnackbar.showError(
+                                    context,
+                                    l10n.imagePickerComingSoon,
+                                  );
                                 },
                                 child: Container(
                                   width: 36,
@@ -182,7 +184,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 32),
 
                         // Name Field
@@ -197,7 +199,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             return null;
                           },
                         ),
-                        
+
                         const SizedBox(height: 16),
 
                         // Email Field
@@ -216,17 +218,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             return null;
                           },
                         ),
-                        
-                        const SizedBox(height: 16),
 
-                        // Phone Field
-                        _buildInputField(
-                          controller: _phoneController,
-                          label: 'Phone Number',
-                          icon: Icons.phone_outlined,
-                          keyboardType: TextInputType.phone,
-                        ),
-                        
                         const SizedBox(height: 16),
 
                         // Bio Field
@@ -237,7 +229,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           maxLines: 4,
                           hint: 'Tell us about yourself...',
                         ),
-                        
+
                         const SizedBox(height: 32),
 
                         // Save Button
@@ -256,7 +248,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.secondary.withValues(alpha: 0.3),
+                                  color: AppColors.secondary.withValues(
+                                    alpha: 0.3,
+                                  ),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -299,9 +293,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF0B1220).withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
@@ -316,16 +308,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             decoration: InputDecoration(
               labelText: label,
               hintText: hint,
-              labelStyle: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-              ),
-              hintStyle: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
-              ),
-              prefixIcon: Icon(
-                icon,
-                color: AppColors.secondary,
-              ),
+              labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+              prefixIcon: Icon(icon, color: AppColors.secondary),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(16),
             ),
