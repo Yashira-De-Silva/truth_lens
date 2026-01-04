@@ -1,19 +1,22 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../news/article_model.dart';
 import 'comment_model.dart';
+import '../profile/profile_provider.dart';
 
-class ArticleDetailsScreen extends StatefulWidget {
+class ArticleDetailsScreen extends ConsumerStatefulWidget {
   final Article? article;
   const ArticleDetailsScreen({this.article, super.key});
 
   @override
-  State<ArticleDetailsScreen> createState() => _ArticleDetailsScreenState();
+  ConsumerState<ArticleDetailsScreen> createState() =>
+      _ArticleDetailsScreenState();
 }
 
-class _ArticleDetailsScreenState extends State<ArticleDetailsScreen> {
+class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
   bool showSummary = true;
   double fakeProbability = 0.18; // mock
 
@@ -61,12 +64,16 @@ class _ArticleDetailsScreenState extends State<ArticleDetailsScreen> {
   void _addComment() {
     if (_commentController.text.trim().isEmpty) return;
 
+    // Read current user profile from provider
+    final profile = ref.read(profileProvider);
+    final displayName = profile.name.isNotEmpty ? profile.name : 'User';
+
     setState(() {
       _comments.insert(
         0,
         Comment(
           id: _comments.length + 1,
-          userName: 'Current User',
+          userName: displayName,
           userAvatar: 'assets/default_avatar.png',
           text: _commentController.text.trim(),
           timestamp: DateTime.now(),
@@ -110,6 +117,7 @@ class _ArticleDetailsScreenState extends State<ArticleDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final profile = ref.watch(profileProvider);
     final isVerified = fakeProbability < 0.3;
     final isBiased = fakeProbability >= 0.3 && fakeProbability < 0.7;
     final statusColor = isVerified
@@ -419,11 +427,19 @@ class _ArticleDetailsScreenState extends State<ArticleDetailsScreen> {
                               backgroundColor: AppColors.secondary.withValues(
                                 alpha: 0.2,
                               ),
-                              child: Icon(
-                                Icons.person,
-                                color: AppColors.secondary,
-                                size: 20,
-                              ),
+                              child: profile.name.isNotEmpty
+                                  ? Text(
+                                      profile.name[0].toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.person,
+                                      color: AppColors.secondary,
+                                      size: 20,
+                                    ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
