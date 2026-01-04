@@ -9,6 +9,7 @@ class PublicProfileScreen extends ConsumerWidget {
   final String? userBio;
   final String? profileVisibility;
   final bool isOwnProfile;
+  final bool isPremium;
 
   const PublicProfileScreen({
     super.key,
@@ -17,6 +18,7 @@ class PublicProfileScreen extends ConsumerWidget {
     this.userBio,
     this.profileVisibility = 'public',
     this.isOwnProfile = false,
+    this.isPremium = false,
   });
 
   @override
@@ -212,50 +214,94 @@ class PublicProfileScreen extends ConsumerWidget {
                                   ),
                                 ],
                                 const SizedBox(height: 16),
-                                // Visibility Badge
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: _getVisibilityColor(
-                                      profileVisibility ?? 'public',
-                                    ).withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: _getVisibilityColor(
-                                        profileVisibility ?? 'public',
-                                      ).withValues(alpha: 0.5),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        _getVisibilityIcon(
-                                          profileVisibility ?? 'public',
+                                // Badges Row
+                                Wrap(
+                                  spacing: 8,
+                                  children: [
+                                    // Premium Badge
+                                    if (isPremium)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
                                         ),
-                                        size: 14,
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFFFFD700),
+                                              Color(0xFFFFA500),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: const [
+                                            Icon(
+                                              Icons.workspace_premium,
+                                              size: 14,
+                                              color: Color(0xFF1A1F3A),
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Premium',
+                                              style: TextStyle(
+                                                color: Color(0xFF1A1F3A),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    // Visibility Badge
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
                                         color: _getVisibilityColor(
                                           profileVisibility ?? 'public',
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        _getVisibilityLabel(
-                                          profileVisibility ?? 'public',
-                                        ),
-                                        style: TextStyle(
+                                        ).withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
                                           color: _getVisibilityColor(
                                             profileVisibility ?? 'public',
-                                          ),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
+                                          ).withValues(alpha: 0.5),
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            _getVisibilityIcon(
+                                              profileVisibility ?? 'public',
+                                            ),
+                                            size: 14,
+                                            color: _getVisibilityColor(
+                                              profileVisibility ?? 'public',
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            _getVisibilityLabel(
+                                              profileVisibility ?? 'public',
+                                            ),
+                                            style: TextStyle(
+                                              color: _getVisibilityColor(
+                                                profileVisibility ?? 'public',
+                                              ),
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

@@ -151,6 +151,9 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                               final visibility =
                                   prefs.getString('profile_visibility') ??
                                   'public';
+                              final subscriptionPlan =
+                                  prefs.getString('subscription_plan') ??
+                                  'basic';
 
                               if (mounted) {
                                 Navigator.push(
@@ -162,6 +165,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                                       userBio: profile.bio,
                                       profileVisibility: visibility,
                                       isOwnProfile: true,
+                                      isPremium: subscriptionPlan == 'premium',
                                     ),
                                   ),
                                 );
