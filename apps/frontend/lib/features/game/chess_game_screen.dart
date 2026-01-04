@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,6 +21,14 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
   String? winner;
   bool? playerColor; // null = not selected, true = white, false = black
   bool showColorSelection = true;
+  
+  // Track if pieces have moved for castling
+  bool whiteKingMoved = false;
+  bool whiteLeftRookMoved = false;
+  bool whiteRightRookMoved = false;
+  bool blackKingMoved = false;
+  bool blackLeftRookMoved = false;
+  bool blackRightRookMoved = false;
 
   @override
   void initState() {
@@ -117,7 +126,64 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
         return false;
 
       case PieceType.king:
-        return rowDiff <= 1 && colDiff <= 1;
+        // Normal king move
+        if (rowDiff <= 1 && colDiff <= 1) return true;
+        
+        // Castling
+        if (rowDiff == 0 && colDiff == 2) {
+          return _canCastle(fromRow, fromCol, toRow, toCol);
+        }
+        return false;
+    }
+  }
+
+  bool _canCastle(int fromRow, int fromCol, int toRow, int toCol) {
+    final piece = board[fromRow][fromCol];
+    if (piece == null || piece.type != PieceType.king) return false;
+
+    // Check if king has moved
+    if (piece.isWhite && whiteKingMoved) return false;
+    if (!piece.isWhite && blackKingMoved) return false;
+
+    // Kingside castling (right)
+    if (toCol > fromCol) {
+      // Check if right rook has moved
+      if (piece.isWhite && whiteRightRookMoved) return false;
+      if (!piece.isWhite && blackRightRookMoved) return false;
+
+      // Check if rook is there
+      final rook = board[fromRow][7];
+      if (rook == null || rook.type != PieceType.rook || rook.isWhite != piece.isWhite) {
+        return false;
+      }
+
+      // Check if path is clear
+      if (board[fromRow][fromCol + 1] != null || board[fromRow][fromCol + 2] != null) {
+        return false;
+      }
+
+      return true;
+    }
+    // Queenside castling (left)
+    else {
+      // Check if left rook has moved
+      if (piece.isWhite && whiteLeftRookMoved) return false;
+      if (!piece.isWhite && blackLeftRookMoved) return false;
+
+      // Check if rook is there
+      final rook = board[fromRow][0];
+      if (rook == null || rook.type != PieceType.rook || rook.isWhite != piece.isWhite) {
+        return false;
+      }
+
+      // Check if path is clear
+      if (board[fromRow][fromCol - 1] != null || 
+          board[fromRow][fromCol - 2] != null ||
+          board[fromRow][fromCol - 3] != null) {
+        return false;
+      }
+
+      return true;
     }
   }
 
@@ -159,21 +225,171 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
       });
     }
 
+    // Check if this is a castling move
+    final isCastling = selectedPiece?.type == PieceType.king &&
+        (toCol - selectedCol!).abs() == 2;
+
     // Move the piece
     setState(() {
       board[toRow][toCol] = selectedPiece;
       board[selectedRow!][selectedCol!] = null;
 
+      // Handle castling - move the rook too
+      if (isCastling) {
+        if (toCol > selectedCol!) {
+          // Kingside castling - move right rook
+          board[toRow][toCol - 1] = board[toRow][7];
+          board[toRow][7] = null;
+        } else {
+          // Queenside castling - move left rook
+          board[toRow][toCol + 1] = board[toRow][0];
+          board[toRow][0] = null;
+        }
+      }
+
+      // Track piece movements for castling
+      if (selectedPiece?.type == PieceType.king) {
+        if (selectedPiece!.isWhite) {
+          whiteKingMoved = true;
+        } else {
+          blackKingMoved = true;
+        }
+      } else if (selectedPiece?.type == PieceType.rook) {
+        if (selectedPiece!.isWhite) {
+          if (selectedCol == 0) whiteLeftRookMoved = true;
+          if (selectedCol == 7) whiteRightRookMoved = true;
+        } else {
+          if (selectedCol == 0) blackLeftRookMoved = true;
+          if (selectedCol == 7) blackRightRookMoved = true;
+        }
+      }
+
       // Record move
       final from =
           '${String.fromCharCode(97 + selectedCol!)}${8 - selectedRow!}';
       final to = '${String.fromCharCode(97 + toCol)}${8 - toRow}';
-      moveHistory.add('${isWhiteTurn ? 'White' : 'Black'}: $from → $to');
+      final moveNotation = isCastling 
+          ? (toCol > selectedCol! ? 'O-O' : 'O-O-O')
+          : '$from → $to';
+      moveHistory.add('${isWhiteTurn ? 'White' : 'Black'}: $moveNotation');
 
       isWhiteTurn = !isWhiteTurn;
       selectedPiece = null;
       selectedRow = null;
       selectedCol = null;
+    });
+
+    // After player moves, make AI move
+    if (!gameOver && isWhiteTurn != playerColor) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _makeAIMove();
+      });
+    }
+  }
+
+  void _makeAIMove() {
+    if (gameOver) return;
+
+    // Find all valid moves for AI
+    final validMoves = <Map<String, int>>[];
+
+    for (int fromRow = 0; fromRow < 8; fromRow++) {
+      for (int fromCol = 0; fromCol < 8; fromCol++) {
+        final piece = board[fromRow][fromCol];
+        if (piece != null && piece.isWhite == isWhiteTurn) {
+          // Check all possible destination squares
+          for (int toRow = 0; toRow < 8; toRow++) {
+            for (int toCol = 0; toCol < 8; toCol++) {
+              if (_isValidMove(fromRow, fromCol, toRow, toCol)) {
+                validMoves.add({
+                  'fromRow': fromRow,
+                  'fromCol': fromCol,
+                  'toRow': toRow,
+                  'toCol': toCol,
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (validMoves.isEmpty) {
+      setState(() {
+        gameOver = true;
+        winner = playerColor == true ? 'White' : 'Black';
+      });
+      return;
+    }
+
+    // Pick a random valid move
+    final random = Random();
+    final move = validMoves[random.nextInt(validMoves.length)];
+
+    final piece = board[move['fromRow']!][move['fromCol']!];
+    final capturedPiece = board[move['toRow']!][move['toCol']!];
+
+    // Check if capturing a king
+    if (capturedPiece?.type == PieceType.king) {
+      setState(() {
+        gameOver = true;
+        winner = isWhiteTurn ? 'White' : 'Black';
+      });
+    }
+
+    // Check if this is a castling move
+    final isCastling = piece?.type == PieceType.king &&
+        (move['toCol']! - move['fromCol']!).abs() == 2;
+
+    setState(() {
+      board[move['toRow']!][move['toCol']!] = piece;
+      board[move['fromRow']!][move['fromCol']!] = null;
+
+      // Handle castling - move the rook too
+      if (isCastling) {
+        final toRow = move['toRow']!;
+        final toCol = move['toCol']!;
+        final fromCol = move['fromCol']!;
+        
+        if (toCol > fromCol) {
+          // Kingside castling - move right rook
+          board[toRow][toCol - 1] = board[toRow][7];
+          board[toRow][7] = null;
+        } else {
+          // Queenside castling - move left rook
+          board[toRow][toCol + 1] = board[toRow][0];
+          board[toRow][0] = null;
+        }
+      }
+
+      // Track piece movements for castling
+      if (piece?.type == PieceType.king) {
+        if (piece!.isWhite) {
+          whiteKingMoved = true;
+        } else {
+          blackKingMoved = true;
+        }
+      } else if (piece?.type == PieceType.rook) {
+        if (piece!.isWhite) {
+          if (move['fromCol'] == 0) whiteLeftRookMoved = true;
+          if (move['fromCol'] == 7) whiteRightRookMoved = true;
+        } else {
+          if (move['fromCol'] == 0) blackLeftRookMoved = true;
+          if (move['fromCol'] == 7) blackRightRookMoved = true;
+        }
+      }
+
+      // Record move
+      final from =
+          '${String.fromCharCode(97 + move['fromCol']!)}${8 - move['fromRow']!}';
+      final to =
+          '${String.fromCharCode(97 + move['toCol']!)}${8 - move['toRow']!}';
+      final moveNotation = isCastling 
+          ? (move['toCol']! > move['fromCol']! ? 'O-O' : 'O-O-O')
+          : '$from → $to';
+      moveHistory.add('${isWhiteTurn ? 'White' : 'Black'}: $moveNotation');
+
+      isWhiteTurn = !isWhiteTurn;
     });
   }
 
@@ -220,6 +436,14 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
       winner = null;
       playerColor = null;
       showColorSelection = true;
+      
+      // Reset castling flags
+      whiteKingMoved = false;
+      whiteLeftRookMoved = false;
+      whiteRightRookMoved = false;
+      blackKingMoved = false;
+      blackLeftRookMoved = false;
+      blackRightRookMoved = false;
     });
   }
 
@@ -228,6 +452,13 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
       playerColor = isWhite;
       showColorSelection = false;
     });
+
+    // If player chose black, AI (white) makes first move
+    if (!isWhite) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _makeAIMove();
+      });
+    }
   }
 
   @override
@@ -329,7 +560,7 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: const Color(0xFF6366F1).withOpacity(0.3),
             blurRadius: 20,
             spreadRadius: 5,
           ),
@@ -344,8 +575,18 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
           ),
           itemCount: 64,
           itemBuilder: (context, index) {
-            final row = index ~/ 8;
-            final col = index % 8;
+            // If player is black, rotate the board
+            int row, col;
+            if (playerColor == false) {
+              // Black player - flip the board
+              row = 7 - (index ~/ 8);
+              col = 7 - (index % 8);
+            } else {
+              // White player - normal orientation
+              row = index ~/ 8;
+              col = index % 8;
+            }
+
             final isLight = (row + col) % 2 == 0;
             final piece = board[row][col];
             final isSelected = selectedRow == row && selectedCol == col;
@@ -354,14 +595,27 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
               onTap: gameOver ? null : () => _selectPiece(row, col),
               child: Container(
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFFFBBF24)
-                      : (isLight
-                            ? const Color(0xFFF0D9B5)
-                            : const Color(0xFFB58863)),
+                  gradient: isSelected
+                      ? const LinearGradient(
+                          colors: [Color(0xFFFBBF24), Color(0xFFFFA500)],
+                        )
+                      : LinearGradient(
+                          colors: isLight
+                              ? [
+                                  const Color(0xFF4F46E5).withOpacity(0.3),
+                                  const Color(0xFF6366F1).withOpacity(0.2),
+                                ]
+                              : [
+                                  const Color(0xFF1E1B4B).withOpacity(0.8),
+                                  const Color(0xFF312E81).withOpacity(0.6),
+                                ],
+                        ),
                   border: isSelected
-                      ? Border.all(color: Colors.white, width: 3)
-                      : null,
+                      ? Border.all(color: const Color(0xFFFBBF24), width: 3)
+                      : Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                          width: 0.5,
+                        ),
                 ),
                 child: piece != null
                     ? Center(
@@ -374,8 +628,8 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
                               Shadow(
                                 color: piece.isWhite
                                     ? Colors.black
-                                    : Colors.white,
-                                blurRadius: 2,
+                                    : const Color(0xFF6366F1),
+                                blurRadius: 3,
                               ),
                             ],
                           ),
