@@ -18,6 +18,8 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
   List<String> moveHistory = [];
   bool gameOver = false;
   String? winner;
+  bool? playerColor; // null = not selected, true = white, false = black
+  bool showColorSelection = true;
 
   @override
   void initState() {
@@ -176,6 +178,11 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
   }
 
   void _selectPiece(int row, int col) {
+    // Only allow moves for the player's color
+    if (playerColor != null && isWhiteTurn != playerColor) {
+      return; // Not player's turn
+    }
+
     final piece = board[row][col];
 
     if (selectedPiece == null) {
@@ -211,11 +218,23 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
       moveHistory.clear();
       gameOver = false;
       winner = null;
+      playerColor = null;
+      showColorSelection = true;
+    });
+  }
+
+  void _selectColor(bool isWhite) {
+    setState(() {
+      playerColor = isWhite;
+      showColorSelection = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (showColorSelection) {
+      return _buildColorSelection();
+    }
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -230,21 +249,17 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
             children: [
               _buildHeader(),
               Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Center(
-                        child: AspectRatio(
-                          aspectRatio: 1,
-                          child: _buildChessBoard(),
-                        ),
-                      ),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: _buildChessBoard(),
                     ),
-                    Expanded(child: _buildSidebar()),
-                  ],
+                  ),
                 ),
               ),
+              _buildMoveHistory(),
             ],
           ),
         ),
@@ -370,6 +385,289 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMoveHistory() {
+    return Container(
+      height: 120,
+      margin: const EdgeInsets.all(16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.15),
+                  Colors.white.withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.history, color: Colors.white, size: 18),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Move History',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${moveHistory.length} moves',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.6),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(color: Colors.white24, height: 1),
+                Expanded(
+                  child: moveHistory.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No moves yet',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 12,
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(8),
+                          scrollDirection: Axis.horizontal,
+                          itemCount: moveHistory.length,
+                          itemBuilder: (context, index) {
+                            return Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    moveHistory[index],
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildColorSelection() {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0A0E27), Color(0xFF1A1F3A), Color(0xFF0A0E27)],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.arrow_back, color: Colors.white),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Text(
+                      'Chess Game',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.extension,
+                          color: Color(0xFF8B5CF6),
+                          size: 80,
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Choose Your Color',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Select which side you want to play',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 48),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildColorOption(
+                                'White',
+                                '♔',
+                                true,
+                                Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: _buildColorOption(
+                                'Black',
+                                '♚',
+                                false,
+                                Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildColorOption(String label, String symbol, bool isWhite, Color color) {
+    return GestureDetector(
+      onTap: () => _selectColor(isWhite),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.2),
+                  Colors.white.withOpacity(0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  symbol,
+                  style: TextStyle(
+                    fontSize: 80,
+                    color: color,
+                    shadows: [
+                      Shadow(
+                        color: isWhite ? Colors.black : Colors.white,
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isWhite ? 'Move First' : 'Move Second',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
