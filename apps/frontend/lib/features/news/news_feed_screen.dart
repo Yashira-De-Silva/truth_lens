@@ -17,37 +17,43 @@ class NewsFeedScreen extends StatelessWidget {
     Article(
       id: 1,
       title: 'Breaking: AI Revolutionizes News Verification',
-      summary: 'New AI technology can detect fake news with 98% accuracy using advanced machine learning algorithms.',
+      summary:
+          'New AI technology can detect fake news with 98% accuracy using advanced machine learning algorithms.',
       source: 'Tech News',
     ),
     Article(
       id: 2,
       title: 'Political Summit Addresses Climate Change',
-      summary: 'World leaders gather to discuss climate action and sustainable development goals for 2026.',
+      summary:
+          'World leaders gather to discuss climate action and sustainable development goals for 2026.',
       source: 'World Politics',
     ),
     Article(
       id: 3,
       title: 'Stock Market Reaches New Heights',
-      summary: 'Technology stocks lead market gains as investors show confidence in AI sector growth.',
+      summary:
+          'Technology stocks lead market gains as investors show confidence in AI sector growth.',
       source: 'Business Today',
     ),
     Article(
       id: 4,
       title: 'Medical Breakthrough in Cancer Treatment',
-      summary: 'Scientists develop new immunotherapy that shows promising results in clinical trials.',
+      summary:
+          'Scientists develop new immunotherapy that shows promising results in clinical trials.',
       source: 'Health News',
     ),
     Article(
       id: 5,
       title: 'SpaceX Announces Mars Mission Timeline',
-      summary: 'Elon Musk reveals updated plans for the first crewed mission to Mars in 2028.',
+      summary:
+          'Elon Musk reveals updated plans for the first crewed mission to Mars in 2028.',
       source: 'Space Journal',
     ),
     Article(
       id: 6,
       title: 'Olympics 2026 Preparations Underway',
-      summary: 'Host city unveils state-of-the-art facilities for upcoming Olympic Games.',
+      summary:
+          'Host city unveils state-of-the-art facilities for upcoming Olympic Games.',
       source: 'Sports World',
     ),
   ];
@@ -55,7 +61,7 @@ class NewsFeedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     return Scaffold(
       // gradient background to match design
       body: Container(
@@ -83,7 +89,9 @@ class NewsFeedScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.secondary.withValues(alpha: 0.3),
+                                color: AppColors.secondary.withValues(
+                                  alpha: 0.3,
+                                ),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -103,16 +111,18 @@ class NewsFeedScreen extends StatelessWidget {
                           children: [
                             Text(
                               l10n.newsFeed,
-                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.headlineMedium
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                             Text(
                               'Stay informed with verified news',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.7),
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                  ),
                             ),
                           ],
                         ),
@@ -144,9 +154,15 @@ class NewsFeedScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final article = _mockArticles[index];
                     final status = index % 3; // 0 verified, 1 biased, 2 fake
-                    final statusColor = status == 0 ? AppColors.success : (status == 1 ? AppColors.accent : AppColors.error);
-                    final statusText = status == 0 ? 'Verified' : (status == 1 ? 'Biased' : 'Possibly Fake');
-                    final confidence = status == 0 ? 0.98 : (status == 1 ? 0.66 : 0.2);
+                    final statusColor = status == 0
+                        ? AppColors.success
+                        : (status == 1 ? AppColors.accent : AppColors.error);
+                    final statusText = status == 0
+                        ? 'Verified'
+                        : (status == 1 ? 'Biased' : 'Possibly Fake');
+                    final confidence = status == 0
+                        ? 0.98
+                        : (status == 1 ? 0.66 : 0.2);
 
                     return _GlassCard(
                       statusColor: statusColor,
@@ -160,7 +176,8 @@ class NewsFeedScreen extends StatelessWidget {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         article.title,
@@ -186,7 +203,9 @@ class NewsFeedScreen extends StatelessWidget {
                                             child: Text(
                                               ' · ${article.source} - 2h ago',
                                               style: TextStyle(
-                                                color: Colors.white.withValues(alpha: 0.6),
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.6,
+                                                ),
                                                 fontSize: 12,
                                               ),
                                               overflow: TextOverflow.ellipsis,
@@ -207,20 +226,125 @@ class NewsFeedScreen extends StatelessWidget {
                                       percent: (confidence * 100).toInt(),
                                     ),
                                     const SizedBox(height: 8),
-                                    GestureDetector(
-                                      onTap: () {},
-                                      child: Container(
+                                    PopupMenuButton<String>(
+                                      icon: Container(
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(8),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: Icon(
                                           Icons.more_horiz,
-                                          color: Colors.white.withValues(alpha: 0.6),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.6,
+                                          ),
                                           size: 18,
                                         ),
                                       ),
+                                      color: const Color(0xFF0B1220),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        side: BorderSide(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                        ),
+                                      ),
+                                      offset: const Offset(-10, 40),
+                                      itemBuilder: (context) => [
+                                        PopupMenuItem(
+                                          value: 'share',
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.share,
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.9,
+                                                ),
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Text(
+                                                l10n.shareArticle,
+                                                style: TextStyle(
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.9),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        PopupMenuItem(
+                                          value: 'report',
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.flag_outlined,
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.9,
+                                                ),
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Text(
+                                                l10n.reportArticle,
+                                                style: TextStyle(
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.9),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        PopupMenuItem(
+                                          value: 'notInterested',
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.block,
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.9,
+                                                ),
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Text(
+                                                l10n.notInterested,
+                                                style: TextStyle(
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.9),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                      onSelected: (value) {
+                                        switch (value) {
+                                          case 'share':
+                                            AppSnackbar.showSuccess(
+                                              context,
+                                              l10n.shareFeatureComingSoon,
+                                            );
+                                            break;
+                                          case 'report':
+                                            AppSnackbar.showSuccess(
+                                              context,
+                                              l10n.reportSubmitted,
+                                            );
+                                            break;
+                                          case 'notInterested':
+                                            AppSnackbar.showSuccess(
+                                              context,
+                                              l10n.articleHidden,
+                                            );
+                                            break;
+                                        }
+                                      },
                                     ),
                                   ],
                                 ),
@@ -241,94 +365,146 @@ class NewsFeedScreen extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                Consumer(builder: (context, ref, _) {
-                                  final bookmarks = ref.watch(bookmarksProvider);
-                                  final isSaved = bookmarks.any((a) => a.id == article.id);
-                                  
-                                  return Flexible(
-                                    child: GestureDetector(
-                                      onTap: () async {
-                                        if (isSaved) {
-                                          await ref.read(bookmarksProvider.notifier).removeById(article.id);
-                                          if (context.mounted) {
-                                            AppSnackbar.showSuccess(context, l10n.removedFromBookmarks);
+                                Consumer(
+                                  builder: (context, ref, _) {
+                                    final bookmarks = ref.watch(
+                                      bookmarksProvider,
+                                    );
+                                    final isSaved = bookmarks.any(
+                                      (a) => a.id == article.id,
+                                    );
+
+                                    return Flexible(
+                                      child: GestureDetector(
+                                        onTap: () async {
+                                          if (isSaved) {
+                                            await ref
+                                                .read(
+                                                  bookmarksProvider.notifier,
+                                                )
+                                                .removeById(article.id);
+                                            if (context.mounted) {
+                                              AppSnackbar.showSuccess(
+                                                context,
+                                                l10n.removedFromBookmarks,
+                                              );
+                                            }
+                                          } else {
+                                            await ref
+                                                .read(
+                                                  bookmarksProvider.notifier,
+                                                )
+                                                .add(article);
+                                            if (context.mounted) {
+                                              AppSnackbar.showSuccess(
+                                                context,
+                                                l10n.savedToBookmarks,
+                                              );
+                                            }
                                           }
-                                        } else {
-                                          await ref.read(bookmarksProvider.notifier).add(article);
-                                          if (context.mounted) {
-                                            AppSnackbar.showSuccess(context, l10n.savedToBookmarks);
-                                          }
-                                        }
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                        decoration: BoxDecoration(
-                                          color: isSaved
-                                              ? AppColors.accent.withValues(alpha: 0.2)
-                                              : Colors.white.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: isSaved
-                                                ? AppColors.accent.withValues(alpha: 0.5)
-                                                : Colors.white.withValues(alpha: 0.2),
-                                            width: isSaved ? 1.5 : 1,
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                            vertical: 12,
                                           ),
-                                        ),
-                                        child: Center(
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                isSaved ? Icons.bookmark : Icons.bookmark_outline,
-                                                color: isSaved
-                                                    ? AppColors.accent
-                                                    : Colors.white.withValues(alpha: 0.9),
-                                                size: 16,
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Flexible(
-                                                child: Text(
-                                                  isSaved ? l10n.unsave : l10n.save,
-                                                  style: TextStyle(
-                                                    color: isSaved
-                                                        ? AppColors.accent
-                                                        : Colors.white.withValues(alpha: 0.9),
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w600,
+                                          decoration: BoxDecoration(
+                                            color: isSaved
+                                                ? AppColors.accent.withValues(
+                                                    alpha: 0.2,
+                                                  )
+                                                : Colors.white.withValues(
+                                                    alpha: 0.1,
                                                   ),
-                                                  overflow: TextOverflow.ellipsis,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            border: Border.all(
+                                              color: isSaved
+                                                  ? AppColors.accent.withValues(
+                                                      alpha: 0.5,
+                                                    )
+                                                  : Colors.white.withValues(
+                                                      alpha: 0.2,
+                                                    ),
+                                              width: isSaved ? 1.5 : 1,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  isSaved
+                                                      ? Icons.bookmark
+                                                      : Icons.bookmark_outline,
+                                                  color: isSaved
+                                                      ? AppColors.accent
+                                                      : Colors.white.withValues(
+                                                          alpha: 0.9,
+                                                        ),
+                                                  size: 16,
                                                 ),
-                                              ),
-                                            ],
+                                                const SizedBox(width: 6),
+                                                Flexible(
+                                                  child: Text(
+                                                    isSaved
+                                                        ? l10n.unsave
+                                                        : l10n.save,
+                                                    style: TextStyle(
+                                                      color: isSaved
+                                                          ? AppColors.accent
+                                                          : Colors.white
+                                                                .withValues(
+                                                                  alpha: 0.9,
+                                                                ),
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                }),
+                                    );
+                                  },
+                                ),
                                 const SizedBox(width: 12),
                                 Flexible(
                                   child: GestureDetector(
                                     onTap: () {
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
-                                          builder: (_) => ArticleDetailsScreen(article: article),
+                                          builder: (_) => ArticleDetailsScreen(
+                                            article: article,
+                                          ),
                                         ),
                                       );
                                     },
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 12,
+                                      ),
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           colors: [
                                             AppColors.secondary,
-                                            AppColors.secondary.withValues(alpha: 0.8),
+                                            AppColors.secondary.withValues(
+                                              alpha: 0.8,
+                                            ),
                                           ],
                                         ),
                                         borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: AppColors.secondary.withValues(alpha: 0.3),
+                                            color: AppColors.secondary
+                                                .withValues(alpha: 0.3),
                                             blurRadius: 8,
                                             offset: const Offset(0, 4),
                                           ),
@@ -348,7 +524,7 @@ class NewsFeedScreen extends StatelessWidget {
                                   ),
                                 ),
                               ],
-                            )
+                            ),
                           ],
                         ),
                       ),
@@ -407,16 +583,18 @@ class _ConfidenceBadge extends StatelessWidget {
   final String text;
   final Color color;
   final int percent;
-  const _ConfidenceBadge({required this.text, required this.color, required this.percent});
+  const _ConfidenceBadge({
+    required this.text,
+    required this.color,
+    required this.percent,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [color, color.withValues(alpha: 0.8)],
-        ),
+        gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.8)]),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(

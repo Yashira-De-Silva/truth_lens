@@ -92,5 +92,12 @@
   "imagePickerComingSoon": "පින්තූර තෝරන්නා ඉක්මනින් එනවා!",
   
   "categoriesSelected": "ප්‍රවර්ග තෝරා ඇත",
-  "categorySelected": "ප්‍රවර්ගය තෝරා ඇත"
+  "categorySelected": "ප්‍රවර්ගය තෝරා ඇත",
+  
+  "shareArticle": "ලිපිය බෙදා ගන්න",
+  "reportArticle": "ලිපිය වාර්තා කරන්න",
+  "notInterested": "උනන්දුවක් නැත",
+  "shareFeatureComingSoon": "බෙදාගැනීමේ විශේෂාංගය ඉක්මනින් එනවා!",
+  "reportSubmitted": "වාර්තාව සාර්ථකව ඉදිරිපත් කරන ලදී",
+  "articleHidden": "ලිපිය feed එකෙන් සැඟවී ඇත"
 }

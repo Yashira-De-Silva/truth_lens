@@ -247,4 +247,22 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get categorySelected => 'வகை தேர்ந்தெடுக்கப்பட்டது';
+
+  @override
+  String get shareArticle => 'கட்டுரையைப் பகிர்';
+
+  @override
+  String get reportArticle => 'கட்டுரையைப் புகாரளி';
+
+  @override
+  String get notInterested => 'ஆர்வமில்லை';
+
+  @override
+  String get shareFeatureComingSoon => 'பகிர்வு அம்சம் விரைவில் வருகிறது!';
+
+  @override
+  String get reportSubmitted => 'புகார் வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது';
+
+  @override
+  String get articleHidden => 'கட்டுரை feed இல் மறைக்கப்பட்டது';
 }

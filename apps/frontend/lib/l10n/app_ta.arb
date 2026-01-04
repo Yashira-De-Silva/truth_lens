@@ -92,5 +92,12 @@
   "imagePickerComingSoon": "படத் தேர்வி விரைவில் வருகிறது!",
   
   "categoriesSelected": "வகைகள் தேர்ந்தெடுக்கப்பட்டன",
-  "categorySelected": "வகை தேர்ந்தெடுக்கப்பட்டது"
+  "categorySelected": "வகை தேர்ந்தெடுக்கப்பட்டது",
+  
+  "shareArticle": "கட்டுரையைப் பகிர்",
+  "reportArticle": "கட்டுரையைப் புகாரளி",
+  "notInterested": "ஆர்வமில்லை",
+  "shareFeatureComingSoon": "பகிர்வு அம்சம் விரைவில் வருகிறது!",
+  "reportSubmitted": "புகார் வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது",
+  "articleHidden": "கட்டுரை feed இல் மறைக்கப்பட்டது"
 }

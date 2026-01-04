@@ -92,5 +92,12 @@
   "imagePickerComingSoon": "Image picker coming soon!",
   
   "categoriesSelected": "categories selected",
-  "categorySelected": "category selected"
+  "categorySelected": "category selected",
+  
+  "shareArticle": "Share Article",
+  "reportArticle": "Report Article",
+  "notInterested": "Not Interested",
+  "shareFeatureComingSoon": "Share feature coming soon!",
+  "reportSubmitted": "Report submitted successfully",
+  "articleHidden": "Article hidden from feed"
 }

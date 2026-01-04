@@ -244,4 +244,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categorySelected => 'category selected';
+
+  @override
+  String get shareArticle => 'Share Article';
+
+  @override
+  String get reportArticle => 'Report Article';
+
+  @override
+  String get notInterested => 'Not Interested';
+
+  @override
+  String get shareFeatureComingSoon => 'Share feature coming soon!';
+
+  @override
+  String get reportSubmitted => 'Report submitted successfully';
+
+  @override
+  String get articleHidden => 'Article hidden from feed';
 }

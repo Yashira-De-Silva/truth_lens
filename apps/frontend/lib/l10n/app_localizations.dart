@@ -573,6 +573,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'category selected'**
   String get categorySelected;
+
+  /// No description provided for @shareArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Article'**
+  String get shareArticle;
+
+  /// No description provided for @reportArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Article'**
+  String get reportArticle;
+
+  /// No description provided for @notInterested.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Interested'**
+  String get notInterested;
+
+  /// No description provided for @shareFeatureComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Share feature coming soon!'**
+  String get shareFeatureComingSoon;
+
+  /// No description provided for @reportSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Report submitted successfully'**
+  String get reportSubmitted;
+
+  /// No description provided for @articleHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Article hidden from feed'**
+  String get articleHidden;
 }
 
 class _AppLocalizationsDelegate

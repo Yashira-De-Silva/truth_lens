@@ -246,4 +246,22 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get categorySelected => 'ප්‍රවර්ගය තෝරා ඇත';
+
+  @override
+  String get shareArticle => 'ලිපිය බෙදා ගන්න';
+
+  @override
+  String get reportArticle => 'ලිපිය වාර්තා කරන්න';
+
+  @override
+  String get notInterested => 'උනන්දුවක් නැත';
+
+  @override
+  String get shareFeatureComingSoon => 'බෙදාගැනීමේ විශේෂාංගය ඉක්මනින් එනවා!';
+
+  @override
+  String get reportSubmitted => 'වාර්තාව සාර්ථකව ඉදිරිපත් කරන ලදී';
+
+  @override
+  String get articleHidden => 'ලිපිය feed එකෙන් සැඟවී ඇත';
 }
