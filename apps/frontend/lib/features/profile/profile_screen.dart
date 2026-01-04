@@ -13,6 +13,7 @@ import 'settings_provider.dart';
 import '../search/user_search_screen.dart';
 import 'subscription_screen.dart';
 import '../game/fact_fiction_game_screen.dart';
+import '../game/news_quiz_game_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -335,19 +336,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 _buildSectionHeader('Fun & Games'),
                 const SizedBox(height: 12),
                 _buildGlassContainer(
-                  child: _buildSettingTile(
-                    icon: Icons.games,
-                    title: 'Fact vs Fiction',
-                    subtitle: 'Test your news verification skills',
-                    iconColor: const Color(0xFFFFD700),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FactFictionGameScreen(),
-                        ),
-                      );
-                    },
+                  child: Column(
+                    children: [
+                      _buildSettingTile(
+                        icon: Icons.games,
+                        title: 'Fact vs Fiction',
+                        subtitle: 'Test your news verification skills',
+                        iconColor: const Color(0xFFFFD700),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const FactFictionGameScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildDivider(),
+                      _buildSettingTile(
+                        icon: Icons.quiz,
+                        title: 'News Quiz Challenge',
+                        subtitle: 'Test your news literacy knowledge',
+                        iconColor: const Color(0xFF6366F1),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NewsQuizGameScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 24),
