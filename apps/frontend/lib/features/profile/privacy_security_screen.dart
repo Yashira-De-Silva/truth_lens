@@ -9,6 +9,8 @@ import 'profile_visibility_screen.dart';
 import 'reading_history_screen.dart';
 import 'change_password_screen.dart';
 import 'manage_devices_screen.dart';
+import 'public_profile_screen.dart';
+import 'profile_provider.dart';
 
 class PrivacySecurityScreen extends ConsumerStatefulWidget {
   const PrivacySecurityScreen({super.key});
@@ -137,6 +139,36 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                     _buildGlassContainer(
                       child: Column(
                         children: [
+                          _buildSettingTile(
+                            context: context,
+                            icon: Icons.preview_outlined,
+                            title: 'Preview My Profile',
+                            subtitle: 'See how others view your profile',
+                            onTap: () async {
+                              final profile = ref.read(profileProvider);
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              final visibility =
+                                  prefs.getString('profile_visibility') ??
+                                  'public';
+
+                              if (mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => PublicProfileScreen(
+                                      userName: profile.name,
+                                      userEmail: profile.email,
+                                      userBio: profile.bio,
+                                      profileVisibility: visibility,
+                                      isOwnProfile: true,
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          _buildDivider(),
                           _buildSettingTile(
                             context: context,
                             icon: Icons.visibility_outlined,

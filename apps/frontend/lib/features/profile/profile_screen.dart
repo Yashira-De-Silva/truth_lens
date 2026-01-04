@@ -9,6 +9,7 @@ import 'privacy_security_screen.dart';
 import 'categories_screen.dart';
 import 'profile_provider.dart';
 import 'settings_provider.dart';
+import '../search/user_search_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -18,11 +19,10 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -38,20 +38,66 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
-                Text(
-                  l10n.profile,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  l10n.manageAccount,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.7),
-                  ),
+                // Header with Search Button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.profile,
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            l10n.manageAccount,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const UserSearchScreen(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0B1220).withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Icon(
+                              Icons.person_search,
+                              color: AppColors.secondary,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
 
@@ -113,7 +159,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.accent.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(12),
@@ -161,7 +210,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         title: l10n.notifications,
                         subtitle: l10n.notificationsSubtitle,
                         value: ref.watch(settingsProvider).notifications,
-                        onChanged: (v) => ref.read(settingsProvider.notifier).setNotifications(v),
+                        onChanged: (v) => ref
+                            .read(settingsProvider.notifier)
+                            .setNotifications(v),
                       ),
                       _buildDivider(),
                       _buildSettingTile(
@@ -195,7 +246,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const PrivacySecurityScreen(),
+                              builder: (context) =>
+                                  const PrivacySecurityScreen(),
                             ),
                           );
                         },
@@ -204,7 +256,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       _buildSettingTile(
                         icon: Icons.language,
                         title: l10n.language,
-                        subtitle: ref.watch(settingsProvider).languageDisplayName,
+                        subtitle: ref
+                            .watch(settingsProvider)
+                            .languageDisplayName,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -278,9 +332,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF0B1220).withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -293,10 +345,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         borderRadius: BorderRadius.circular(20),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: child,
-          ),
+          child: Padding(padding: const EdgeInsets.all(20.0), child: child),
         ),
       ),
     );
@@ -317,11 +366,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             color: AppColors.secondary.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            icon,
-            color: AppColors.secondary,
-            size: 22,
-          ),
+          child: Icon(icon, color: AppColors.secondary, size: 22),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -419,10 +464,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildDivider() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Divider(
-        color: Colors.white.withValues(alpha: 0.1),
-        height: 1,
-      ),
+      child: Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
     );
   }
 }
