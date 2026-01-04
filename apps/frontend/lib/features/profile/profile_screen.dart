@@ -12,6 +12,7 @@ import 'profile_provider.dart';
 import 'settings_provider.dart';
 import '../search/user_search_screen.dart';
 import 'subscription_screen.dart';
+import '../game/fact_fiction_game_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -326,6 +327,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         },
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Fun & Games Section
+                _buildSectionHeader('Fun & Games'),
+                const SizedBox(height: 12),
+                _buildGlassContainer(
+                  child: _buildSettingTile(
+                    icon: Icons.games,
+                    title: 'Fact vs Fiction',
+                    subtitle: 'Test your news verification skills',
+                    iconColor: const Color(0xFFFFD700),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const FactFictionGameScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 24),
