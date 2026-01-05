@@ -38,7 +38,7 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
     }
   }
 
-  void _onSquareTapped(String square) async {
+  void _onSquareTapped(String square) {
     if (chess.game_over) return;
     
     // Check if it's player's turn
@@ -47,74 +47,56 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
       return;
     }
 
-    if (selectedSquare == null) {
-      // Select a piece
-      final piece = chess.get(square);
-      if (piece != null && 
-          ((chess.turn == chess_lib.Color.WHITE && piece.color == chess_lib.Color.WHITE) ||
-           (chess.turn == chess_lib.Color.BLACK && piece.color == chess_lib.Color.BLACK))) {
-        setState(() {
+    setState(() {
+      if (selectedSquare == null) {
+        // Select a piece
+        final piece = chess.get(square);
+        if (piece != null && 
+            ((chess.turn == chess_lib.Color.WHITE && piece.color == chess_lib.Color.WHITE) ||
+             (chess.turn == chess_lib.Color.BLACK && piece.color == chess_lib.Color.BLACK))) {
           selectedSquare = square;
-        });
-      }
-    } else {
-      // Check if this is a pawn promotion move
-      final piece = chess.get(selectedSquare!);
-      final fromRank = int.parse(selectedSquare![1]);
-      final toRank = int.parse(square[1]);
-      final isPromotion = piece != null && piece.type.name == 'p' &&
-          ((piece.color == chess_lib.Color.WHITE && fromRank == 7 && toRank == 8) ||
-           (piece.color == chess_lib.Color.BLACK && fromRank == 2 && toRank == 1));
-
-      String moveStr = selectedSquare! + square;
-      
-      // If it's a promotion, show dialog to choose piece
-      if (isPromotion) {
-        final promotionPiece = await _showPromotionDialog();
-        if (promotionPiece != null) {
-          moveStr += promotionPiece; // Add promotion piece (q, r, b, n)
-        } else {
-          setState(() {
-            selectedSquare = null;
-          });
-          return;
-        }
-      }
-      
-      // Try to make a move
-      if (chess.move(moveStr)) {
-        setState(() {
-          moveHistory.add(moveStr);
-          selectedSquare = null;
-        });
-        
-        // Check for game over
-        if (chess.in_checkmate) {
-          _showVictoryDialog();
-        } else if (chess.in_draw || chess.in_stalemate) {
-          _showDrawDialog();
-        } else {
-          // AI's turn
-          Future.delayed(const Duration(milliseconds: 300), () {
-            _makeAIMove();
-          });
         }
       } else {
-        // Invalid move, try selecting a different piece
-        final newPiece = chess.get(square);
-        if (newPiece != null &&
-            ((chess.turn == chess_lib.Color.WHITE && newPiece.color == chess_lib.Color.WHITE) ||
-             (chess.turn == chess_lib.Color.BLACK && newPiece.color == chess_lib.Color.BLACK))) {
-          setState(() {
-            selectedSquare = square;
-          });
+        // Try to make a move using proper format with from/to
+        final moveSuccessful = chess.move({
+          'from': selectedSquare!,
+          'to': square,
+        });
+        
+        if (moveSuccessful) {
+          // Move was successful - get the last move from history
+          final history = chess.getHistory({'verbose': true});
+          if (history.isNotEmpty) {
+            final lastMove = history.last;
+            final san = lastMove['san'] ?? '${selectedSquare!}-$square';
+            moveHistory.add(san);
+          }
+          selectedSquare = null;
+          
+          // Check for game over
+          if (chess.in_checkmate) {
+            _showVictoryDialog();
+          } else if (chess.in_draw || chess.in_stalemate) {
+            _showDrawDialog();
+          } else {
+            // AI's turn
+            Future.delayed(const Duration(milliseconds: 300), () {
+              _makeAIMove();
+            });
+          }
         } else {
-          setState(() {
+          // Invalid move, try selecting a different piece
+          final piece = chess.get(square);
+          if (piece != null &&
+              ((chess.turn == chess_lib.Color.WHITE && piece.color == chess_lib.Color.WHITE) ||
+               (chess.turn == chess_lib.Color.BLACK && piece.color == chess_lib.Color.BLACK))) {
+            selectedSquare = square;
+          } else {
             selectedSquare = null;
-          });
+          }
         }
       }
-    }
+    });
   }
 
   void _makeAIMove() {
@@ -150,113 +132,6 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
       playerColor = null;
       showColorSelection = true;
     });
-  }
-
-  Future<String?> _showPromotionDialog() async {
-    return showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Dialog(
-            backgroundColor: Colors.transparent,
-            child: Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF1A1F3A).withOpacity(0.95),
-                    const Color(0xFF0A0E27).withOpacity(0.95),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFF6366F1), width: 2),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Promote Pawn',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Choose a piece',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildPromotionOption('♕', 'q', 'Queen', context),
-                      _buildPromotionOption('♖', 'r', 'Rook', context),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildPromotionOption('♗', 'b', 'Bishop', context),
-                      _buildPromotionOption('♘', 'n', 'Knight', context),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildPromotionOption(String symbol, String piece, String name, BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.pop(context, piece),
-      child: Container(
-        width: 80,
-        height: 100,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF6366F1).withOpacity(0.3),
-              const Color(0xFF4F46E5).withOpacity(0.3),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.5)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              symbol,
-              style: const TextStyle(fontSize: 48, color: Colors.white),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              name,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white.withOpacity(0.7),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   void _showVictoryDialog() {
