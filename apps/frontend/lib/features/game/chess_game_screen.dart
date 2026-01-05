@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chess/chess.dart' as chess_lib;
 
 class ChessGameScreen extends ConsumerStatefulWidget {
   const ChessGameScreen({super.key});
@@ -11,440 +12,16 @@ class ChessGameScreen extends ConsumerStatefulWidget {
 }
 
 class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
-  late List<List<ChessPiece?>> board;
-  ChessPiece? selectedPiece;
-  int? selectedRow;
-  int? selectedCol;
-  bool isWhiteTurn = true;
-  List<String> moveHistory = [];
-  bool gameOver = false;
-  String? winner;
-  bool? playerColor; // null = not selected, true = white, false = black
+  late chess_lib.Chess chess;
+  String? selectedSquare;
+  bool? playerColor; // true = white, false = black
   bool showColorSelection = true;
+  List<String> moveHistory = [];
   
-  // Track if pieces have moved for castling
-  bool whiteKingMoved = false;
-  bool whiteLeftRookMoved = false;
-  bool whiteRightRookMoved = false;
-  bool blackKingMoved = false;
-  bool blackLeftRookMoved = false;
-  bool blackRightRookMoved = false;
-
   @override
   void initState() {
     super.initState();
-    _initializeBoard();
-  }
-
-  void _initializeBoard() {
-    board = List.generate(8, (i) => List.generate(8, (j) => null));
-
-    // Set up black pieces
-    board[0] = [
-      ChessPiece(PieceType.rook, false),
-      ChessPiece(PieceType.knight, false),
-      ChessPiece(PieceType.bishop, false),
-      ChessPiece(PieceType.queen, false),
-      ChessPiece(PieceType.king, false),
-      ChessPiece(PieceType.bishop, false),
-      ChessPiece(PieceType.knight, false),
-      ChessPiece(PieceType.rook, false),
-    ];
-    for (int i = 0; i < 8; i++) {
-      board[1][i] = ChessPiece(PieceType.pawn, false);
-    }
-
-    // Set up white pieces
-    for (int i = 0; i < 8; i++) {
-      board[6][i] = ChessPiece(PieceType.pawn, true);
-    }
-    board[7] = [
-      ChessPiece(PieceType.rook, true),
-      ChessPiece(PieceType.knight, true),
-      ChessPiece(PieceType.bishop, true),
-      ChessPiece(PieceType.queen, true),
-      ChessPiece(PieceType.king, true),
-      ChessPiece(PieceType.bishop, true),
-      ChessPiece(PieceType.knight, true),
-      ChessPiece(PieceType.rook, true),
-    ];
-  }
-
-  bool _isValidMove(int fromRow, int fromCol, int toRow, int toCol) {
-    if (toRow < 0 || toRow > 7 || toCol < 0 || toCol > 7) return false;
-
-    final piece = board[fromRow][fromCol];
-    if (piece == null) return false;
-
-    final targetPiece = board[toRow][toCol];
-    if (targetPiece != null && targetPiece.isWhite == piece.isWhite) {
-      return false;
-    }
-
-    final rowDiff = (toRow - fromRow).abs();
-    final colDiff = (toCol - fromCol).abs();
-
-    switch (piece.type) {
-      case PieceType.pawn:
-        final direction = piece.isWhite ? -1 : 1;
-        final startRow = piece.isWhite ? 6 : 1;
-
-        // Move forward
-        if (fromCol == toCol && targetPiece == null) {
-          if (toRow == fromRow + direction) return true;
-          if (fromRow == startRow && toRow == fromRow + (2 * direction)) {
-            if (board[fromRow + direction][fromCol] == null) return true;
-          }
-        }
-        // Capture diagonally
-        if (colDiff == 1 &&
-            toRow == fromRow + direction &&
-            targetPiece != null) {
-          return true;
-        }
-        return false;
-
-      case PieceType.rook:
-        if (rowDiff == 0 || colDiff == 0) {
-          return _isPathClear(fromRow, fromCol, toRow, toCol);
-        }
-        return false;
-
-      case PieceType.knight:
-        return (rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2);
-
-      case PieceType.bishop:
-        if (rowDiff == colDiff) {
-          return _isPathClear(fromRow, fromCol, toRow, toCol);
-        }
-        return false;
-
-      case PieceType.queen:
-        if (rowDiff == colDiff || rowDiff == 0 || colDiff == 0) {
-          return _isPathClear(fromRow, fromCol, toRow, toCol);
-        }
-        return false;
-
-      case PieceType.king:
-        // Normal king move
-        if (rowDiff <= 1 && colDiff <= 1) return true;
-        
-        // Castling
-        if (rowDiff == 0 && colDiff == 2) {
-          return _canCastle(fromRow, fromCol, toRow, toCol);
-        }
-        return false;
-    }
-  }
-
-  bool _canCastle(int fromRow, int fromCol, int toRow, int toCol) {
-    final piece = board[fromRow][fromCol];
-    if (piece == null || piece.type != PieceType.king) return false;
-
-    // Check if king has moved
-    if (piece.isWhite && whiteKingMoved) return false;
-    if (!piece.isWhite && blackKingMoved) return false;
-
-    // Kingside castling (right)
-    if (toCol > fromCol) {
-      // Check if right rook has moved
-      if (piece.isWhite && whiteRightRookMoved) return false;
-      if (!piece.isWhite && blackRightRookMoved) return false;
-
-      // Check if rook is there
-      final rook = board[fromRow][7];
-      if (rook == null || rook.type != PieceType.rook || rook.isWhite != piece.isWhite) {
-        return false;
-      }
-
-      // Check if path is clear
-      if (board[fromRow][fromCol + 1] != null || board[fromRow][fromCol + 2] != null) {
-        return false;
-      }
-
-      return true;
-    }
-    // Queenside castling (left)
-    else {
-      // Check if left rook has moved
-      if (piece.isWhite && whiteLeftRookMoved) return false;
-      if (!piece.isWhite && blackLeftRookMoved) return false;
-
-      // Check if rook is there
-      final rook = board[fromRow][0];
-      if (rook == null || rook.type != PieceType.rook || rook.isWhite != piece.isWhite) {
-        return false;
-      }
-
-      // Check if path is clear
-      if (board[fromRow][fromCol - 1] != null || 
-          board[fromRow][fromCol - 2] != null ||
-          board[fromRow][fromCol - 3] != null) {
-        return false;
-      }
-
-      return true;
-    }
-  }
-
-  bool _isPathClear(int fromRow, int fromCol, int toRow, int toCol) {
-    final rowStep = toRow > fromRow ? 1 : (toRow < fromRow ? -1 : 0);
-    final colStep = toCol > fromCol ? 1 : (toCol < fromCol ? -1 : 0);
-
-    int currentRow = fromRow + rowStep;
-    int currentCol = fromCol + colStep;
-
-    while (currentRow != toRow || currentCol != toCol) {
-      if (board[currentRow][currentCol] != null) return false;
-      currentRow += rowStep;
-      currentCol += colStep;
-    }
-    return true;
-  }
-
-  void _makeMove(int toRow, int toCol) {
-    if (selectedPiece == null || selectedRow == null || selectedCol == null) {
-      return;
-    }
-
-    if (!_isValidMove(selectedRow!, selectedCol!, toRow, toCol)) {
-      setState(() {
-        selectedPiece = null;
-        selectedRow = null;
-        selectedCol = null;
-      });
-      return;
-    }
-
-    // Check if capturing a king
-    final capturedPiece = board[toRow][toCol];
-    if (capturedPiece?.type == PieceType.king) {
-      setState(() {
-        gameOver = true;
-        winner = isWhiteTurn ? 'White' : 'Black';
-      });
-    }
-
-    // Check if this is a castling move
-    final isCastling = selectedPiece?.type == PieceType.king &&
-        (toCol - selectedCol!).abs() == 2;
-
-    // Move the piece
-    setState(() {
-      board[toRow][toCol] = selectedPiece;
-      board[selectedRow!][selectedCol!] = null;
-
-      // Handle castling - move the rook too
-      if (isCastling) {
-        if (toCol > selectedCol!) {
-          // Kingside castling - move right rook
-          board[toRow][toCol - 1] = board[toRow][7];
-          board[toRow][7] = null;
-        } else {
-          // Queenside castling - move left rook
-          board[toRow][toCol + 1] = board[toRow][0];
-          board[toRow][0] = null;
-        }
-      }
-
-      // Track piece movements for castling
-      if (selectedPiece?.type == PieceType.king) {
-        if (selectedPiece!.isWhite) {
-          whiteKingMoved = true;
-        } else {
-          blackKingMoved = true;
-        }
-      } else if (selectedPiece?.type == PieceType.rook) {
-        if (selectedPiece!.isWhite) {
-          if (selectedCol == 0) whiteLeftRookMoved = true;
-          if (selectedCol == 7) whiteRightRookMoved = true;
-        } else {
-          if (selectedCol == 0) blackLeftRookMoved = true;
-          if (selectedCol == 7) blackRightRookMoved = true;
-        }
-      }
-
-      // Record move
-      final from =
-          '${String.fromCharCode(97 + selectedCol!)}${8 - selectedRow!}';
-      final to = '${String.fromCharCode(97 + toCol)}${8 - toRow}';
-      final moveNotation = isCastling 
-          ? (toCol > selectedCol! ? 'O-O' : 'O-O-O')
-          : '$from → $to';
-      moveHistory.add('${isWhiteTurn ? 'White' : 'Black'}: $moveNotation');
-
-      isWhiteTurn = !isWhiteTurn;
-      selectedPiece = null;
-      selectedRow = null;
-      selectedCol = null;
-    });
-
-    // After player moves, make AI move
-    if (!gameOver && isWhiteTurn != playerColor) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _makeAIMove();
-      });
-    }
-  }
-
-  void _makeAIMove() {
-    if (gameOver) return;
-
-    // Find all valid moves for AI
-    final validMoves = <Map<String, int>>[];
-
-    for (int fromRow = 0; fromRow < 8; fromRow++) {
-      for (int fromCol = 0; fromCol < 8; fromCol++) {
-        final piece = board[fromRow][fromCol];
-        if (piece != null && piece.isWhite == isWhiteTurn) {
-          // Check all possible destination squares
-          for (int toRow = 0; toRow < 8; toRow++) {
-            for (int toCol = 0; toCol < 8; toCol++) {
-              if (_isValidMove(fromRow, fromCol, toRow, toCol)) {
-                validMoves.add({
-                  'fromRow': fromRow,
-                  'fromCol': fromCol,
-                  'toRow': toRow,
-                  'toCol': toCol,
-                });
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (validMoves.isEmpty) {
-      setState(() {
-        gameOver = true;
-        winner = playerColor == true ? 'White' : 'Black';
-      });
-      return;
-    }
-
-    // Pick a random valid move
-    final random = Random();
-    final move = validMoves[random.nextInt(validMoves.length)];
-
-    final piece = board[move['fromRow']!][move['fromCol']!];
-    final capturedPiece = board[move['toRow']!][move['toCol']!];
-
-    // Check if capturing a king
-    if (capturedPiece?.type == PieceType.king) {
-      setState(() {
-        gameOver = true;
-        winner = isWhiteTurn ? 'White' : 'Black';
-      });
-    }
-
-    // Check if this is a castling move
-    final isCastling = piece?.type == PieceType.king &&
-        (move['toCol']! - move['fromCol']!).abs() == 2;
-
-    setState(() {
-      board[move['toRow']!][move['toCol']!] = piece;
-      board[move['fromRow']!][move['fromCol']!] = null;
-
-      // Handle castling - move the rook too
-      if (isCastling) {
-        final toRow = move['toRow']!;
-        final toCol = move['toCol']!;
-        final fromCol = move['fromCol']!;
-        
-        if (toCol > fromCol) {
-          // Kingside castling - move right rook
-          board[toRow][toCol - 1] = board[toRow][7];
-          board[toRow][7] = null;
-        } else {
-          // Queenside castling - move left rook
-          board[toRow][toCol + 1] = board[toRow][0];
-          board[toRow][0] = null;
-        }
-      }
-
-      // Track piece movements for castling
-      if (piece?.type == PieceType.king) {
-        if (piece!.isWhite) {
-          whiteKingMoved = true;
-        } else {
-          blackKingMoved = true;
-        }
-      } else if (piece?.type == PieceType.rook) {
-        if (piece!.isWhite) {
-          if (move['fromCol'] == 0) whiteLeftRookMoved = true;
-          if (move['fromCol'] == 7) whiteRightRookMoved = true;
-        } else {
-          if (move['fromCol'] == 0) blackLeftRookMoved = true;
-          if (move['fromCol'] == 7) blackRightRookMoved = true;
-        }
-      }
-
-      // Record move
-      final from =
-          '${String.fromCharCode(97 + move['fromCol']!)}${8 - move['fromRow']!}';
-      final to =
-          '${String.fromCharCode(97 + move['toCol']!)}${8 - move['toRow']!}';
-      final moveNotation = isCastling 
-          ? (move['toCol']! > move['fromCol']! ? 'O-O' : 'O-O-O')
-          : '$from → $to';
-      moveHistory.add('${isWhiteTurn ? 'White' : 'Black'}: $moveNotation');
-
-      isWhiteTurn = !isWhiteTurn;
-    });
-  }
-
-  void _selectPiece(int row, int col) {
-    // Only allow moves for the player's color
-    if (playerColor != null && isWhiteTurn != playerColor) {
-      return; // Not player's turn
-    }
-
-    final piece = board[row][col];
-
-    if (selectedPiece == null) {
-      // Select piece
-      if (piece != null && piece.isWhite == isWhiteTurn) {
-        setState(() {
-          selectedPiece = piece;
-          selectedRow = row;
-          selectedCol = col;
-        });
-      }
-    } else {
-      // Move piece or select different piece
-      if (piece != null && piece.isWhite == isWhiteTurn) {
-        setState(() {
-          selectedPiece = piece;
-          selectedRow = row;
-          selectedCol = col;
-        });
-      } else {
-        _makeMove(row, col);
-      }
-    }
-  }
-
-  void _resetGame() {
-    setState(() {
-      _initializeBoard();
-      selectedPiece = null;
-      selectedRow = null;
-      selectedCol = null;
-      isWhiteTurn = true;
-      moveHistory.clear();
-      gameOver = false;
-      winner = null;
-      playerColor = null;
-      showColorSelection = true;
-      
-      // Reset castling flags
-      whiteKingMoved = false;
-      whiteLeftRookMoved = false;
-      whiteRightRookMoved = false;
-      blackKingMoved = false;
-      blackLeftRookMoved = false;
-      blackRightRookMoved = false;
-    });
+    chess = chess_lib.Chess();
   }
 
   void _selectColor(bool isWhite) {
@@ -452,8 +29,8 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
       playerColor = isWhite;
       showColorSelection = false;
     });
-
-    // If player chose black, AI (white) makes first move
+    
+    // If player chose black, AI makes first move
     if (!isWhite) {
       Future.delayed(const Duration(milliseconds: 500), () {
         _makeAIMove();
@@ -461,96 +38,91 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (showColorSelection) {
-      return _buildColorSelection();
+  void _onSquareTapped(String square) {
+    if (chess.game_over) return;
+    
+    // Check if it's player's turn
+    if ((chess.turn == chess_lib.Color.WHITE && playerColor != true) ||
+        (chess.turn == chess_lib.Color.BLACK && playerColor != false)) {
+      return;
     }
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0A0E27), Color(0xFF1A1F3A), Color(0xFF0A0E27)],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: _buildChessBoard(),
-                    ),
-                  ),
-                ),
-              ),
-              _buildMoveHistory(),
-            ],
-          ),
-        ),
-      ),
-    );
+
+    setState(() {
+      if (selectedSquare == null) {
+        // Select a piece
+        final piece = chess.get(square);
+        if (piece != null && 
+            ((chess.turn == chess_lib.Color.WHITE && piece.color == chess_lib.Color.WHITE) ||
+             (chess.turn == chess_lib.Color.BLACK && piece.color == chess_lib.Color.BLACK))) {
+          selectedSquare = square;
+        }
+      } else {
+        // Try to make a move
+        final moveStr = selectedSquare! + square;
+        
+        if (chess.move(moveStr)) {
+          moveHistory.add(moveStr);
+          selectedSquare = null;
+          
+          // Check for game over
+          if (chess.in_checkmate) {
+            _showVictoryDialog();
+          } else if (chess.in_draw || chess.in_stalemate) {
+            _showDrawDialog();
+          } else {
+            // AI's turn
+            Future.delayed(const Duration(milliseconds: 300), () {
+              _makeAIMove();
+            });
+          }
+        } else {
+          // Invalid move, try selecting a different piece
+          final piece = chess.get(square);
+          if (piece != null &&
+              ((chess.turn == chess_lib.Color.WHITE && piece.color == chess_lib.Color.WHITE) ||
+               (chess.turn == chess_lib.Color.BLACK && piece.color == chess_lib.Color.BLACK))) {
+            selectedSquare = square;
+          } else {
+            selectedSquare = null;
+          }
+        }
+      }
+    });
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.arrow_back, color: Colors.white),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Chess Game',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  gameOver
-                      ? '$winner wins!'
-                      : '${isWhiteTurn ? 'White' : 'Black'}\'s turn',
-                  style: TextStyle(
-                    color: gameOver
-                        ? const Color(0xFFFBBF24)
-                        : Colors.white.withOpacity(0.7),
-                    fontSize: 12,
-                    fontWeight: gameOver ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: _resetGame,
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            tooltip: 'New Game',
-          ),
-        ],
-      ),
-    );
+  void _makeAIMove() {
+    if (chess.game_over) return;
+
+    final moves = chess.moves();
+    if (moves.isEmpty) return;
+
+    // Simple AI: Pick a random move
+    final selectedMove = moves[Random().nextInt(moves.length)];
+
+    setState(() {
+      chess.move(selectedMove);
+      moveHistory.add(selectedMove);
+      
+      if (chess.in_checkmate) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _showDefeatDialog();
+        });
+      } else if (chess.in_draw || chess.in_stalemate) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _showDrawDialog();
+        });
+      }
+    });
+  }
+
+  void _resetGame() {
+    setState(() {
+      chess.reset();
+      selectedSquare = null;
+      moveHistory.clear();
+      playerColor = null;
+      showColorSelection = true;
+    });
   }
 
   void _showVictoryDialog() {
@@ -621,7 +193,10 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () { Navigator.pop(context); _resetGame(); },
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _resetGame();
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF6366F1),
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -633,7 +208,10 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () { Navigator.pop(context); Navigator.pop(context); },
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                          },
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.white,
                             side: const BorderSide(color: Colors.white54),
@@ -654,213 +232,200 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
     );
   }
 
-
-  Widget _buildChessBoard() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF6366F1).withOpacity(0.3),
-            blurRadius: 20,
-            spreadRadius: 5,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: GridView.builder(
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 8,
-          ),
-          itemCount: 64,
-          itemBuilder: (context, index) {
-            // If player is black, rotate the board
-            int row, col;
-            if (playerColor == false) {
-              // Black player - flip the board
-              row = 7 - (index ~/ 8);
-              col = 7 - (index % 8);
-            } else {
-              // White player - normal orientation
-              row = index ~/ 8;
-              col = index % 8;
-            }
-
-            final isLight = (row + col) % 2 == 0;
-            final piece = board[row][col];
-            final isSelected = selectedRow == row && selectedCol == col;
-
-            return GestureDetector(
-              onTap: gameOver ? null : () => _selectPiece(row, col),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? const LinearGradient(
-                          colors: [Color(0xFFFBBF24), Color(0xFFFFA500)],
-                        )
-                      : LinearGradient(
-                          colors: isLight
-                              ? [
-                                  const Color(0xFF4F46E5).withOpacity(0.3),
-                                  const Color(0xFF6366F1).withOpacity(0.2),
-                                ]
-                              : [
-                                  const Color(0xFF1E1B4B).withOpacity(0.8),
-                                  const Color(0xFF312E81).withOpacity(0.6),
-                                ],
-                        ),
-                  border: isSelected
-                      ? Border.all(color: const Color(0xFFFBBF24), width: 3)
-                      : Border.all(
-                          color: Colors.white.withOpacity(0.1),
-                          width: 0.5,
-                        ),
-                ),
-                child: piece != null
-                    ? Center(
-                        child: Text(
-                          _getPieceSymbol(piece),
-                          style: TextStyle(
-                            fontSize: 32,
-                            color: piece.isWhite ? Colors.white : Colors.black,
-                            shadows: [
-                              Shadow(
-                                color: piece.isWhite
-                                    ? Colors.black
-                                    : const Color(0xFF6366F1),
-                                blurRadius: 3,
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : null,
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMoveHistory() {
-    return Container(
-      height: 120,
-      margin: const EdgeInsets.all(16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
+  void _showDefeatDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withOpacity(0.15),
-                  Colors.white.withOpacity(0.05),
-                ],
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF1A1F3A).withOpacity(0.95),
+                    const Color(0xFF0A0E27).withOpacity(0.95),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFEF4444), width: 2),
               ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
-            ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.sentiment_dissatisfied, size: 60, color: Color(0xFFEF4444)),
+                  const SizedBox(height: 24),
+                  const Text(
+                    "Game Over",
+                    style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
                   ),
-                  child: Row(
+                  const SizedBox(height: 12),
+                  Text(
+                    "Better luck next time!",
+                    style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 16),
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
                     children: [
-                      const Icon(Icons.history, color: Colors.white, size: 18),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Move History',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _resetGame();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6366F1),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text("Play Again", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
                       ),
-                      const Spacer(),
-                      Text(
-                        '${moveHistory.length} moves',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.6),
-                          fontSize: 12,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white54),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text("Exit", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
                   ),
-                ),
-                const Divider(color: Colors.white24, height: 1),
-                Expanded(
-                  child: moveHistory.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No moves yet',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 12,
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(8),
-                          scrollDirection: Axis.horizontal,
-                          itemCount: moveHistory.length,
-                          itemBuilder: (context, index) {
-                            return Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '${index + 1}',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    moveHistory[index],
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
+                ],
+              ),
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDrawDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF1A1F3A).withOpacity(0.95),
+                    const Color(0xFF0A0E27).withOpacity(0.95),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFF6366F1), width: 2),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.handshake, size: 60, color: Color(0xFF6366F1)),
+                  const SizedBox(height: 24),
+                  const Text(
+                    "It's a Draw!",
+                    style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Well played!",
+                    style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 16),
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _resetGame();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6366F1),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text("Play Again", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white54),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text("Exit", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (showColorSelection) {
+      return _buildColorSelection();
+    }
+    
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0A0E27), Color(0xFF1A1F3A), Color(0xFF0A0E27)],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: _buildChessBoard(),
+                    ),
+                  ),
+                ),
+              ),
+              _buildMoveHistory(),
+            ],
           ),
         ),
       ),
@@ -893,77 +458,36 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
                           color: Colors.white.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                        ),
+                        child: const Icon(Icons.arrow_back, color: Colors.white),
                       ),
                     ),
                     const SizedBox(width: 16),
                     const Text(
                       'Chess Game',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
               ),
               Expanded(
                 child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.extension,
-                          color: Color(0xFF8B5CF6),
-                          size: 80,
-                        ),
-                        const SizedBox(height: 24),
-                        const Text(
-                          'Choose Your Color',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Select which side you want to play',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 48),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildColorOption(
-                                'White',
-                                '♔',
-                                true,
-                                Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: _buildColorOption(
-                                'Black',
-                                '♚',
-                                false,
-                                Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Choose Your Color',
+                        style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 48),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildColorOption(true),
+                          const SizedBox(width: 32),
+                          _buildColorOption(false),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -974,66 +498,301 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
     );
   }
 
-  Widget _buildColorOption(
-    String label,
-    String symbol,
-    bool isWhite,
-    Color color,
-  ) {
+  Widget _buildColorOption(bool isWhite) {
     return GestureDetector(
       onTap: () => _selectColor(isWhite),
+      child: Container(
+        width: 140,
+        height: 140,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isWhite
+                ? [Colors.white, Colors.grey.shade300]
+                : [Colors.grey.shade800, Colors.black],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF6366F1), width: 3),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6366F1).withOpacity(0.3),
+              blurRadius: 20,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              isWhite ? '♔' : '♚',
+              style: TextStyle(
+                fontSize: 64,
+                color: isWhite ? Colors.black : Colors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isWhite ? 'WHITE' : 'BLACK',
+              style: TextStyle(
+                color: isWhite ? Colors.black : Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.arrow_back, color: Colors.white),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Chess Game',
+                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  chess.in_check
+                      ? 'CHECK!'
+                      : chess.turn == chess_lib.Color.WHITE
+                          ? "White's turn"
+                          : "Black's turn",
+                  style: TextStyle(
+                    color: chess.in_check ? const Color(0xFFEF4444) : Colors.white70,
+                    fontSize: 14,
+                    fontWeight: chess.in_check ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: _resetGame,
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            tooltip: 'New Game',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChessBoard() {
+    var squares = <String>[];
+    for (int rank = 7; rank >= 0; rank--) {
+      for (int file = 0; file < 8; file++) {
+        squares.add(String.fromCharCode(97 + file) + (rank + 1).toString());
+      }
+    }
+
+    // Flip board if player is black
+    if (playerColor == false) {
+      squares = squares.reversed.toList();
+    }
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6366F1).withOpacity(0.3),
+            blurRadius: 20,
+            spreadRadius: 5,
+          ),
+        ],
+      ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
+        child: GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 8,
+          ),
+          itemCount: 64,
+          itemBuilder: (context, index) {
+            final square = squares[index];
+            final file = square.codeUnitAt(0) - 97;
+            final rank = int.parse(square[1]) - 1;
+            final isLight = (rank + file) % 2 == 0;
+            final piece = chess.get(square);
+            final isSelected = selectedSquare == square;
+            final isInCheck = chess.in_check && piece?.type.name == 'k' && 
+                              ((chess.turn == chess_lib.Color.WHITE && piece?.color == chess_lib.Color.WHITE) ||
+                               (chess.turn == chess_lib.Color.BLACK && piece?.color == chess_lib.Color.BLACK));
+
+            return GestureDetector(
+              onTap: () => _onSquareTapped(square),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: isInCheck
+                      ? const LinearGradient(colors: [Color(0xFFEF4444), Color(0xFFDC2626)])
+                      : isSelected
+                          ? const LinearGradient(colors: [Color(0xFFFBBF24), Color(0xFFFFA500)])
+                          : LinearGradient(
+                              colors: isLight
+                                  ? [const Color(0xFF4F46E5).withOpacity(0.3), const Color(0xFF6366F1).withOpacity(0.2)]
+                                  : [const Color(0xFF1E1B4B).withOpacity(0.8), const Color(0xFF312E81).withOpacity(0.6)],
+                            ),
+                  border: isInCheck
+                      ? Border.all(color: const Color(0xFFEF4444), width: 3)
+                      : isSelected
+                          ? Border.all(color: const Color(0xFFFBBF24), width: 3)
+                          : Border.all(color: Colors.white.withOpacity(0.1), width: 0.5),
+                  boxShadow: isInCheck
+                      ? [BoxShadow(color: const Color(0xFFEF4444).withOpacity(0.6), blurRadius: 10, spreadRadius: 2)]
+                      : null,
+                ),
+                child: piece != null
+                    ? Center(
+                        child: Text(
+                          _getPieceSymbol(piece),
+                          style: TextStyle(
+                            fontSize: 32,
+                            color: piece.color == chess_lib.Color.WHITE ? Colors.white : Colors.black,
+                            shadows: [
+                              Shadow(
+                                color: piece.color == chess_lib.Color.WHITE ? Colors.black : const Color(0xFF6366F1),
+                                blurRadius: 3,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  String _getPieceSymbol(chess_lib.Piece piece) {
+    final symbols = {
+      'p': piece.color == chess_lib.Color.WHITE ? '♙' : '♟',
+      'n': piece.color == chess_lib.Color.WHITE ? '♘' : '♞',
+      'b': piece.color == chess_lib.Color.WHITE ? '♗' : '♝',
+      'r': piece.color == chess_lib.Color.WHITE ? '♖' : '♜',
+      'q': piece.color == chess_lib.Color.WHITE ? '♕' : '♛',
+      'k': piece.color == chess_lib.Color.WHITE ? '♔' : '♚',
+    };
+    return symbols[piece.type.name] ?? '';
+  }
+
+  Widget _buildMoveHistory() {
+    return Container(
+      height: 120,
+      margin: const EdgeInsets.all(16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
-            padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.white.withOpacity(0.2),
-                  Colors.white.withOpacity(0.1),
+                  const Color(0xFF1A1F3A).withOpacity(0.8),
+                  const Color(0xFF0A0E27).withOpacity(0.8),
                 ],
               ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.3),
-                width: 2,
-              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  symbol,
-                  style: TextStyle(
-                    fontSize: 80,
-                    color: color,
-                    shadows: [
-                      Shadow(
-                        color: isWhite ? Colors.black : Colors.white,
-                        blurRadius: 4,
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.history, color: Color(0xFF6366F1), size: 20),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Move History',
+                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${moveHistory.length} moves',
+                        style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  isWhite ? 'Move First' : 'Move Second',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 14,
-                  ),
+                Expanded(
+                  child: moveHistory.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No moves yet',
+                            style: TextStyle(color: Colors.white.withOpacity(0.4)),
+                          ),
+                        )
+                      : ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          itemCount: moveHistory.length,
+                          itemBuilder: (context, index) {
+                            return Container(
+                              margin: const EdgeInsets.only(right: 8, bottom: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    const Color(0xFF6366F1).withOpacity(0.2),
+                                    const Color(0xFF4F46E5).withOpacity(0.2),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.3)),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '${index + 1}',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.6),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    moveHistory[index],
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
@@ -1042,37 +801,4 @@ class _ChessGameScreenState extends ConsumerState<ChessGameScreen> {
       ),
     );
   }
-
-  String _getPieceSymbol(ChessPiece piece) {
-    const whiteSymbols = {
-      PieceType.king: '♔',
-      PieceType.queen: '♕',
-      PieceType.rook: '♖',
-      PieceType.bishop: '♗',
-      PieceType.knight: '♘',
-      PieceType.pawn: '♙',
-    };
-
-    const blackSymbols = {
-      PieceType.king: '♚',
-      PieceType.queen: '♛',
-      PieceType.rook: '♜',
-      PieceType.bishop: '♝',
-      PieceType.knight: '♞',
-      PieceType.pawn: '♟',
-    };
-
-    return piece.isWhite
-        ? whiteSymbols[piece.type]!
-        : blackSymbols[piece.type]!;
-  }
-}
-
-enum PieceType { king, queen, rook, bishop, knight, pawn }
-
-class ChessPiece {
-  final PieceType type;
-  final bool isWhite;
-
-  ChessPiece(this.type, this.isWhite);
 }
