@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 import 'edit_profile_screen.dart';
@@ -10,6 +11,10 @@ import 'categories_screen.dart';
 import 'profile_provider.dart';
 import 'settings_provider.dart';
 import '../search/user_search_screen.dart';
+import 'subscription_screen.dart';
+import '../game/fact_fiction_game_screen.dart';
+import '../game/news_quiz_game_screen.dart';
+import '../game/chess_game_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -19,6 +24,21 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  String _subscriptionPlan = 'basic';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSubscriptionPlan();
+  }
+
+  Future<void> _loadSubscriptionPlan() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _subscriptionPlan = prefs.getString('subscription_plan') ?? 'basic';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -157,25 +177,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 fontSize: 14,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.accent.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                l10n.premiumUser,
+                            if (ref.watch(profileProvider).bio.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                ref.watch(profileProvider).bio,
                                 style: TextStyle(
-                                  color: AppColors.accent,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  fontSize: 13,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                            const SizedBox(height: 8),
+                            if (_subscriptionPlan == 'premium')
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFFFFD700),
+                                      Color(0xFFFFA500),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Text(
+                                  'Premium User',
+                                  style: TextStyle(
+                                    color: Color(0xFF1A1F3A),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ),
@@ -239,6 +278,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: Column(
                     children: [
                       _buildSettingTile(
+                        icon: Icons.workspace_premium,
+                        title: 'Subscription',
+                        subtitle: _subscriptionPlan == 'premium'
+                            ? 'Premium Plan'
+                            : 'Basic Plan - Upgrade now',
+                        iconColor: _subscriptionPlan == 'premium'
+                            ? const Color(0xFFFFD700)
+                            : null,
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SubscriptionScreen(),
+                            ),
+                          );
+                          // Reload subscription plan when returning
+                          _loadSubscriptionPlan();
+                        },
+                      ),
+                      _buildDivider(),
+                      _buildSettingTile(
                         icon: Icons.security,
                         title: l10n.privacySecurity,
                         subtitle: l10n.privacySettings,
@@ -264,6 +324,62 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => const LanguageScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Fun & Games Section
+                _buildSectionHeader('Fun & Games'),
+                const SizedBox(height: 12),
+                _buildGlassContainer(
+                  child: Column(
+                    children: [
+                      _buildSettingTile(
+                        icon: Icons.games,
+                        title: 'Fact vs Fiction',
+                        subtitle: 'Test your news verification skills',
+                        iconColor: const Color(0xFFFFD700),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const FactFictionGameScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildDivider(),
+                      _buildSettingTile(
+                        icon: Icons.quiz,
+                        title: 'News Quiz Challenge',
+                        subtitle: 'Test your news literacy knowledge',
+                        iconColor: const Color(0xFF6366F1),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NewsQuizGameScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildDivider(),
+                      _buildSettingTile(
+                        icon: Icons.extension,
+                        title: 'Chess Game',
+                        subtitle: 'Play a classic game of chess',
+                        iconColor: const Color(0xFF8B5CF6),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ChessGameScreen(),
                             ),
                           );
                         },
