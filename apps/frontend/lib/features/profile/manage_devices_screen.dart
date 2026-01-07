@@ -5,37 +5,43 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
 import '../../l10n/app_localizations.dart';
 
-class ManageDevicesScreen extends ConsumerWidget {
+class ManageDevicesScreen extends ConsumerStatefulWidget {
   const ManageDevicesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+  ConsumerState<ManageDevicesScreen> createState() =>
+      _ManageDevicesScreenState();
+}
 
-    // Mock device data
-    final devices = [
-      _Device(
-        name: 'iPhone 15 Pro',
-        location: 'Colombo, Sri Lanka',
-        lastActive: 'Active now',
-        isCurrent: true,
-        icon: Icons.phone_iphone,
-      ),
-      _Device(
-        name: 'MacBook Pro',
-        location: 'Colombo, Sri Lanka',
-        lastActive: '2 hours ago',
-        isCurrent: false,
-        icon: Icons.laptop_mac,
-      ),
-      _Device(
-        name: 'iPad Air',
-        location: 'Kandy, Sri Lanka',
-        lastActive: '1 day ago',
-        isCurrent: false,
-        icon: Icons.tablet_mac,
-      ),
-    ];
+class _ManageDevicesScreenState extends ConsumerState<ManageDevicesScreen> {
+  // Mock device data - now as instance variable
+  List<_Device> devices = [
+    _Device(
+      name: 'iPhone 15 Pro',
+      location: 'Colombo, Sri Lanka',
+      lastActive: 'Active now',
+      isCurrent: true,
+      icon: Icons.phone_iphone,
+    ),
+    _Device(
+      name: 'MacBook Pro',
+      location: 'Colombo, Sri Lanka',
+      lastActive: '2 hours ago',
+      isCurrent: false,
+      icon: Icons.laptop_mac,
+    ),
+    _Device(
+      name: 'iPad Air',
+      location: 'Kandy, Sri Lanka',
+      lastActive: '1 day ago',
+      isCurrent: false,
+      icon: Icons.tablet_mac,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: Container(
@@ -124,6 +130,58 @@ class ManageDevicesScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _showRemoveDeviceDialog(
+    BuildContext context,
+    _Device device,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF0B1220),
+        title: const Text(
+          'Remove Device',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'Are you sure you want to remove ${device.name} from your account? You will need to sign in again on this device.',
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              l10n.cancel,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Remove',
+              style: const TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      // Remove the device from the list
+      setState(() {
+        devices.removeWhere((d) => d.name == device.name);
+      });
+
+      if (context.mounted) {
+        AppSnackbar.showSuccess(
+          context,
+          'Device ${device.name} removed successfully',
+        );
+      }
+    }
   }
 
   Widget _buildDeviceCard(BuildContext context, _Device device) {
@@ -253,12 +311,7 @@ class ManageDevicesScreen extends ConsumerWidget {
                   ),
                   if (!device.isCurrent)
                     GestureDetector(
-                      onTap: () {
-                        AppSnackbar.showSuccess(
-                          context,
-                          'Device removed from ${device.name}',
-                        );
-                      },
+                      onTap: () => _showRemoveDeviceDialog(context, device),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
