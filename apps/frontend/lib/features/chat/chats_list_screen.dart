@@ -185,15 +185,36 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
 
   Widget _buildConversationCard(ChatConversation conversation) {
     final formattedTime = _formatTime(conversation.lastMessage?.timestamp);
+    final lastMessage = conversation.lastMessage;
+    
+    // Determine what to display based on message status
+    String displayMessage = 'No messages yet';
+    bool isItalic = false;
+    
+    if (lastMessage != null) {
+      if (lastMessage.isDeletedForEveryone) {
+        displayMessage = 'This message was deleted';
+        isItalic = true;
+      } else if (lastMessage.isDeletedForMe) {
+        displayMessage = 'Message deleted';
+        isItalic = true;
+      } else {
+        // Show "You: " prefix if you sent the message
+        final prefix = lastMessage.senderId == 'me' ? 'You: ' : '';
+        displayMessage = prefix + lastMessage.message;
+      }
+    }
     
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ChatScreen(user: conversation.user),
           ),
         );
+        // Reload conversations when returning from chat
+        _loadConversations();
       },
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -295,7 +316,7 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              conversation.lastMessage?.message ?? 'No messages yet',
+                              displayMessage,
                               style: TextStyle(
                                 color: conversation.unreadCount > 0
                                     ? Colors.white.withValues(alpha: 0.9)
@@ -304,6 +325,7 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
                                 fontWeight: conversation.unreadCount > 0
                                     ? FontWeight.w500
                                     : FontWeight.normal,
+                                fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
