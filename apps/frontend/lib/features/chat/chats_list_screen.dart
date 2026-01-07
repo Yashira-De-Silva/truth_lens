@@ -1,7 +1,9 @@
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
 import 'chat_model.dart';
 import 'chat_screen.dart';
@@ -15,63 +17,93 @@ class ChatsListScreen extends ConsumerStatefulWidget {
 }
 
 class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
-  // Mock data for conversations
-  final List<ChatConversation> _conversations = [
-    ChatConversation(
+  // Mock data for available users
+  final List<ChatUser> _availableUsers = [
+    ChatUser(
       id: '1',
-      user: ChatUser(
-        id: '1',
-        name: 'Sarah Johnson',
-        email: 'sarah@example.com',
-        isOnline: true,
-      ),
-      lastMessage: ChatMessage(
-        id: 'm1',
-        senderId: '1',
-        receiverId: 'me',
-        message: 'Did you see the latest news about AI?',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-        isRead: false,
-      ),
-      unreadCount: 2,
+      name: 'Sarah Johnson',
+      email: 'sarah@example.com',
+      isOnline: true,
     ),
-    ChatConversation(
+    ChatUser(
       id: '2',
-      user: ChatUser(
-        id: '2',
-        name: 'Michael Chen',
-        email: 'michael@example.com',
-        isOnline: false,
-      ),
-      lastMessage: ChatMessage(
-        id: 'm2',
-        senderId: 'me',
-        receiverId: '2',
-        message: 'Thanks for sharing that article!',
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-        isRead: true,
-      ),
-      unreadCount: 0,
+      name: 'Michael Chen',
+      email: 'michael@example.com',
+      isOnline: false,
     ),
-    ChatConversation(
+    ChatUser(
       id: '3',
-      user: ChatUser(
-        id: '3',
-        name: 'Emma Rodriguez',
-        email: 'emma@example.com',
-        isOnline: true,
-      ),
-      lastMessage: ChatMessage(
-        id: 'm3',
-        senderId: '3',
-        receiverId: 'me',
-        message: 'What do you think about the climate summit?',
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-        isRead: true,
-      ),
-      unreadCount: 0,
+      name: 'Emma Rodriguez',
+      email: 'emma@example.com',
+      isOnline: true,
     ),
   ];
+
+  List<ChatConversation> _conversations = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConversations();
+  }
+
+  Future<void> _loadConversations() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<ChatConversation> loadedConversations = [];
+
+    for (final user in _availableUsers) {
+      final chatKey = 'chat_messages_${user.id}';
+      final messagesJson = prefs.getString(chatKey);
+      
+      if (messagesJson != null) {
+        try {
+          final List<dynamic> decoded = jsonDecode(messagesJson);
+          final messages = decoded.map((json) => ChatMessage.fromJson(json)).toList();
+          
+          if (messages.isNotEmpty) {
+            // Get the last non-deleted message
+            ChatMessage? lastMessage;
+            int unreadCount = 0;
+            
+            for (var i = messages.length - 1; i >= 0; i--) {
+              if (!messages[i].isDeletedForMe && lastMessage == null) {
+                lastMessage = messages[i];
+              }
+              if (messages[i].senderId != 'me' && !messages[i].isRead) {
+                unreadCount++;
+              }
+            }
+            
+            if (lastMessage != null) {
+              loadedConversations.add(
+                ChatConversation(
+                  id: user.id,
+                  user: user,
+                  lastMessage: lastMessage,
+                  unreadCount: unreadCount,
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          // Skip if there's an error loading this conversation
+          continue;
+        }
+      }
+    }
+
+    // Sort by last message timestamp (most recent first)
+    loadedConversations.sort((a, b) {
+      if (a.lastMessage == null && b.lastMessage == null) return 0;
+      if (a.lastMessage == null) return 1;
+      if (b.lastMessage == null) return -1;
+      return b.lastMessage!.timestamp.compareTo(a.lastMessage!.timestamp);
+    });
+
+    setState(() {
+      _conversations = loadedConversations;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
