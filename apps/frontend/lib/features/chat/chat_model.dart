@@ -62,6 +62,42 @@ class ChatMessage {
       replyToMessage: replyToMessage,
     );
   }
+
+  // Convert to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'senderId': senderId,
+      'receiverId': receiverId,
+      'message': message,
+      'timestamp': timestamp.toIso8601String(),
+      'isRead': isRead,
+      'isEdited': isEdited,
+      'isDeletedForMe': isDeletedForMe,
+      'isDeletedForEveryone': isDeletedForEveryone,
+      'replyToMessageId': replyToMessageId,
+      'replyToMessage': replyToMessage?.toJson(),
+    };
+  }
+
+  // Create from JSON
+  factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    return ChatMessage(
+      id: json['id'] as String,
+      senderId: json['senderId'] as String,
+      receiverId: json['receiverId'] as String,
+      message: json['message'] as String,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      isRead: json['isRead'] as bool? ?? false,
+      isEdited: json['isEdited'] as bool? ?? false,
+      isDeletedForMe: json['isDeletedForMe'] as bool? ?? false,
+      isDeletedForEveryone: json['isDeletedForEveryone'] as bool? ?? false,
+      replyToMessageId: json['replyToMessageId'] as String?,
+      replyToMessage: json['replyToMessage'] != null
+          ? ChatMessage.fromJson(json['replyToMessage'] as Map<String, dynamic>)
+          : null,
+    );
+  }
 }
 
 class ChatConversation {

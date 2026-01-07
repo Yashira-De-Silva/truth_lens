@@ -1,7 +1,9 @@
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
 import 'chat_model.dart';
 
@@ -24,7 +26,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _loadMockMessages();
+    _loadMessages();
   }
 
   @override
@@ -32,6 +34,51 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  String _getChatKey() {
+    // Create a unique key for this chat conversation
+    return 'chat_messages_${widget.user.id}';
+  }
+
+  Future<void> _loadMessages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final chatKey = _getChatKey();
+    final messagesJson = prefs.getString(chatKey);
+    
+    if (messagesJson != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(messagesJson);
+        setState(() {
+          _messages.clear();
+          _messages.addAll(
+            decoded.map((json) => ChatMessage.fromJson(json)).toList(),
+          );
+        });
+      } catch (e) {
+        // If there's an error loading, load mock messages
+        _loadMockMessages();
+      }
+    } else {
+      // First time, load mock messages
+      _loadMockMessages();
+    }
+
+    // Scroll to bottom after messages load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+    });
+  }
+
+  Future<void> _saveMessages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final chatKey = _getChatKey();
+    final messagesJson = jsonEncode(
+      _messages.map((msg) => msg.toJson()).toList(),
+    );
+    await prefs.setString(chatKey, messagesJson);
   }
 
   void _loadMockMessages() {
@@ -114,6 +161,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _messageController.clear();
     });
 
+    // Save messages to persistence
+    _saveMessages();
+
     // Scroll to bottom
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -133,6 +183,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         _messages[index] = _messages[index].copyWith(isDeletedForMe: true);
       }
     });
+    _saveMessages();
   }
 
   void _deleteForEveryone(ChatMessage message) {
@@ -142,6 +193,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         _messages[index] = _messages[index].copyWith(isDeletedForEveryone: true);
       }
     });
+    _saveMessages();
   }
 
   void _editMessage(ChatMessage message) {
