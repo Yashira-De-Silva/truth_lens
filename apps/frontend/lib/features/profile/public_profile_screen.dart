@@ -1,11 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_snackbar.dart';
 import 'edit_profile_screen.dart';
 import 'profile_provider.dart';
 
-class PublicProfileScreen extends ConsumerWidget {
+class PublicProfileScreen extends ConsumerStatefulWidget {
   final String userName;
   final String userEmail;
   final String? userBio;
@@ -24,15 +26,178 @@ class PublicProfileScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PublicProfileScreen> createState() =>
+      _PublicProfileScreenState();
+}
+
+class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
+  String? _currentVisibility;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVisibility();
+  }
+
+  Future<void> _loadVisibility() async {
+    if (widget.isOwnProfile) {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _currentVisibility = prefs.getString('profile_visibility') ?? 'public';
+      });
+    } else {
+      setState(() {
+        _currentVisibility = widget.profileVisibility;
+      });
+    }
+  }
+
+  Future<void> _showVisibilityDialog() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF0B1220),
+        title: const Text(
+          'Profile Visibility',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildVisibilityOption(
+              ctx,
+              'public',
+              'Public',
+              'Anyone can see your profile',
+              Icons.public,
+            ),
+            const SizedBox(height: 12),
+            _buildVisibilityOption(
+              ctx,
+              'friends',
+              'Friends Only',
+              'Only your friends can see your profile',
+              Icons.people,
+            ),
+            const SizedBox(height: 12),
+            _buildVisibilityOption(
+              ctx,
+              'private',
+              'Private',
+              'Only you can see your profile',
+              Icons.lock,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && mounted) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profile_visibility', result);
+      setState(() {
+        _currentVisibility = result;
+      });
+      if (mounted) {
+        AppSnackbar.showSuccess(
+          context,
+          'Profile visibility updated to ${_getVisibilityLabel(result)}',
+        );
+      }
+    }
+  }
+
+  Widget _buildVisibilityOption(
+    BuildContext ctx,
+    String value,
+    String title,
+    String subtitle,
+    IconData icon,
+  ) {
+    final isSelected = _currentVisibility == value;
+    return GestureDetector(
+      onTap: () => Navigator.pop(ctx, value),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? _getVisibilityColor(value).withValues(alpha: 0.2)
+              : const Color(0xFF1A1F3A).withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? _getVisibilityColor(value)
+                : Colors.white.withValues(alpha: 0.1),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected
+                  ? _getVisibilityColor(value)
+                  : Colors.white.withValues(alpha: 0.6),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: isSelected
+                          ? _getVisibilityColor(value)
+                          : Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check_circle, color: _getVisibilityColor(value)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // Mock data for demonstration
     final stats = {'Articles Read': '127', 'Comments': '45', 'Bookmarks': '23'};
 
     // If viewing own profile, use live data from profile provider
-    final profile = isOwnProfile ? ref.watch(profileProvider) : null;
-    final displayName = isOwnProfile ? profile!.name : userName;
-    final displayEmail = isOwnProfile ? profile!.email : userEmail;
-    final displayBio = isOwnProfile ? profile!.bio : (userBio ?? '');
+    final profile = widget.isOwnProfile ? ref.watch(profileProvider) : null;
+    final displayName = widget.isOwnProfile ? profile!.name : widget.userName;
+    final displayEmail = widget.isOwnProfile
+        ? profile!.email
+        : widget.userEmail;
+    final displayBio = widget.isOwnProfile
+        ? profile!.bio
+        : (widget.userBio ?? '');
+    final displayVisibility =
+        _currentVisibility ?? widget.profileVisibility ?? 'public';
 
     return Scaffold(
       body: Container(
@@ -79,7 +244,9 @@ class PublicProfileScreen extends ConsumerWidget {
                     const SizedBox(width: 16),
                     Expanded(
                       child: Text(
-                        isOwnProfile ? 'Profile Preview' : 'User Profile',
+                        widget.isOwnProfile
+                            ? 'Profile Preview'
+                            : 'User Profile',
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(
                               color: Colors.white,
@@ -87,7 +254,7 @@ class PublicProfileScreen extends ConsumerWidget {
                             ),
                       ),
                     ),
-                    if (isOwnProfile) ...[
+                    if (widget.isOwnProfile) ...[
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -159,7 +326,7 @@ class PublicProfileScreen extends ConsumerWidget {
                 ),
               ),
 
-              if (isOwnProfile)
+              if (widget.isOwnProfile)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text(
@@ -232,8 +399,8 @@ class PublicProfileScreen extends ConsumerWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                if (profileVisibility == 'public' ||
-                                    profileVisibility == 'friends')
+                                if (displayVisibility == 'public' ||
+                                    displayVisibility == 'friends')
                                   Text(
                                     displayEmail,
                                     style: TextStyle(
@@ -263,7 +430,7 @@ class PublicProfileScreen extends ConsumerWidget {
                                   spacing: 8,
                                   children: [
                                     // Premium Badge
-                                    if (isPremium)
+                                    if (widget.isPremium)
                                       Container(
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 12,
@@ -300,49 +467,66 @@ class PublicProfileScreen extends ConsumerWidget {
                                           ],
                                         ),
                                       ),
-                                    // Visibility Badge
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _getVisibilityColor(
-                                          profileVisibility ?? 'public',
-                                        ).withValues(alpha: 0.2),
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: _getVisibilityColor(
-                                            profileVisibility ?? 'public',
-                                          ).withValues(alpha: 0.5),
+                                    // Visibility Badge - Make it clickable if own profile
+                                    GestureDetector(
+                                      onTap: widget.isOwnProfile
+                                          ? _showVisibilityDialog
+                                          : null,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
                                         ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            _getVisibilityIcon(
-                                              profileVisibility ?? 'public',
-                                            ),
-                                            size: 14,
+                                        decoration: BoxDecoration(
+                                          color: _getVisibilityColor(
+                                            displayVisibility,
+                                          ).withValues(alpha: 0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
                                             color: _getVisibilityColor(
-                                              profileVisibility ?? 'public',
-                                            ),
+                                              displayVisibility,
+                                            ).withValues(alpha: 0.5),
                                           ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            _getVisibilityLabel(
-                                              profileVisibility ?? 'public',
-                                            ),
-                                            style: TextStyle(
-                                              color: _getVisibilityColor(
-                                                profileVisibility ?? 'public',
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              _getVisibilityIcon(
+                                                displayVisibility,
                                               ),
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
+                                              size: 14,
+                                              color: _getVisibilityColor(
+                                                displayVisibility,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              _getVisibilityLabel(
+                                                displayVisibility,
+                                              ),
+                                              style: TextStyle(
+                                                color: _getVisibilityColor(
+                                                  displayVisibility,
+                                                ),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            if (widget.isOwnProfile) ...[
+                                              const SizedBox(width: 4),
+                                              Icon(
+                                                Icons.edit,
+                                                size: 12,
+                                                color: _getVisibilityColor(
+                                                  displayVisibility,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ],
