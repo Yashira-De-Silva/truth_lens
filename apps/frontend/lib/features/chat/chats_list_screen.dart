@@ -61,15 +61,19 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
           final messages = decoded.map((json) => ChatMessage.fromJson(json)).toList();
           
           if (messages.isNotEmpty) {
-            // Get the last non-deleted message
+            // Get the last message (even if deleted for everyone)
+            // Only skip messages deleted for me
             ChatMessage? lastMessage;
             int unreadCount = 0;
             
             for (var i = messages.length - 1; i >= 0; i--) {
-              if (!messages[i].isDeletedForMe && lastMessage == null) {
+              // Show last message even if deleted for everyone
+              // Only skip if deleted for me
+              if (lastMessage == null && !messages[i].isDeletedForMe) {
                 lastMessage = messages[i];
               }
-              if (messages[i].senderId != 'me' && !messages[i].isRead) {
+              // Count unread messages
+              if (messages[i].senderId != 'me' && !messages[i].isRead && !messages[i].isDeletedForMe) {
                 unreadCount++;
               }
             }
