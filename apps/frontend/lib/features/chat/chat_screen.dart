@@ -56,12 +56,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           );
         });
       } catch (e) {
-        // If there's an error loading, load mock messages
-        _loadMockMessages();
+        // If there's an error loading, start with empty messages
+        setState(() {
+          _messages.clear();
+        });
       }
-    } else {
-      // First time, load mock messages
-      _loadMockMessages();
     }
 
     // Scroll to bottom after messages load
@@ -79,53 +78,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _messages.map((msg) => msg.toJson()).toList(),
     );
     await prefs.setString(chatKey, messagesJson);
-  }
-
-  void _loadMockMessages() {
-    // Mock conversation history
-    setState(() {
-      _messages.addAll([
-        ChatMessage(
-          id: '1',
-          senderId: widget.user.id,
-          receiverId: 'me',
-          message: 'Hey! How are you doing?',
-          timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-          isRead: true,
-        ),
-        ChatMessage(
-          id: '2',
-          senderId: 'me',
-          receiverId: widget.user.id,
-          message: 'Hi! I\'m doing great, thanks! How about you?',
-          timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 55)),
-          isRead: true,
-        ),
-        ChatMessage(
-          id: '3',
-          senderId: widget.user.id,
-          receiverId: 'me',
-          message: 'Pretty good! Did you see that article I shared?',
-          timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 50)),
-          isRead: true,
-        ),
-        ChatMessage(
-          id: '4',
-          senderId: 'me',
-          receiverId: widget.user.id,
-          message: 'Yes! It was really interesting. Thanks for sharing!',
-          timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-          isRead: true,
-        ),
-      ]);
-    });
-
-    // Scroll to bottom after messages load
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-      }
-    });
   }
 
   void _sendMessage() {
