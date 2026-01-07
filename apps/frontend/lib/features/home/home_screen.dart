@@ -3,7 +3,7 @@ import '../../core/theme/app_theme.dart';
 import '../news/news_feed_screen.dart';
 import '../search/search_screen.dart';
 import '../digest/digest_screen.dart';
-import '../bookmarks/bookmarks_screen.dart';
+import '../chat/chats_list_screen.dart';
 import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const NewsFeedScreen(),
     const SearchScreen(),
     DigestScreen(),
-    const BookmarksScreen(),
+    const ChatsListScreen(),
     const ProfileScreen(),
   ];
 
@@ -96,9 +96,9 @@ class _ModernNavBar extends StatelessWidget {
             onTap: () => onTap(2),
           ),
           _NavItem(
-            icon: Icons.bookmark_outline,
-            activeIcon: Icons.bookmark,
-            label: 'Bookmarks',
+            icon: Icons.chat_bubble_outline,
+            activeIcon: Icons.chat_bubble,
+            label: 'Chat',
             isActive: currentIndex == 3,
             onTap: () => onTap(3),
           ),

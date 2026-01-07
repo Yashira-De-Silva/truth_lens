@@ -16,6 +16,7 @@ import 'subscription_screen.dart';
 import '../game/fact_fiction_game_screen.dart';
 import '../game/news_quiz_game_screen.dart';
 import '../game/chess_game_screen.dart';
+import '../bookmarks/bookmarks_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -371,6 +372,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 _buildGlassContainer(
                   child: Column(
                     children: [
+                      _buildSettingTile(
+                        icon: Icons.bookmark,
+                        title: 'Bookmarks',
+                        subtitle: 'View your saved articles',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BookmarksScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildDivider(),
                       _buildSettingTile(
                         icon: Icons.workspace_premium,
                         title: 'Subscription',
