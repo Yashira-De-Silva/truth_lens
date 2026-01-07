@@ -15,37 +15,37 @@ class ReadingHistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _ReadingHistoryScreenState extends ConsumerState<ReadingHistoryScreen> {
+  // Mock reading history data - now as instance variable
+  List<_HistoryItem> historyItems = [
+    _HistoryItem(
+      title: 'AI Revolutionizes News Verification',
+      source: 'Tech News',
+      readTime: '2h ago',
+      category: 'Technology',
+    ),
+    _HistoryItem(
+      title: 'Political Summit Addresses Climate Change',
+      source: 'World Politics',
+      readTime: '5h ago',
+      category: 'Politics',
+    ),
+    _HistoryItem(
+      title: 'Stock Market Reaches New Heights',
+      source: 'Business Today',
+      readTime: '1d ago',
+      category: 'Business',
+    ),
+    _HistoryItem(
+      title: 'Medical Breakthrough in Cancer Treatment',
+      source: 'Health News',
+      readTime: '2d ago',
+      category: 'Health',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-
-    // Mock reading history data
-    final historyItems = [
-      _HistoryItem(
-        title: 'AI Revolutionizes News Verification',
-        source: 'Tech News',
-        readTime: '2h ago',
-        category: 'Technology',
-      ),
-      _HistoryItem(
-        title: 'Political Summit Addresses Climate Change',
-        source: 'World Politics',
-        readTime: '5h ago',
-        category: 'Politics',
-      ),
-      _HistoryItem(
-        title: 'Stock Market Reaches New Heights',
-        source: 'Business Today',
-        readTime: '1d ago',
-        category: 'Business',
-      ),
-      _HistoryItem(
-        title: 'Medical Breakthrough in Cancer Treatment',
-        source: 'Health News',
-        readTime: '2d ago',
-        category: 'Health',
-      ),
-    ];
 
     return Scaffold(
       body: Container(
@@ -196,6 +196,12 @@ class _ReadingHistoryScreenState extends ConsumerState<ReadingHistoryScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('cached_articles');
       await prefs.remove('reading_history');
+      
+      // Clear the history items from the UI
+      setState(() {
+        historyItems.clear();
+      });
+      
       if (context.mounted) {
         AppSnackbar.showSuccess(context, 'Data cleared successfully');
       }
