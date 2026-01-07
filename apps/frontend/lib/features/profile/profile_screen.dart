@@ -10,6 +10,7 @@ import 'privacy_security_screen.dart';
 import 'categories_screen.dart';
 import 'profile_provider.dart';
 import 'settings_provider.dart';
+import 'public_profile_screen.dart';
 import '../search/user_search_screen.dart';
 import 'subscription_screen.dart';
 import '../game/fact_fiction_game_screen.dart';
@@ -234,6 +235,99 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Preview Profile Button
+                GestureDetector(
+                  onTap: () async {
+                    final profile = ref.read(profileProvider);
+                    final prefs = await SharedPreferences.getInstance();
+                    final visibility =
+                        prefs.getString('profile_visibility') ?? 'public';
+
+                    if (context.mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PublicProfileScreen(
+                            userName: profile.name,
+                            userEmail: profile.email,
+                            userBio: profile.bio,
+                            profileVisibility: visibility,
+                            isOwnProfile: true,
+                            isPremium: _subscriptionPlan == 'premium',
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0B1220).withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.secondary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: AppColors.secondary.withValues(
+                                  alpha: 0.2,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.preview_outlined,
+                                color: AppColors.secondary,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Preview My Profile',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'See how others view your profile',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.6,
+                                      ),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              color: Colors.white.withValues(alpha: 0.4),
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
