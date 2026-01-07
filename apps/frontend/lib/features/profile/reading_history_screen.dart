@@ -140,15 +140,45 @@ class _ReadingHistoryScreenState extends ConsumerState<ReadingHistoryScreen> {
 
               // History List
               Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: historyItems.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final item = historyItems[index];
-                    return _buildHistoryCard(item);
-                  },
-                ),
+                child: historyItems.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.history,
+                              size: 80,
+                              color: Colors.white.withValues(alpha: 0.3),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No Reading History',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.6),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Your article history will appear here',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.4),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: historyItems.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final item = historyItems[index];
+                          return _buildHistoryCard(item);
+                        },
+                      ),
               ),
             ],
           ),
@@ -196,12 +226,12 @@ class _ReadingHistoryScreenState extends ConsumerState<ReadingHistoryScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('cached_articles');
       await prefs.remove('reading_history');
-      
+
       // Clear the history items from the UI
       setState(() {
         historyItems.clear();
       });
-      
+
       if (context.mounted) {
         AppSnackbar.showSuccess(context, 'Data cleared successfully');
       }
