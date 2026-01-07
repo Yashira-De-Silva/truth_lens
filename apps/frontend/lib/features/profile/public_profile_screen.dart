@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
+import 'edit_profile_screen.dart';
+import 'profile_provider.dart';
 
 class PublicProfileScreen extends ConsumerWidget {
   final String userName;
@@ -25,6 +27,12 @@ class PublicProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Mock data for demonstration
     final stats = {'Articles Read': '127', 'Comments': '45', 'Bookmarks': '23'};
+
+    // If viewing own profile, use live data from profile provider
+    final profile = isOwnProfile ? ref.watch(profileProvider) : null;
+    final displayName = isOwnProfile ? profile!.name : userName;
+    final displayEmail = isOwnProfile ? profile!.email : userEmail;
+    final displayBio = isOwnProfile ? profile!.bio : (userBio ?? '');
 
     return Scaffold(
       body: Container(
@@ -79,7 +87,7 @@ class PublicProfileScreen extends ConsumerWidget {
                             ),
                       ),
                     ),
-                    if (isOwnProfile)
+                    if (isOwnProfile) ...[
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -111,6 +119,42 @@ class PublicProfileScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const EditProfileScreen(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF0B1220,
+                            ).withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.secondary.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: Icon(
+                                Icons.edit,
+                                color: AppColors.secondary,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -167,8 +211,8 @@ class PublicProfileScreen extends ConsumerWidget {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      userName.isNotEmpty
-                                          ? userName[0].toUpperCase()
+                                      displayName.isNotEmpty
+                                          ? displayName[0].toUpperCase()
                                           : 'U',
                                       style: const TextStyle(
                                         color: Colors.white,
@@ -180,7 +224,7 @@ class PublicProfileScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
-                                  userName,
+                                  displayName,
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 24,
@@ -191,7 +235,7 @@ class PublicProfileScreen extends ConsumerWidget {
                                 if (profileVisibility == 'public' ||
                                     profileVisibility == 'friends')
                                   Text(
-                                    userEmail,
+                                    displayEmail,
                                     style: TextStyle(
                                       color: Colors.white.withValues(
                                         alpha: 0.6,
@@ -199,10 +243,10 @@ class PublicProfileScreen extends ConsumerWidget {
                                       fontSize: 14,
                                     ),
                                   ),
-                                if (userBio != null && userBio!.isNotEmpty) ...[
+                                if (displayBio.isNotEmpty) ...[
                                   const SizedBox(height: 16),
                                   Text(
-                                    userBio!,
+                                    displayBio,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       color: Colors.white.withValues(
