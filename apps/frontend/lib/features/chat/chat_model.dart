@@ -21,6 +21,11 @@ class ChatMessage {
   final String message;
   final DateTime timestamp;
   final bool isRead;
+  final bool isEdited;
+  final bool isDeletedForMe;
+  final bool isDeletedForEveryone;
+  final String? replyToMessageId;
+  final ChatMessage? replyToMessage;
 
   ChatMessage({
     required this.id,
@@ -29,7 +34,34 @@ class ChatMessage {
     required this.message,
     required this.timestamp,
     this.isRead = false,
+    this.isEdited = false,
+    this.isDeletedForMe = false,
+    this.isDeletedForEveryone = false,
+    this.replyToMessageId,
+    this.replyToMessage,
   });
+
+  ChatMessage copyWith({
+    String? message,
+    bool? isEdited,
+    bool? isDeletedForMe,
+    bool? isDeletedForEveryone,
+    bool? isRead,
+  }) {
+    return ChatMessage(
+      id: id,
+      senderId: senderId,
+      receiverId: receiverId,
+      message: message ?? this.message,
+      timestamp: timestamp,
+      isRead: isRead ?? this.isRead,
+      isEdited: isEdited ?? this.isEdited,
+      isDeletedForMe: isDeletedForMe ?? this.isDeletedForMe,
+      isDeletedForEveryone: isDeletedForEveryone ?? this.isDeletedForEveryone,
+      replyToMessageId: replyToMessageId,
+      replyToMessage: replyToMessage,
+    );
+  }
 }
 
 class ChatConversation {

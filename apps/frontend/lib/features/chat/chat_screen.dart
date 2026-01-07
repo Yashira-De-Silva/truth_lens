@@ -18,6 +18,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
+  ChatMessage? _replyingTo;
+  ChatMessage? _editingMessage;
 
   @override
   void initState() {
@@ -83,16 +85,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (_messageController.text.trim().isEmpty) return;
 
     setState(() {
-      _messages.add(
-        ChatMessage(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          senderId: 'me',
-          receiverId: widget.user.id,
-          message: _messageController.text.trim(),
-          timestamp: DateTime.now(),
-          isRead: false,
-        ),
-      );
+      if (_editingMessage != null) {
+        // Edit existing message
+        final index = _messages.indexWhere((m) => m.id == _editingMessage!.id);
+        if (index != -1) {
+          _messages[index] = _messages[index].copyWith(
+            message: _messageController.text.trim(),
+            isEdited: true,
+          );
+        }
+        _editingMessage = null;
+      } else {
+        // Send new message
+        _messages.add(
+          ChatMessage(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            senderId: 'me',
+            receiverId: widget.user.id,
+            message: _messageController.text.trim(),
+            timestamp: DateTime.now(),
+            isRead: false,
+            replyToMessageId: _replyingTo?.id,
+            replyToMessage: _replyingTo,
+          ),
+        );
+        _replyingTo = null;
+      }
       _messageController.clear();
     });
 
@@ -106,6 +124,203 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         );
       }
     });
+  }
+
+  void _deleteForMe(ChatMessage message) {
+    setState(() {
+      final index = _messages.indexWhere((m) => m.id == message.id);
+      if (index != -1) {
+        _messages[index] = _messages[index].copyWith(isDeletedForMe: true);
+      }
+    });
+  }
+
+  void _deleteForEveryone(ChatMessage message) {
+    setState(() {
+      final index = _messages.indexWhere((m) => m.id == message.id);
+      if (index != -1) {
+        _messages[index] = _messages[index].copyWith(isDeletedForEveryone: true);
+      }
+    });
+  }
+
+  void _editMessage(ChatMessage message) {
+    setState(() {
+      _editingMessage = message;
+      _messageController.text = message.message;
+      _replyingTo = null;
+    });
+  }
+
+  void _replyToMessage(ChatMessage message) {
+    setState(() {
+      _replyingTo = message;
+      _editingMessage = null;
+    });
+  }
+
+  void _cancelReplyOrEdit() {
+    setState(() {
+      _replyingTo = null;
+      _editingMessage = null;
+      _messageController.clear();
+    });
+  }
+
+  void _showMessageActions(ChatMessage message, bool isMe) {
+    final now = DateTime.now();
+    final timeDiff = now.difference(message.timestamp);
+    final canDeleteForEveryone = isMe && timeDiff.inHours < 2;
+    final canEdit = isMe && timeDiff.inMinutes < 10;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF0B1220),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            if (!message.isDeletedForEveryone)
+              _buildActionTile(
+                icon: Icons.reply,
+                label: 'Reply',
+                onTap: () {
+                  Navigator.pop(context);
+                  _replyToMessage(message);
+                },
+              ),
+            if (canEdit && !message.isDeletedForEveryone)
+              _buildActionTile(
+                icon: Icons.edit,
+                label: 'Edit',
+                subtitle: 'Available for 10 minutes',
+                onTap: () {
+                  Navigator.pop(context);
+                  _editMessage(message);
+                },
+              ),
+            _buildActionTile(
+              icon: Icons.delete_outline,
+              label: 'Delete for me',
+              onTap: () {
+                Navigator.pop(context);
+                _deleteForMe(message);
+              },
+            ),
+            if (canDeleteForEveryone && !message.isDeletedForEveryone)
+              _buildActionTile(
+                icon: Icons.delete_forever,
+                label: 'Delete for everyone',
+                subtitle: 'Available for 2 hours',
+                color: AppColors.error,
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDeleteForEveryoneConfirmation(message);
+                },
+              ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteForEveryoneConfirmation(ChatMessage message) {
+    showDialog(
+      context: context,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF0B1220),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: Colors.white.withValues(alpha: 0.1),
+            ),
+          ),
+          title: const Text(
+            'Delete for everyone?',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Text(
+            'This message will be deleted for both you and ${widget.user.name}.',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteForEveryone(message);
+              },
+              child: Text(
+                'Delete',
+                style: TextStyle(color: AppColors.error),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionTile({
+    required IconData icon,
+    required String label,
+    String? subtitle,
+    Color? color,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: color ?? Colors.white,
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: color ?? Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 12,
+              ),
+            )
+          : null,
+      onTap: onTap,
+    );
   }
 
   @override
@@ -319,72 +534,153 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildMessageBubble(ChatMessage message, bool isMe) {
+    // Don't show deleted messages
+    if (message.isDeletedForMe) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
-          Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.7,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              gradient: isMe
-                  ? LinearGradient(
-                      colors: [
-                        AppColors.secondary,
-                        AppColors.secondary.withValues(alpha: 0.8),
-                      ],
-                    )
-                  : null,
-              color: isMe ? null : const Color(0xFF0B1220).withValues(alpha: 0.6),
-              borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(16),
-                topRight: const Radius.circular(16),
-                bottomLeft: Radius.circular(isMe ? 16 : 4),
-                bottomRight: Radius.circular(isMe ? 4 : 16),
+          GestureDetector(
+            onLongPress: () => _showMessageActions(message, isMe),
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.7,
               ),
-              border: Border.all(
-                color: isMe
-                    ? Colors.transparent
-                    : Colors.white.withValues(alpha: 0.1),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  message.message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                  ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: isMe
+                    ? LinearGradient(
+                        colors: [
+                          AppColors.secondary,
+                          AppColors.secondary.withValues(alpha: 0.8),
+                        ],
+                      )
+                    : null,
+                color: isMe ? null : const Color(0xFF0B1220).withValues(alpha: 0.6),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(16),
+                  topRight: const Radius.circular(16),
+                  bottomLeft: Radius.circular(isMe ? 16 : 4),
+                  bottomRight: Radius.circular(isMe ? 4 : 16),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      DateFormat('h:mm a').format(message.timestamp),
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 11,
+                border: Border.all(
+                  color: isMe
+                      ? Colors.transparent
+                      : Colors.white.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Reply preview
+                  if (message.replyToMessage != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border(
+                          left: BorderSide(
+                            color: isMe 
+                                ? Colors.white.withValues(alpha: 0.5)
+                                : AppColors.secondary,
+                            width: 3,
+                          ),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            message.replyToMessage!.senderId == 'me' 
+                                ? 'You' 
+                                : widget.user.name,
+                            style: TextStyle(
+                              color: isMe 
+                                  ? Colors.white.withValues(alpha: 0.9)
+                                  : AppColors.secondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            message.replyToMessage!.isDeletedForEveryone
+                                ? 'Message deleted'
+                                : message.replyToMessage!.message,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 12,
+                              fontStyle: message.replyToMessage!.isDeletedForEveryone
+                                  ? FontStyle.italic
+                                  : FontStyle.normal,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
-                    if (isMe) ...[
-                      const SizedBox(width: 4),
-                      Icon(
-                        message.isRead ? Icons.done_all : Icons.done,
-                        size: 14,
-                        color: message.isRead
-                            ? AppColors.accent
-                            : Colors.white.withValues(alpha: 0.6),
-                      ),
-                    ],
                   ],
-                ),
-              ],
+                  // Message content
+                  Text(
+                    message.isDeletedForEveryone 
+                        ? 'This message was deleted'
+                        : message.message,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontStyle: message.isDeletedForEveryone 
+                          ? FontStyle.italic 
+                          : FontStyle.normal,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (message.isEdited && !message.isDeletedForEveryone) ...[
+                        Text(
+                          'Edited',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 11,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '•',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 11,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      Text(
+                        DateFormat('h:mm a').format(message.timestamp),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 11,
+                        ),
+                      ),
+                      if (isMe && !message.isDeletedForEveryone) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          message.isRead ? Icons.done_all : Icons.done,
+                          size: 14,
+                          color: message.isRead
+                              ? AppColors.accent
+                              : Colors.white.withValues(alpha: 0.6),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
