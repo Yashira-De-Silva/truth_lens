@@ -1,14 +1,22 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_snackbar.dart';
 import '../../l10n/app_localizations.dart';
 
-class ReadingHistoryScreen extends ConsumerWidget {
+class ReadingHistoryScreen extends ConsumerStatefulWidget {
   const ReadingHistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ReadingHistoryScreen> createState() =>
+      _ReadingHistoryScreenState();
+}
+
+class _ReadingHistoryScreenState extends ConsumerState<ReadingHistoryScreen> {
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     // Mock reading history data
@@ -93,9 +101,7 @@ class ReadingHistoryScreen extends ConsumerWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {
-                        // Clear history action
-                      },
+                      onTap: () => _showClearDataDialog(context, l10n),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -149,6 +155,51 @@ class ReadingHistoryScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _showClearDataDialog(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF0B1220),
+        title: Text(
+          l10n.clearData,
+          style: const TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          l10n.removeCachedData,
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              l10n.cancel,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              l10n.confirm,
+              style: const TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('cached_articles');
+      await prefs.remove('reading_history');
+      if (context.mounted) {
+        AppSnackbar.showSuccess(context, 'Data cleared successfully');
+      }
+    }
   }
 
   Widget _buildHistoryCard(_HistoryItem item) {
