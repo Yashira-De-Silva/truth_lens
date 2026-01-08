@@ -330,6 +330,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -788,7 +789,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
               // Input Field
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                 child: Row(
                   children: [
                     Expanded(
@@ -803,7 +804,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         child: TextField(
                           controller: _messageController,
                           style: const TextStyle(color: Colors.white),
-                          maxLines: null,
+                          maxLines: 5,
+                          minLines: 1,
                           textCapitalization: TextCapitalization.sentences,
                           decoration: InputDecoration(
                             hintText: _editingMessage != null 
@@ -817,6 +819,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               horizontal: 20,
                               vertical: 12,
                             ),
+                            isDense: true,
                           ),
                         ),
                       ),
