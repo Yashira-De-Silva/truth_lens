@@ -18,6 +18,7 @@ import '../game/news_quiz_game_screen.dart';
 import '../game/chess_game_screen.dart';
 import '../bookmarks/bookmarks_screen.dart';
 import 'help_support_screen.dart';
+import 'about_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -523,7 +524,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         icon: Icons.info_outline,
                         title: l10n.aboutApp,
                         subtitle: l10n.appInfo,
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AboutScreen(),
+                            ),
+                          );
+                        },
                       ),
                       _buildDivider(),
                       _buildSettingTile(
