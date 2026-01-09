@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -134,14 +135,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         height: 80,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.secondary.withValues(alpha: 0.3),
-                              AppColors.primary.withValues(alpha: 0.3),
-                            ],
-                          ),
+                          gradient: ref.watch(profileProvider).avatarPath == null
+                            ? LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppColors.secondary.withValues(alpha: 0.3),
+                                  AppColors.primary.withValues(alpha: 0.3),
+                                ],
+                              )
+                            : null,
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.2),
                             width: 2,
@@ -153,12 +156,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               offset: const Offset(0, 4),
                             ),
                           ],
+                          image: ref.watch(profileProvider).avatarPath != null
+                            ? DecorationImage(
+                                image: FileImage(File(ref.watch(profileProvider).avatarPath!)),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                         ),
-                        child: const Icon(
-                          Icons.person,
-                          size: 40,
-                          color: Colors.white,
-                        ),
+                        child: ref.watch(profileProvider).avatarPath == null
+                          ? const Icon(
+                              Icons.person,
+                              size: 40,
+                              color: Colors.white,
+                            )
+                          : null,
                       ),
                       const SizedBox(width: 16),
                       Expanded(

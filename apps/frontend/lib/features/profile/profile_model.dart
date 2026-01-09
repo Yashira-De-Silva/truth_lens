@@ -3,12 +3,14 @@ class UserProfile {
   final String email;
   final String phone;
   final String bio;
+  final String? avatarPath;
 
   UserProfile({
     required this.name,
     required this.email,
     this.phone = '',
     this.bio = '',
+    this.avatarPath,
   });
 
   UserProfile copyWith({
@@ -16,12 +18,14 @@ class UserProfile {
     String? email,
     String? phone,
     String? bio,
+    String? avatarPath,
   }) {
     return UserProfile(
       name: name ?? this.name,
       email: email ?? this.email,
       phone: phone ?? this.phone,
       bio: bio ?? this.bio,
+      avatarPath: avatarPath ?? this.avatarPath,
     );
   }
 
@@ -31,6 +35,7 @@ class UserProfile {
       'email': email,
       'phone': phone,
       'bio': bio,
+      'avatarPath': avatarPath,
     };
   }
 
@@ -40,6 +45,7 @@ class UserProfile {
       email: json['email'] ?? 'user@example.com',
       phone: json['phone'] ?? '',
       bio: json['bio'] ?? '',
+      avatarPath: json['avatarPath'],
     );
   }
 }

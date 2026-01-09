@@ -1,6 +1,8 @@
 import 'dart:ui';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
 import '../../l10n/app_localizations.dart';
@@ -18,6 +20,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   late final TextEditingController _bioController;
+  final ImagePicker _imagePicker = ImagePicker();
+  String? _selectedImagePath;
 
   @override
   void initState() {
@@ -27,6 +31,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _nameController = TextEditingController(text: profile.name);
     _emailController = TextEditingController(text: profile.email);
     _bioController = TextEditingController(text: profile.bio);
+    _selectedImagePath = profile.avatarPath;
   }
 
   @override
@@ -47,11 +52,112 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             name: _nameController.text,
             email: _emailController.text,
             bio: _bioController.text,
+            avatarPath: _selectedImagePath,
           );
 
       AppSnackbar.showSuccess(context, l10n.profileUpdated);
       Navigator.pop(context);
     }
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        setState(() {
+          _selectedImagePath = image.path;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.showError(context, 'Failed to pick image');
+      }
+    }
+  }
+
+  Future<void> _showImageSourceDialog() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF0B1220),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.white),
+              title: const Text('Choose from Gallery', 
+                style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.white),
+              title: const Text('Take a Photo', 
+                style: TextStyle(color: Colors.white)),
+              onTap: () async {
+                Navigator.pop(context);
+                try {
+                  final XFile? image = await _imagePicker.pickImage(
+                    source: ImageSource.camera,
+                    maxWidth: 512,
+                    maxHeight: 512,
+                    imageQuality: 85,
+                  );
+
+                  if (image != null) {
+                    setState(() {
+                      _selectedImagePath = image.path;
+                    });
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    AppSnackbar.showError(context, 'Failed to take photo');
+                  }
+                }
+              },
+            ),
+            if (_selectedImagePath != null)
+              ListTile(
+                leading: Icon(Icons.delete, color: AppColors.error),
+                title: Text('Remove Photo', 
+                  style: TextStyle(color: AppColors.error)),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    _selectedImagePath = null;
+                  });
+                },
+              ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -129,37 +235,40 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               height: 120,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    AppColors.secondary.withValues(alpha: 0.3),
-                                    AppColors.primary.withValues(alpha: 0.3),
-                                  ],
-                                ),
+                                gradient: _selectedImagePath == null
+                                  ? LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        AppColors.secondary.withValues(alpha: 0.3),
+                                        AppColors.primary.withValues(alpha: 0.3),
+                                      ],
+                                    )
+                                  : null,
                                 border: Border.all(
                                   color: Colors.white.withValues(alpha: 0.2),
                                   width: 2,
                                 ),
+                                image: _selectedImagePath != null
+                                  ? DecorationImage(
+                                      image: FileImage(File(_selectedImagePath!)),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
                               ),
-                              child: const Icon(
-                                Icons.person,
-                                size: 60,
-                                color: Colors.white,
-                              ),
+                              child: _selectedImagePath == null
+                                ? const Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: Colors.white,
+                                  )
+                                : null,
                             ),
                             Positioned(
                               bottom: 0,
                               right: 0,
                               child: GestureDetector(
-                                onTap: () {
-                                  final l10n = AppLocalizations.of(context)!;
-                                  // TODO: Implement image picker
-                                  AppSnackbar.showError(
-                                    context,
-                                    l10n.imagePickerComingSoon,
-                                  );
-                                },
+                                onTap: _showImageSourceDialog,
                                 child: Container(
                                   width: 36,
                                   height: 36,

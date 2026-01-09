@@ -24,8 +24,8 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
     await prefs.setString(_key, jsonEncode(state.toJson()));
   }
 
-  Future<void> updateProfile({String? name, String? email, String? bio}) async {
-    state = state.copyWith(name: name, email: email, bio: bio);
+  Future<void> updateProfile({String? name, String? email, String? bio, String? avatarPath}) async {
+    state = state.copyWith(name: name, email: email, bio: bio, avatarPath: avatarPath);
     await _save();
   }
 }
