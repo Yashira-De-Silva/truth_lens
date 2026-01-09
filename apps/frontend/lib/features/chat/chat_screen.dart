@@ -538,17 +538,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0B1220).withValues(alpha: 0.6),
         border: Border(
           bottom: BorderSide(
             color: Colors.white.withValues(alpha: 0.1),
           ),
         ),
       ),
-      child: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Row(
+      child: Row(
             children: [
               GestureDetector(
                 onTap: () => Navigator.pop(context),
@@ -669,8 +665,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 
