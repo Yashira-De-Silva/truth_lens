@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
 import '../../l10n/app_localizations.dart';
@@ -62,27 +63,38 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _pickImage() async {
     try {
+      // Simply try to pick image - the plugin handles permissions automatically
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
         imageQuality: 85,
       );
 
-      if (image != null) {
-        setState(() {
-          _selectedImagePath = image.path;
-        });
+      if (image != null && mounted) {
+        // Verify the file exists
+        final file = File(image.path);
+        if (await file.exists()) {
+          setState(() {
+            _selectedImagePath = image.path;
+          });
+          if (mounted) {
+            AppSnackbar.showSuccess(context, 'Image selected successfully');
+          }
+        } else {
+          throw Exception('Selected file not found');
+        }
       }
-    } catch (e) {
+    } on Exception catch (e) {
+      print('Image picker error: $e');
       if (mounted) {
-        AppSnackbar.showError(context, 'Failed to pick image');
+        // Show a helpful dialog instead of just an error
+        _showPermissionHelpDialog();
       }
     }
   }
 
   Future<void> _showImageSourceDialog() async {
-    showModalBottomSheet(
+    // Show a dialog with options: Gallery, Camera, or choose from default avatars
+    final result = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
@@ -106,39 +118,32 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
             ),
             const SizedBox(height: 20),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Choose Profile Picture',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.photo_library, color: Colors.white),
               title: const Text('Choose from Gallery', 
                 style: TextStyle(color: Colors.white)),
               onTap: () {
-                Navigator.pop(context);
-                _pickImage();
+                Navigator.pop(context, 'gallery');
               },
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt, color: Colors.white),
               title: const Text('Take a Photo', 
                 style: TextStyle(color: Colors.white)),
-              onTap: () async {
-                Navigator.pop(context);
-                try {
-                  final XFile? image = await _imagePicker.pickImage(
-                    source: ImageSource.camera,
-                    maxWidth: 512,
-                    maxHeight: 512,
-                    imageQuality: 85,
-                  );
-
-                  if (image != null) {
-                    setState(() {
-                      _selectedImagePath = image.path;
-                    });
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    AppSnackbar.showError(context, 'Failed to take photo');
-                  }
-                }
+              onTap: () {
+                Navigator.pop(context, 'camera');
               },
             ),
             if (_selectedImagePath != null)
@@ -147,13 +152,111 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 title: Text('Remove Photo', 
                   style: TextStyle(color: AppColors.error)),
                 onTap: () {
-                  Navigator.pop(context);
-                  setState(() {
-                    _selectedImagePath = null;
-                  });
+                  Navigator.pop(context, 'remove');
                 },
               ),
             const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+
+    // Handle the result
+    if (result == 'gallery') {
+      await _pickImage();
+    } else if (result == 'camera') {
+      await _takePhoto();
+    } else if (result == 'remove') {
+      setState(() {
+        _selectedImagePath = null;
+      });
+    }
+  }
+
+  Future<void> _takePhoto() async {
+    try {
+      // Simply try to take photo - the plugin handles permissions automatically
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+      );
+
+      if (image != null && mounted) {
+        final file = File(image.path);
+        if (await file.exists()) {
+          setState(() {
+            _selectedImagePath = image.path;
+          });
+          if (mounted) {
+            AppSnackbar.showSuccess(context, 'Photo taken successfully');
+          }
+        }
+      }
+    } on Exception catch (e) {
+      print('Camera error: $e');
+      if (mounted) {
+        _showPermissionHelpDialog();
+      }
+    }
+  }
+
+  void _showPermissionHelpDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF0B1220),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: Colors.white.withValues(alpha: 0.1),
+            ),
+          ),
+          title: const Text(
+            'Permission Required',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            'TruthLens needs permission to access your photos and camera.\n\nPlease enable Camera and Photos permissions in your device settings.',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 15,
+              height: 1.5,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () async {
+                Navigator.pop(context);
+                // Open app settings
+                await openAppSettings();
+              },
+              icon: const Icon(Icons.settings, size: 18),
+              label: const Text('Open Settings'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secondary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
           ],
         ),
       ),
