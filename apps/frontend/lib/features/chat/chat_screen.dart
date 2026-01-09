@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
 import 'chat_model.dart';
+import 'chat_theme.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final ChatUser user;
@@ -22,11 +23,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final List<ChatMessage> _messages = [];
   ChatMessage? _replyingTo;
   ChatMessage? _editingMessage;
+  ChatTheme _currentTheme = ChatTheme.classic;
 
   @override
   void initState() {
     super.initState();
     _loadMessages();
+    _loadChatTheme();
   }
 
   @override
@@ -78,6 +81,160 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _messages.map((msg) => msg.toJson()).toList(),
     );
     await prefs.setString(chatKey, messagesJson);
+  }
+
+  Future<void> _loadChatTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final themeKey = 'chat_theme_${widget.user.id}';
+    final themeTypeString = prefs.getString(themeKey);
+    final themeType = ChatTheme.typeFromString(themeTypeString);
+    
+    setState(() {
+      _currentTheme = ChatTheme.fromType(themeType);
+    });
+  }
+
+  Future<void> _saveChatTheme(ChatTheme theme) async {
+    final prefs = await SharedPreferences.getInstance();
+    final themeKey = 'chat_theme_${widget.user.id}';
+    await prefs.setString(themeKey, theme.type.toString());
+    
+    setState(() {
+      _currentTheme = theme;
+    });
+  }
+
+  void _showThemeSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF0B1220),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.palette_outlined,
+                    color: AppColors.secondary,
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Choose Chat Theme',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 120,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: ChatTheme.allThemes.length,
+                itemBuilder: (context, index) {
+                  final theme = ChatTheme.allThemes[index];
+                  final isSelected = theme.type == _currentTheme.type;
+                  
+                  return GestureDetector(
+                    onTap: () {
+                      _saveChatTheme(theme);
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      width: 100,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        gradient: theme.backgroundGradient,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected 
+                              ? AppColors.secondary 
+                              : Colors.white.withValues(alpha: 0.2),
+                          width: isSelected ? 3 : 1,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: theme.myMessageColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: theme.theirMessageColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            theme.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (isSelected) ...[
+                            const SizedBox(height: 4),
+                            Icon(
+                              Icons.check_circle,
+                              color: AppColors.secondary,
+                              size: 16,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 30),
+          ],
+        ),
+      ),
+    );
   }
 
   void _sendMessage() {
@@ -332,12 +489,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF020617), Color(0xFF0A2540)],
-          ),
+        decoration: BoxDecoration(
+          gradient: _currentTheme.backgroundGradient,
         ),
         child: SafeArea(
           child: Column(
@@ -484,6 +637,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ],
                 ),
               ),
+              GestureDetector(
+                onTap: _showThemeSelector,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.palette_outlined,
+                    color: Colors.white.withValues(alpha: 0.7),
+                    size: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               Container(
                 width: 40,
                 height: 40,
@@ -548,6 +718,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           GestureDetector(
+            onTap: () => _showMessageActions(message, isMe),
             onLongPress: () => _showMessageActions(message, isMe),
             child: Container(
               constraints: BoxConstraints(
@@ -555,15 +726,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                gradient: isMe
-                    ? LinearGradient(
-                        colors: [
-                          AppColors.secondary,
-                          AppColors.secondary.withValues(alpha: 0.8),
-                        ],
-                      )
-                    : null,
-                color: isMe ? null : const Color(0xFF0B1220).withValues(alpha: 0.6),
+                color: isMe ? _currentTheme.myMessageColor : _currentTheme.theirMessageColor,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
@@ -591,7 +754,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           left: BorderSide(
                             color: isMe 
                                 ? Colors.white.withValues(alpha: 0.5)
-                                : AppColors.secondary,
+                                : _currentTheme.myMessageColor.withValues(alpha: 0.8),
                             width: 3,
                           ),
                         ),
@@ -605,8 +768,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 : widget.user.name,
                             style: TextStyle(
                               color: isMe 
-                                  ? Colors.white.withValues(alpha: 0.9)
-                                  : AppColors.secondary,
+                                  ? _currentTheme.myMessageTextColor.withValues(alpha: 0.9)
+                                  : _currentTheme.myMessageColor.withValues(alpha: 0.8),
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -617,7 +780,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 ? 'Message deleted'
                                 : message.replyToMessage!.message,
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.6),
+                              color: isMe 
+                                  ? _currentTheme.myMessageTextColor.withValues(alpha: 0.6)
+                                  : _currentTheme.theirMessageTextColor.withValues(alpha: 0.6),
                               fontSize: 12,
                               fontStyle: message.replyToMessage!.isDeletedForEveryone
                                   ? FontStyle.italic
@@ -636,7 +801,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         ? 'This message was deleted'
                         : message.message,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: isMe ? _currentTheme.myMessageTextColor : _currentTheme.theirMessageTextColor,
                       fontSize: 15,
                       fontStyle: message.isDeletedForEveryone 
                           ? FontStyle.italic 
@@ -651,7 +816,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         Text(
                           'Edited',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: isMe 
+                                ? _currentTheme.myMessageTextColor.withValues(alpha: 0.5)
+                                : _currentTheme.theirMessageTextColor.withValues(alpha: 0.5),
                             fontSize: 11,
                           ),
                         ),
@@ -659,7 +826,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         Text(
                           '•',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: isMe 
+                                ? _currentTheme.myMessageTextColor.withValues(alpha: 0.5)
+                                : _currentTheme.theirMessageTextColor.withValues(alpha: 0.5),
                             fontSize: 11,
                           ),
                         ),
@@ -668,7 +837,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       Text(
                         DateFormat('h:mm a').format(message.timestamp),
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.6),
+                          color: isMe 
+                              ? _currentTheme.myMessageTextColor.withValues(alpha: 0.6)
+                              : _currentTheme.theirMessageTextColor.withValues(alpha: 0.6),
                           fontSize: 11,
                         ),
                       ),
@@ -679,7 +850,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           size: 14,
                           color: message.isRead
                               ? AppColors.accent
-                              : Colors.white.withValues(alpha: 0.6),
+                              : _currentTheme.myMessageTextColor.withValues(alpha: 0.6),
                         ),
                       ],
                     ],
@@ -795,10 +966,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
+                          color: _currentTheme.inputBackgroundColor,
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
+                            color: _currentTheme.inputBorderColor,
                           ),
                         ),
                         child: TextField(
