@@ -29,10 +29,10 @@ class _TruthLensAppState extends ConsumerState<TruthLensApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
-      locale: Locale(languageCode),
+      locale: Locale(languageCode), // Language code
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const SplashScreen(),
+      home: const SplashScreen(), // Splash screen
     );
   }
 }
