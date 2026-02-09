@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import 'chat_model.dart';
 import 'chat_screen.dart';
 import 'select_user_screen.dart';
@@ -54,18 +55,20 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
     for (final user in _availableUsers) {
       final chatKey = 'chat_messages_${user.id}';
       final messagesJson = prefs.getString(chatKey);
-      
+
       if (messagesJson != null) {
         try {
           final List<dynamic> decoded = jsonDecode(messagesJson);
-          final messages = decoded.map((json) => ChatMessage.fromJson(json)).toList();
-          
+          final messages = decoded
+              .map((json) => ChatMessage.fromJson(json))
+              .toList();
+
           if (messages.isNotEmpty) {
             // Get the last message (even if deleted for everyone)
             // Only skip messages deleted for me
             ChatMessage? lastMessage;
             int unreadCount = 0;
-            
+
             for (var i = messages.length - 1; i >= 0; i--) {
               // Show last message even if deleted for everyone
               // Only skip if deleted for me
@@ -73,11 +76,13 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
                 lastMessage = messages[i];
               }
               // Count unread messages
-              if (messages[i].senderId != 'me' && !messages[i].isRead && !messages[i].isDeletedForMe) {
+              if (messages[i].senderId != 'me' &&
+                  !messages[i].isRead &&
+                  !messages[i].isDeletedForMe) {
                 unreadCount++;
               }
             }
-            
+
             if (lastMessage != null) {
               loadedConversations.add(
                 ChatConversation(
@@ -130,11 +135,12 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Messages',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      AppLocalizations.of(context)!.messages,
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -188,27 +194,28 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
   }
 
   Widget _buildConversationCard(ChatConversation conversation) {
+    final l10n = AppLocalizations.of(context)!;
     final formattedTime = _formatTime(conversation.lastMessage?.timestamp);
     final lastMessage = conversation.lastMessage;
-    
+
     // Determine what to display based on message status
-    String displayMessage = 'No messages yet';
+    String displayMessage = l10n.noMessages;
     bool isItalic = false;
-    
+
     if (lastMessage != null) {
       if (lastMessage.isDeletedForEveryone) {
-        displayMessage = 'This message was deleted';
+        displayMessage = l10n.thisMessageWasDeleted;
         isItalic = true;
       } else if (lastMessage.isDeletedForMe) {
-        displayMessage = 'Message deleted';
+        displayMessage = l10n.messageDeleted;
         isItalic = true;
       } else {
         // Show "You: " prefix if you sent the message
-        final prefix = lastMessage.senderId == 'me' ? 'You: ' : '';
+        final prefix = lastMessage.senderId == 'me' ? '${l10n.you}: ' : '';
         displayMessage = prefix + lastMessage.message;
       }
     }
-    
+
     return GestureDetector(
       onTap: () async {
         await Navigator.push(
@@ -329,7 +336,9 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
                                 fontWeight: conversation.unreadCount > 0
                                     ? FontWeight.w500
                                     : FontWeight.normal,
-                                fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
+                                fontStyle: isItalic
+                                    ? FontStyle.italic
+                                    : FontStyle.normal,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -370,6 +379,8 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
   }
 
   Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -381,7 +392,7 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No Messages Yet',
+            l10n.noMessagesYet,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.6),
               fontSize: 18,
@@ -390,7 +401,7 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Start a conversation with someone',
+            l10n.startConversation,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.4),
               fontSize: 14,
@@ -407,7 +418,7 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
               );
             },
             icon: const Icon(Icons.add),
-            label: const Text('New Message'),
+            label: Text(l10n.newMessage),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondary,
               foregroundColor: Colors.white,
@@ -424,10 +435,10 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
 
   String _formatTime(DateTime? time) {
     if (time == null) return '';
-    
+
     final now = DateTime.now();
     final difference = now.difference(time);
-    
+
     if (difference.inMinutes < 60) {
       return '${difference.inMinutes}m';
     } else if (difference.inHours < 24) {

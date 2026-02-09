@@ -264,4 +264,333 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get articleHidden => 'ලිපිය feed එකෙන් සැඟවී ඇත';
+
+  @override
+  String get messages => 'පණිවිඩ';
+
+  @override
+  String get newMessage => 'නව පණිවිඩය';
+
+  @override
+  String get noMessagesYet => 'තවම පණිවිඩ නැත';
+
+  @override
+  String get startConversation => 'කෙනෙකු සමඟ සංවාදයක් ආරම්භ කරන්න';
+
+  @override
+  String get noMessages => 'තවම පණිවිඩ නැත';
+
+  @override
+  String get typeMessage => 'පණිවිඩයක් ටයිප් කරන්න...';
+
+  @override
+  String get yesterday => 'ඊයේ';
+
+  @override
+  String get you => 'ඔබ';
+
+  @override
+  String get thisMessageWasDeleted => 'මෙම පණිවිඩය මකා දමන ලදී';
+
+  @override
+  String get messageDeleted => 'පණිවිඩය මකා දමන ලදී';
+
+  @override
+  String get startTheConversation => 'සංවාදය ආරම්භ කරන්න!';
+
+  @override
+  String get selectUser => 'පරිශීලක තෝරන්න';
+
+  @override
+  String get searchUsers => 'පරිශීලකයින් සොයන්න...';
+
+  @override
+  String get noUsersFound => 'පරිශීලකයින් හමු නොවීය';
+
+  @override
+  String get online => 'ඔන්ලයින්';
+
+  @override
+  String get offline => 'නොබැඳි';
+
+  @override
+  String get reply => 'පිළිතුරු දෙන්න';
+
+  @override
+  String get copy => 'පිටපත් කරන්න';
+
+  @override
+  String get editMessage => 'සංස්කරණය';
+
+  @override
+  String get deleteForMe => 'මා සඳහා මකන්න';
+
+  @override
+  String get deleteForEveryone => 'සියලු දෙනා සඳහා මකන්න';
+
+  @override
+  String get messageEdited => 'සංස්කරණය කළා';
+
+  @override
+  String get messageCopied => 'පණිවිඩය ක්ලිප්බෝඩයට පිටපත් කරන ලදී';
+
+  @override
+  String get deleteMessageConfirm => 'මෙම පණිවිඩය මකන්නද?';
+
+  @override
+  String get deleteForMeDesc =>
+      'මෙම පණිවිඩය මෙම උපාංගයෙන් පමණක් ඉවත් කරනු ලැබේ';
+
+  @override
+  String get deleteForEveryoneDesc =>
+      'මෙම පණිවිඩය චැට් එකේ සියලු දෙනා සඳහා මකා දමනු ලැබේ';
+
+  @override
+  String get chatTheme => 'චැට් තේමාව';
+
+  @override
+  String get classic => 'සම්භාව්‍ය';
+
+  @override
+  String get ocean => 'සාගරය';
+
+  @override
+  String get sunset => 'හිරු බැසීම';
+
+  @override
+  String get forest => 'වනාන්තරය';
+
+  @override
+  String get lavender => 'ලැවෙන්ඩර්';
+
+  @override
+  String get midnight => 'මධ්‍යම රාත්‍රිය';
+
+  @override
+  String get chooseFromGallery => 'ගැලරියෙන් තෝරන්න';
+
+  @override
+  String get takePhoto => 'ඡායාරූපයක් ගන්න';
+
+  @override
+  String get removePhoto => 'ඡායාරූපය ඉවත් කරන්න';
+
+  @override
+  String get openSettings => 'සැකසීම් විවෘත කරන්න';
+
+  @override
+  String get currentPassword => 'වත්මන් මුරපදය';
+
+  @override
+  String get newPassword => 'නව මුරපදය';
+
+  @override
+  String get confirmNewPassword => 'නව මුරපදය තහවුරු කරන්න';
+
+  @override
+  String get passwordChanged => 'මුරපදය සාර්ථකව වෙනස් කරන ලදී';
+
+  @override
+  String get passwordMismatch => 'මුරපද නොගැලපේ';
+
+  @override
+  String get emailSupport => 'විද්‍යුත් තැපැල් සහාය';
+
+  @override
+  String get visitWebsite => 'වෙබ් අඩවියට පිවිසෙන්න';
+
+  @override
+  String get userGuide => 'පරිශීලක මාර්ගෝපදේශය';
+
+  @override
+  String get learnHowToUse => 'Truth Lens භාවිතා කරන ආකාරය ඉගෙන ගන්න';
+
+  @override
+  String get privacyPolicy => 'රහස්‍යතා ප්‍රතිපත්තිය';
+
+  @override
+  String get readPrivacyPolicy => 'අපගේ රහස්‍යතා ප්‍රතිපත්තිය කියවන්න';
+
+  @override
+  String get termsOfService => 'සේවා කොන්දේසි';
+
+  @override
+  String get readTermsOfService => 'අපගේ සේවා කොන්දේසි කියවන්න';
+
+  @override
+  String get copiedToClipboard => 'ක්ලිප්බෝඩයට පිටපත් කරන ලදී';
+
+  @override
+  String get subscription => 'දායකත්වය';
+
+  @override
+  String get basic => 'මූලික';
+
+  @override
+  String get premium => 'වාසි සහිත';
+
+  @override
+  String get free => 'නොමිලේ';
+
+  @override
+  String get month => 'මාසය';
+
+  @override
+  String get currentPlan => 'වත්මන් සැලැස්ම';
+
+  @override
+  String get upgrade => 'උත්ශ්‍රේණි කරන්න';
+
+  @override
+  String get devices => 'උපාංග';
+
+  @override
+  String get thisDevice => 'මෙම උපාංගය';
+
+  @override
+  String get lastActive => 'අවසන් වරට සක්‍රීය';
+
+  @override
+  String get removeDevice => 'උපාංගය ඉවත් කරන්න';
+
+  @override
+  String get clearHistory => 'ඉතිහාසය මකන්න';
+
+  @override
+  String get historyCleared => 'ඉතිහාසය සාර්ථකව මකා දමන ලදී';
+
+  @override
+  String get addComment => 'අදහසක් එක් කරන්න...';
+
+  @override
+  String get comments => 'අදහස්';
+
+  @override
+  String get likes => 'කැමති';
+
+  @override
+  String get share => 'බෙදා ගන්න';
+
+  @override
+  String get report => 'වාර්තා කරන්න';
+
+  @override
+  String get searchByKeyword => 'මූල පදයෙන් සොයන්න';
+
+  @override
+  String get filter => 'පෙරහන';
+
+  @override
+  String get noResults => 'ප්‍රතිඵල නැත';
+
+  @override
+  String get news => 'ප්‍රවෘත්ති';
+
+  @override
+  String get chat => 'චැට්';
+
+  @override
+  String get settings => 'සැකසීම්';
+
+  @override
+  String get theme => 'තේමාව';
+
+  @override
+  String get darkTheme => 'අඳුරු තේමාව';
+
+  @override
+  String get lightTheme => 'ආලෝක තේමාව';
+
+  @override
+  String get systemTheme => 'පද්ධති තේමාව';
+
+  @override
+  String get userName => 'පරිශීලක නම';
+
+  @override
+  String get userEmail => 'පරිශීලක@උදාහරණය.com';
+
+  @override
+  String get managePreferredCategories => 'කැමති ප්‍රවර්ග කළමනාකරණය කරන්න';
+
+  @override
+  String get aiSummary => 'AI සාරාංශය';
+
+  @override
+  String get fullArticle => 'සම්පූර්ණ ලිපිය';
+
+  @override
+  String get misinformationConfidence => 'වැරදි තොරතුරු විශ්වාසය';
+
+  @override
+  String get relatedTrustedSources => 'අදාළ විශ්වාසදායක මූලාශ්‍ර';
+
+  @override
+  String get source => 'මූලාශ්‍රය';
+
+  @override
+  String get error => 'දෝෂයක්';
+
+  @override
+  String get loading => 'පූරණය වෙමින්...';
+
+  @override
+  String get tryAgain => 'නැවත උත්සාහ කරන්න';
+
+  @override
+  String get welcome => 'සාදරයෙන් පිළිගනිමු';
+
+  @override
+  String get getStarted => 'ආරම්භ කරන්න';
+
+  @override
+  String get skip => 'මඟ හරින්න';
+
+  @override
+  String get next => 'ඊළඟ';
+
+  @override
+  String get done => 'අවසන්';
+
+  @override
+  String get signIn => 'පුරනය වන්න';
+
+  @override
+  String get signUp => 'ලියාපදිංචි වන්න';
+
+  @override
+  String get forgotPassword => 'මුරපදය අමතක ද?';
+
+  @override
+  String get resetPassword => 'මුරපදය නැවත සකසන්න';
+
+  @override
+  String get sendResetLink => 'නැවත සැකසීමේ සබැඳිය යවන්න';
+
+  @override
+  String get password => 'මුරපදය';
+
+  @override
+  String get confirmPassword => 'මුරපදය තහවුරු කරන්න';
+
+  @override
+  String get termsAndConditions => 'නියම හා කොන්දේසි';
+
+  @override
+  String get agreeToTerms => 'මම නියම සහ කොන්දේසි වලට එකඟ වෙමි';
+
+  @override
+  String get invalidEmail => 'වලංගු නොවන විද්‍යුත් තැපැල් ලිපිනය';
+
+  @override
+  String get invalidPassword => 'මුරපදය අවම වශයෙන් අක්ෂර 6ක් විය යුතුය';
+
+  @override
+  String get emailRequired => 'විද්‍යුත් තැපෑල අවශ්‍ය වේ';
+
+  @override
+  String get passwordRequired => 'මුරපදය අවශ්‍ය වේ';
+
+  @override
+  String get nameRequired => 'නම අවශ්‍ය වේ';
 }

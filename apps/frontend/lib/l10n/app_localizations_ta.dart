@@ -265,4 +265,336 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get articleHidden => 'கட்டுரை feed இல் மறைக்கப்பட்டது';
+
+  @override
+  String get messages => 'செய்திகள்';
+
+  @override
+  String get newMessage => 'புதிய செய்தி';
+
+  @override
+  String get noMessagesYet => 'இன்னும் செய்திகள் இல்லை';
+
+  @override
+  String get startConversation => 'யாருடனாவது உரையாடலைத் தொடங்குங்கள்';
+
+  @override
+  String get noMessages => 'இன்னும் செய்திகள் இல்லை';
+
+  @override
+  String get typeMessage => 'ஒரு செய்தியை தட்டச்சு செய்யுங்கள்...';
+
+  @override
+  String get yesterday => 'நேற்று';
+
+  @override
+  String get you => 'நீங்கள்';
+
+  @override
+  String get thisMessageWasDeleted => 'இந்த செய்தி நீக்கப்பட்டது';
+
+  @override
+  String get messageDeleted => 'செய்தி நீக்கப்பட்டது';
+
+  @override
+  String get startTheConversation => 'உரையாடலைத் தொடங்குங்கள்!';
+
+  @override
+  String get selectUser => 'பயனரைத் தேர்ந்தெடுக்கவும்';
+
+  @override
+  String get searchUsers => 'பயனர்களைத் தேடுங்கள்...';
+
+  @override
+  String get noUsersFound => 'பயனர்கள் கிடைக்கவில்லை';
+
+  @override
+  String get online => 'ஆன்லைனில்';
+
+  @override
+  String get offline => 'ஆஃப்லைனில்';
+
+  @override
+  String get reply => 'பதிலளி';
+
+  @override
+  String get copy => 'நகலெடு';
+
+  @override
+  String get editMessage => 'திருத்து';
+
+  @override
+  String get deleteForMe => 'எனக்காக நீக்கு';
+
+  @override
+  String get deleteForEveryone => 'அனைவருக்கும் நீக்கு';
+
+  @override
+  String get messageEdited => 'திருத்தப்பட்டது';
+
+  @override
+  String get messageCopied => 'செய்தி clipboard இல் நகலெடுக்கப்பட்டது';
+
+  @override
+  String get deleteMessageConfirm => 'இந்த செய்தியை நீக்கவா?';
+
+  @override
+  String get deleteForMeDesc =>
+      'இந்த செய்தி இந்த சாதனத்திலிருந்து மட்டும் அகற்றப்படும்';
+
+  @override
+  String get deleteForEveryoneDesc =>
+      'இந்த செய்தி அரட்டையில் உள்ள அனைவருக்கும் நீக்கப்படும்';
+
+  @override
+  String get chatTheme => 'அரட்டை தீம்';
+
+  @override
+  String get classic => 'கிளாசிக்';
+
+  @override
+  String get ocean => 'கடல்';
+
+  @override
+  String get sunset => 'சூரிய அஸ்தமனம்';
+
+  @override
+  String get forest => 'காடு';
+
+  @override
+  String get lavender => 'லாவெண்டர்';
+
+  @override
+  String get midnight => 'நடு இரவு';
+
+  @override
+  String get chooseFromGallery => 'கேலரியில் இருந்து தேர்ந்தெடுக்கவும்';
+
+  @override
+  String get takePhoto => 'புகைப்படம் எடுக்கவும்';
+
+  @override
+  String get removePhoto => 'புகைப்படத்தை அகற்று';
+
+  @override
+  String get openSettings => 'அமைப்புகளைத் திற';
+
+  @override
+  String get currentPassword => 'தற்போதைய கடவுச்சொல்';
+
+  @override
+  String get newPassword => 'புதிய கடவுச்சொல்';
+
+  @override
+  String get confirmNewPassword => 'புதிய கடவுச்சொல்லை உறுதிப்படுத்து';
+
+  @override
+  String get passwordChanged => 'கடவுச்சொல் வெற்றிகரமாக மாற்றப்பட்டது';
+
+  @override
+  String get passwordMismatch => 'கடவுச்சொற்கள் பொருந்தவில்லை';
+
+  @override
+  String get emailSupport => 'மின்னஞ்சல் ஆதரவு';
+
+  @override
+  String get visitWebsite => 'வலைத்தளத்தைப் பார்வையிடவும்';
+
+  @override
+  String get userGuide => 'பயனர் வழிகாட்டி';
+
+  @override
+  String get learnHowToUse =>
+      'Truth Lens ஐ எவ்வாறு பயன்படுத்துவது என்பதை அறியவும்';
+
+  @override
+  String get privacyPolicy => 'தனியுரிமைக் கொள்கை';
+
+  @override
+  String get readPrivacyPolicy => 'எங்கள் தனியுரிமைக் கொள்கையைப் படிக்கவும்';
+
+  @override
+  String get termsOfService => 'சேவை விதிமுறைகள்';
+
+  @override
+  String get readTermsOfService => 'எங்கள் சேவை விதிமுறைகளைப் படிக்கவும்';
+
+  @override
+  String get copiedToClipboard => 'clipboard இல் நகலெடுக்கப்பட்டது';
+
+  @override
+  String get subscription => 'சந்தா';
+
+  @override
+  String get basic => 'அடிப்படை';
+
+  @override
+  String get premium => 'பிரீமியம்';
+
+  @override
+  String get free => 'இலவசம்';
+
+  @override
+  String get month => 'மாதம்';
+
+  @override
+  String get currentPlan => 'தற்போதைய திட்டம்';
+
+  @override
+  String get upgrade => 'மேம்படுத்து';
+
+  @override
+  String get devices => 'சாதனங்கள்';
+
+  @override
+  String get thisDevice => 'இந்த சாதனம்';
+
+  @override
+  String get lastActive => 'கடைசியாக செயலில்';
+
+  @override
+  String get removeDevice => 'சாதனத்தை அகற்று';
+
+  @override
+  String get clearHistory => 'வரலாற்றை அழி';
+
+  @override
+  String get historyCleared => 'வரலாறு வெற்றிகரமாக அழிக்கப்பட்டது';
+
+  @override
+  String get addComment => 'கருத்தைச் சேர்க்கவும்...';
+
+  @override
+  String get comments => 'கருத்துகள்';
+
+  @override
+  String get likes => 'விருப்பங்கள்';
+
+  @override
+  String get share => 'பகிர்';
+
+  @override
+  String get report => 'புகாரளி';
+
+  @override
+  String get searchByKeyword => 'முக்கிய சொல்லால் தேடுங்கள்';
+
+  @override
+  String get filter => 'வடிகட்டி';
+
+  @override
+  String get noResults => 'முடிவுகள் இல்லை';
+
+  @override
+  String get news => 'செய்திகள்';
+
+  @override
+  String get chat => 'அரட்டை';
+
+  @override
+  String get settings => 'அமைப்புகள்';
+
+  @override
+  String get theme => 'தீம்';
+
+  @override
+  String get darkTheme => 'இருண்ட தீம்';
+
+  @override
+  String get lightTheme => 'ஒளி தீம்';
+
+  @override
+  String get systemTheme => 'கணினி தீம்';
+
+  @override
+  String get userName => 'பயனர் பெயர்';
+
+  @override
+  String get userEmail => 'பயனர்@உதாரணம்.com';
+
+  @override
+  String get managePreferredCategories => 'விருப்பமான வகைகளை நிர்வகிக்கவும்';
+
+  @override
+  String get aiSummary => 'AI சுருக்கம்';
+
+  @override
+  String get fullArticle => 'முழு கட்டுரை';
+
+  @override
+  String get misinformationConfidence => 'தவறான தகவல் நம்பிக்கை';
+
+  @override
+  String get relatedTrustedSources => 'தொடர்புடைய நம்பகமான ஆதாரங்கள்';
+
+  @override
+  String get source => 'ஆதாரம்';
+
+  @override
+  String get error => 'பிழை';
+
+  @override
+  String get loading => 'ஏற்றுகிறது...';
+
+  @override
+  String get tryAgain => 'மீண்டும் முயற்சிக்கவும்';
+
+  @override
+  String get welcome => 'வரவேற்கிறோம்';
+
+  @override
+  String get getStarted => 'தொடங்குங்கள்';
+
+  @override
+  String get skip => 'தவிர்';
+
+  @override
+  String get next => 'அடுத்து';
+
+  @override
+  String get done => 'முடிந்தது';
+
+  @override
+  String get signIn => 'உள்நுழைக';
+
+  @override
+  String get signUp => 'பதிவு செய்க';
+
+  @override
+  String get forgotPassword => 'கடவுச்சொல்லை மறந்துவிட்டீர்களா?';
+
+  @override
+  String get resetPassword => 'கடவுச்சொல்லை மீட்டமை';
+
+  @override
+  String get sendResetLink => 'மீட்டமை இணைப்பை அனுப்பு';
+
+  @override
+  String get password => 'கடவுச்சொல்';
+
+  @override
+  String get confirmPassword => 'கடவுச்சொல்லை உறுதிப்படுத்து';
+
+  @override
+  String get termsAndConditions => 'விதிமுறைகள் மற்றும் நிபந்தனைகள்';
+
+  @override
+  String get agreeToTerms =>
+      'விதிமுறைகள் மற்றும் நிபந்தனைகளுக்கு நான் ஒப்புக்கொள்கிறேன்';
+
+  @override
+  String get invalidEmail => 'தவறான மின்னஞ்சல் முகவரி';
+
+  @override
+  String get invalidPassword =>
+      'கடவுச்சொல் குறைந்தது 6 எழுத்துகளாக இருக்க வேண்டும்';
+
+  @override
+  String get emailRequired => 'மின்னஞ்சல் தேவை';
+
+  @override
+  String get passwordRequired => 'கடவுச்சொல் தேவை';
+
+  @override
+  String get nameRequired => 'பெயர் தேவை';
 }

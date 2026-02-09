@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../news/news_feed_screen.dart';
 import '../search/search_screen.dart';
 import '../digest/digest_screen.dart';
@@ -95,35 +96,35 @@ class _ModernNavBar extends StatelessWidget {
           _NavItem(
             icon: Icons.article_outlined,
             activeIcon: Icons.article,
-            label: 'News',
+            label: AppLocalizations.of(context)!.news,
             isActive: currentIndex == 0,
             onTap: () => onTap(0),
           ),
           _NavItem(
             icon: Icons.search_outlined,
             activeIcon: Icons.search,
-            label: 'Explore',
+            label: AppLocalizations.of(context)!.explore,
             isActive: currentIndex == 1,
             onTap: () => onTap(1),
           ),
           _NavItem(
             icon: Icons.dashboard_outlined,
             activeIcon: Icons.dashboard,
-            label: 'Digest',
+            label: AppLocalizations.of(context)!.digest,
             isActive: currentIndex == 2,
             onTap: () => onTap(2),
           ),
           _NavItem(
             icon: Icons.chat_bubble_outline,
             activeIcon: Icons.chat_bubble,
-            label: 'Chat',
+            label: AppLocalizations.of(context)!.chat,
             isActive: currentIndex == 3,
             onTap: () => onTap(3),
           ),
           _NavItem(
             icon: Icons.person_outline,
             activeIcon: Icons.person,
-            label: 'Profile',
+            label: AppLocalizations.of(context)!.profile,
             isActive: currentIndex == 4,
             onTap: () => onTap(4),
           ),
