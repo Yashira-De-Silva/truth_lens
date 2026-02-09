@@ -41,16 +41,34 @@ class _ModernNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
 
-  const _ModernNavBar({
-    required this.currentIndex,
-    required this.onTap,
-  });
+  const _ModernNavBar({required this.currentIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    // Get safe area insets to handle gesture navigation and button navigation
+    final mediaQuery = MediaQuery.of(context);
+    final bottomPadding = mediaQuery.padding.bottom;
+    final screenWidth = mediaQuery.size.width;
+
+    // Adaptive margins based on screen width
+    final horizontalMargin = screenWidth > 600 ? 24.0 : 16.0;
+
+    // Adaptive bottom margin:
+    // - For gesture navigation: bottomPadding is usually small (0-10px), so add more margin
+    // - For button navigation: bottomPadding is larger (20-34px), so add less margin
+    final bottomMargin = bottomPadding > 15 ? 8.0 : 16.0;
+
+    // Adaptive padding within the nav bar
+    final verticalPadding = screenWidth > 600 ? 14.0 : 12.0;
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      margin: EdgeInsets.fromLTRB(
+        horizontalMargin,
+        0,
+        horizontalMargin,
+        bottomMargin + bottomPadding,
+      ),
+      padding: EdgeInsets.symmetric(vertical: verticalPadding),
       decoration: BoxDecoration(
         color: const Color(0xFF0B1220).withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(24),
@@ -132,13 +150,22 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Adaptive sizing for different screen sizes
+    final iconSize = screenWidth > 600 ? 26.0 : 24.0;
+    final fontSize = screenWidth > 600 ? 12.0 : 11.0;
+    final horizontalPadding = screenWidth > 600
+        ? 18.0
+        : (isActive ? 16.0 : 12.0);
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
         padding: EdgeInsets.symmetric(
-          horizontal: isActive ? 16 : 12,
+          horizontal: horizontalPadding,
           vertical: 8,
         ),
         decoration: BoxDecoration(
@@ -152,15 +179,19 @@ class _NavItem extends StatelessWidget {
           children: [
             Icon(
               isActive ? activeIcon : icon,
-              color: isActive ? AppColors.secondary : Colors.white.withValues(alpha: 0.6),
-              size: 24,
+              color: isActive
+                  ? AppColors.secondary
+                  : Colors.white.withValues(alpha: 0.6),
+              size: iconSize,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                color: isActive ? AppColors.secondary : Colors.white.withValues(alpha: 0.6),
-                fontSize: 11,
+                color: isActive
+                    ? AppColors.secondary
+                    : Colors.white.withValues(alpha: 0.6),
+                fontSize: fontSize,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
