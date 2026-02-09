@@ -22,6 +22,47 @@ class _SearchScreenState extends State<SearchScreen> {
   List<Article> _searchResults = [];
   bool _isSearching = false;
 
+  List<Article> _getTranslatedArticles(AppLocalizations l10n) {
+    return [
+      Article(
+        id: 1,
+        title: l10n.article1Title,
+        summary: l10n.article1Summary,
+        source: l10n.article1Source,
+      ),
+      Article(
+        id: 2,
+        title: l10n.article2Title,
+        summary: l10n.article2Summary,
+        source: l10n.article2Source,
+      ),
+      Article(
+        id: 3,
+        title: l10n.article3Title,
+        summary: l10n.article3Summary,
+        source: l10n.article3Source,
+      ),
+      Article(
+        id: 4,
+        title: l10n.article4Title,
+        summary: l10n.article4Summary,
+        source: l10n.article4Source,
+      ),
+      Article(
+        id: 5,
+        title: l10n.article5Title,
+        summary: l10n.article5Summary,
+        source: l10n.article5Source,
+      ),
+      Article(
+        id: 6,
+        title: l10n.article6Title,
+        summary: l10n.article6Summary,
+        source: l10n.article6Source,
+      ),
+    ];
+  }
+
   final List<String> _categories = [
     'All',
     'Politics',
@@ -30,24 +71,13 @@ class _SearchScreenState extends State<SearchScreen> {
     'Science',
     'Health',
     'Sports',
-    'Entertainment'
-  ];
-
-  // Mock search data
-  final List<Article> _mockArticles = [
-    Article(id: 1, title: 'Breaking: AI Revolutionizes News Verification', summary: 'New AI technology can detect fake news with 98% accuracy using advanced machine learning algorithms.', source: 'Tech News'),
-    Article(id: 2, title: 'Political Summit Addresses Climate Change', summary: 'World leaders gather to discuss climate action and sustainable development goals for 2026.', source: 'World Politics'),
-    Article(id: 3, title: 'Stock Market Reaches New Heights', summary: 'Technology stocks lead market gains as investors show confidence in AI sector growth.', source: 'Business Today'),
-    Article(id: 4, title: 'Medical Breakthrough in Cancer Treatment', summary: 'Scientists develop new immunotherapy that shows promising results in clinical trials.', source: 'Health News'),
-    Article(id: 5, title: 'SpaceX Announces Mars Mission Timeline', summary: 'Elon Musk reveals updated plans for the first crewed mission to Mars in 2028.', source: 'Space Journal'),
-    Article(id: 6, title: 'Olympics 2026 Preparations Underway', summary: 'Host city unveils state-of-the-art facilities for upcoming Olympic Games.', source: 'Sports World'),
+    'Entertainment',
   ];
 
   @override
   void initState() {
     super.initState();
-    // Initialize with all articles
-    _searchResults = _mockArticles;
+    // Search results will be initialized in build method with translations
   }
 
   @override
@@ -57,6 +87,9 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _performSearch() {
+    final l10n = AppLocalizations.of(context)!;
+    final translatedArticles = _getTranslatedArticles(l10n);
+
     setState(() {
       _isSearching = true;
       _searchQuery = _searchController.text.toLowerCase();
@@ -65,18 +98,24 @@ class _SearchScreenState extends State<SearchScreen> {
     // Simulate network delay
     Future.delayed(const Duration(milliseconds: 500), () {
       if (!mounted) return;
-      
+
       setState(() {
-        _searchResults = _mockArticles.where((article) {
-          final matchesQuery = _searchQuery.isEmpty ||
+        _searchResults = translatedArticles.where((article) {
+          final matchesQuery =
+              _searchQuery.isEmpty ||
               article.title.toLowerCase().contains(_searchQuery) ||
               article.summary.toLowerCase().contains(_searchQuery) ||
               article.source.toLowerCase().contains(_searchQuery);
-          
-          final matchesCategory = _selectedCategory == 'All' ||
-              article.source.toLowerCase().contains(_selectedCategory.toLowerCase()) ||
-              article.title.toLowerCase().contains(_selectedCategory.toLowerCase());
-          
+
+          final matchesCategory =
+              _selectedCategory == 'All' ||
+              article.source.toLowerCase().contains(
+                _selectedCategory.toLowerCase(),
+              ) ||
+              article.title.toLowerCase().contains(
+                _selectedCategory.toLowerCase(),
+              );
+
           return matchesQuery && matchesCategory;
         }).toList();
         _isSearching = false;
@@ -84,7 +123,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
       if (_searchResults.isEmpty && _searchQuery.isNotEmpty) {
         final l10n = AppLocalizations.of(context)!;
-        AppSnackbar.showError(context, '${l10n.noResultsFound} "$_searchQuery"');
+        AppSnackbar.showError(
+          context,
+          '${l10n.noResultsFound} "$_searchQuery"',
+        );
       }
     });
   }
@@ -101,7 +143,13 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+    final translatedArticles = _getTranslatedArticles(l10n);
+
+    // Initialize search results on first build if empty
+    if (_searchResults.isEmpty && !_isSearching) {
+      _searchResults = translatedArticles;
+    }
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -147,17 +195,19 @@ class _SearchScreenState extends State<SearchScreen> {
                         children: [
                           Text(
                             l10n.explore,
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Search for articles by keyword or category',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.7),
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                ),
                           ),
                         ],
                       ),
@@ -183,9 +233,7 @@ class _SearchScreenState extends State<SearchScreen> {
               const SizedBox(height: 16),
 
               // Results
-              Expanded(
-                child: _buildSearchResults(),
-              ),
+              Expanded(child: _buildSearchResults()),
             ],
           ),
         ),
@@ -198,9 +246,7 @@ class _SearchScreenState extends State<SearchScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF0B1220).withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -223,12 +269,18 @@ class _SearchScreenState extends State<SearchScreen> {
               prefixIcon: Icon(Icons.search, color: AppColors.secondary),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: Icon(Icons.clear, color: Colors.white.withValues(alpha: 0.6)),
+                      icon: Icon(
+                        Icons.clear,
+                        color: Colors.white.withValues(alpha: 0.6),
+                      ),
                       onPressed: _clearSearch,
                     )
                   : null,
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
             ),
             onChanged: (value) {
               setState(() {});
@@ -296,7 +348,9 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Text(
           category,
           style: TextStyle(
-            color: isSelected ? AppColors.secondary : Colors.white.withValues(alpha: 0.7),
+            color: isSelected
+                ? AppColors.secondary
+                : Colors.white.withValues(alpha: 0.7),
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
             fontSize: 14,
           ),
@@ -310,9 +364,7 @@ class _SearchScreenState extends State<SearchScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF0B1220).withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -345,9 +397,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildSearchResults() {
     if (_isSearching) {
       return Center(
-        child: CircularProgressIndicator(
-          color: AppColors.secondary,
-        ),
+        child: CircularProgressIndicator(color: AppColors.secondary),
       );
     }
 
@@ -412,9 +462,7 @@ class _SearchScreenState extends State<SearchScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFF0B1220).withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.1),
-            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
@@ -428,7 +476,10 @@ class _SearchScreenState extends State<SearchScreen> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.secondary.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
@@ -446,30 +497,44 @@ class _SearchScreenState extends State<SearchScreen> {
                         Consumer(
                           builder: (context, ref, _) {
                             final bookmarks = ref.watch(bookmarksProvider);
-                            final isSaved = bookmarks.any((a) => a.id == article.id);
-                            
+                            final isSaved = bookmarks.any(
+                              (a) => a.id == article.id,
+                            );
+
                             return GestureDetector(
                               onTap: () async {
                                 final l10n = AppLocalizations.of(context)!;
                                 if (isSaved) {
-                                  await ref.read(bookmarksProvider.notifier).removeById(article.id);
+                                  await ref
+                                      .read(bookmarksProvider.notifier)
+                                      .removeById(article.id);
                                   if (context.mounted) {
-                                    AppSnackbar.showSuccess(context, l10n.removedFromBookmarks);
+                                    AppSnackbar.showSuccess(
+                                      context,
+                                      l10n.removedFromBookmarks,
+                                    );
                                   }
                                 } else {
-                                  await ref.read(bookmarksProvider.notifier).add(article);
+                                  await ref
+                                      .read(bookmarksProvider.notifier)
+                                      .add(article);
                                   if (context.mounted) {
-                                    AppSnackbar.showSuccess(context, l10n.savedToBookmarks);
+                                    AppSnackbar.showSuccess(
+                                      context,
+                                      l10n.savedToBookmarks,
+                                    );
                                   }
                                 }
                               },
                               child: Container(
                                 padding: const EdgeInsets.all(4),
                                 child: Icon(
-                                  isSaved ? Icons.bookmark : Icons.bookmark_outline,
+                                  isSaved
+                                      ? Icons.bookmark
+                                      : Icons.bookmark_outline,
                                   size: 20,
-                                  color: isSaved 
-                                      ? AppColors.accent 
+                                  color: isSaved
+                                      ? AppColors.accent
                                       : Colors.white.withValues(alpha: 0.6),
                                 ),
                               ),

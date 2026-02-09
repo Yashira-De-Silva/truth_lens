@@ -12,51 +12,47 @@ import '../article/article_details_screen.dart';
 class NewsFeedScreen extends StatelessWidget {
   const NewsFeedScreen({super.key});
 
-  // Mock news articles with realistic data
-  static final List<Article> _mockArticles = [
-    Article(
-      id: 1,
-      title: 'Breaking: AI Revolutionizes News Verification',
-      summary:
-          'New AI technology can detect fake news with 98% accuracy using advanced machine learning algorithms.',
-      source: 'Tech News',
-    ),
-    Article(
-      id: 2,
-      title: 'Political Summit Addresses Climate Change',
-      summary:
-          'World leaders gather to discuss climate action and sustainable development goals for 2026.',
-      source: 'World Politics',
-    ),
-    Article(
-      id: 3,
-      title: 'Stock Market Reaches New Heights',
-      summary:
-          'Technology stocks lead market gains as investors show confidence in AI sector growth.',
-      source: 'Business Today',
-    ),
-    Article(
-      id: 4,
-      title: 'Medical Breakthrough in Cancer Treatment',
-      summary:
-          'Scientists develop new immunotherapy that shows promising results in clinical trials.',
-      source: 'Health News',
-    ),
-    Article(
-      id: 5,
-      title: 'SpaceX Announces Mars Mission Timeline',
-      summary:
-          'Elon Musk reveals updated plans for the first crewed mission to Mars in 2028.',
-      source: 'Space Journal',
-    ),
-    Article(
-      id: 6,
-      title: 'Olympics 2026 Preparations Underway',
-      summary:
-          'Host city unveils state-of-the-art facilities for upcoming Olympic Games.',
-      source: 'Sports World',
-    ),
-  ];
+  // Get translated mock news articles
+  List<Article> _getTranslatedArticles(AppLocalizations l10n) {
+    return [
+      Article(
+        id: 1,
+        title: l10n.article1Title,
+        summary: l10n.article1Summary,
+        source: l10n.article1Source,
+      ),
+      Article(
+        id: 2,
+        title: l10n.article2Title,
+        summary: l10n.article2Summary,
+        source: l10n.article2Source,
+      ),
+      Article(
+        id: 3,
+        title: l10n.article3Title,
+        summary: l10n.article3Summary,
+        source: l10n.article3Source,
+      ),
+      Article(
+        id: 4,
+        title: l10n.article4Title,
+        summary: l10n.article4Summary,
+        source: l10n.article4Source,
+      ),
+      Article(
+        id: 5,
+        title: l10n.article5Title,
+        summary: l10n.article5Summary,
+        source: l10n.article5Source,
+      ),
+      Article(
+        id: 6,
+        title: l10n.article6Title,
+        summary: l10n.article6Summary,
+        source: l10n.article6Source,
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,17 +145,18 @@ class NewsFeedScreen extends StatelessWidget {
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                  itemCount: _mockArticles.length,
+                  itemCount: _getTranslatedArticles(l10n).length,
                   separatorBuilder: (_, __) => const SizedBox(height: 16),
                   itemBuilder: (context, index) {
-                    final article = _mockArticles[index];
+                    final articles = _getTranslatedArticles(l10n);
+                    final article = articles[index];
                     final status = index % 3; // 0 verified, 1 biased, 2 fake
                     final statusColor = status == 0
                         ? AppColors.success
                         : (status == 1 ? AppColors.accent : AppColors.error);
                     final statusText = status == 0
-                        ? 'Verified'
-                        : (status == 1 ? 'Biased' : 'Possibly Fake');
+                        ? l10n.verified
+                        : (status == 1 ? l10n.biased : l10n.possiblyFake);
                     final confidence = status == 0
                         ? 0.98
                         : (status == 1 ? 0.66 : 0.2);
@@ -192,7 +189,7 @@ class NewsFeedScreen extends StatelessWidget {
                                       Row(
                                         children: [
                                           Text(
-                                            'AI Summary',
+                                            l10n.aiSummary,
                                             style: TextStyle(
                                               color: AppColors.secondary,
                                               fontSize: 12,

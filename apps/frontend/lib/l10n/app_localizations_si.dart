@@ -593,4 +593,77 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get nameRequired => 'නම අවශ්‍ය වේ';
+
+  @override
+  String get article1Title => 'කඩිනම්: AI ප්‍රවෘත්ති සත්‍යාපනය විප්ලවීය කරයි';
+
+  @override
+  String get article1Summary =>
+      'නව AI තාක්ෂණයට උසස් යන්ත්‍ර ඉගෙනීමේ ඇල්ගොරිතම භාවිතයෙන් 98% නිරවද්‍යතාවයකින් ව්‍යාජ ප්‍රවෘත්ති හඳුනාගත හැකිය.';
+
+  @override
+  String get article1Source => 'තාක්ෂණ ප්‍රවෘත්ති';
+
+  @override
+  String get article2Title =>
+      'දේශපාලන සමුළුව දේශගුණික විපර්යාස ආමන්ත්‍රණය කරයි';
+
+  @override
+  String get article2Summary =>
+      'ලෝක නායකයින් 2026 සඳහා දේශගුණික ක්‍රියාමාර්ග සහ තිරසාර සංවර්ධන ඉලක්ක සාකච්ඡා කිරීමට රැස්වෙති.';
+
+  @override
+  String get article2Source => 'ලෝක දේශපාලනය';
+
+  @override
+  String get article3Title => 'කොටස් වෙළඳපොල නව උස් මට්ටම් කරා';
+
+  @override
+  String get article3Summary =>
+      'AI අංශයේ වර්ධනය පිළිබඳ ආයෝජකයින් විශ්වාසය දක්වන විට තාක්ෂණ කොටස් වෙළඳපල ලාභ මෙහෙයවයි.';
+
+  @override
+  String get article3Source => 'අද ව්‍යාපාර';
+
+  @override
+  String get article4Title => 'පිළිකා ප්‍රතිකාරයේ වෛද්‍ය ජයග්‍රහණයක්';
+
+  @override
+  String get article4Summary =>
+      'විද්‍යාඥයින් සායනික අත්හදා බැලීම්වල පොරොන්දු සහිත ප්‍රතිඵල පෙන්වන නව ප්‍රතිශක්ති චිකිත්සාවක් සංවර්ධනය කරයි.';
+
+  @override
+  String get article4Source => 'සෞඛ්‍ය ප්‍රවෘත්ති';
+
+  @override
+  String get article5Title => 'SpaceX අඟහරු මෙහෙයුමේ කාලසටහන නිවේදනය කරයි';
+
+  @override
+  String get article5Summary =>
+      'Elon Musk 2028 දී අඟහරු වෙත පළමු කාර්ය මණ්ඩල මෙහෙයුම සඳහා යාවත්කාලීන සැලසුම් හෙළි කරයි.';
+
+  @override
+  String get article5Source => 'අභ්‍යවකාශ සඟරාව';
+
+  @override
+  String get article6Title => 'ඔලිම්පික් 2026 සූදානම යටතේ';
+
+  @override
+  String get article6Summary =>
+      'සත්කාරක නගරය එළඹෙන ඔලිම්පික් ක්‍රීඩා සඳහා අති නවීන පහසුකම් එළිදක්වයි.';
+
+  @override
+  String get article6Source => 'ක්‍රීඩා ලෝකය';
+
+  @override
+  String get biased => 'පක්ෂග්‍රාහී';
+
+  @override
+  String get possiblyFake => 'ව්‍යාජ විය හැකිය';
+
+  @override
+  String get readMore => 'තව කියවන්න';
+
+  @override
+  String get sourceLabel => 'මූලාශ්‍රය';
 }
