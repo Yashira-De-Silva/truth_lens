@@ -29,7 +29,7 @@ class _TruthLensAppState extends ConsumerState<TruthLensApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme, // Theme
       themeMode: _themeMode,
-      locale: Locale(languageCode), // Language code
+      locale: Locale(languageCode),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: const SplashScreen(), // Splash screen
