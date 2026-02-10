@@ -27,12 +27,12 @@ class _TruthLensAppState extends ConsumerState<TruthLensApp> {
       title: 'TruthLens',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme, // Theme
+      darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
       locale: Locale(languageCode),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const SplashScreen(), // Splash screen
+      home: const SplashScreen(),
     );
   }
 }
