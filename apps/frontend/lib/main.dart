@@ -24,7 +24,7 @@ class _TruthLensAppState extends ConsumerState<TruthLensApp> {
     final languageCode = ref.watch(settingsProvider).language;
     
     return MaterialApp(
-      title: 'TruthLens', //name
+      title: 'TruthLens', 
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
