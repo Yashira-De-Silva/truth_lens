@@ -33,6 +33,6 @@ class _TruthLensAppState extends ConsumerState<TruthLensApp> {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: const SplashScreen(),
-    );
+    ); 
   }
 }
