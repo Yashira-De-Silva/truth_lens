@@ -25,7 +25,7 @@ class _TruthLensAppState extends ConsumerState<TruthLensApp> {
     
     return MaterialApp(
       title: 'TruthLens', 
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: false, //banner
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
