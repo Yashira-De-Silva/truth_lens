@@ -27,7 +27,7 @@ class _TruthLensAppState extends ConsumerState<TruthLensApp> {
       title: 'TruthLens', 
       debugShowCheckedModeBanner: false, 
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme, //theme
+      darkTheme: AppTheme.darkTheme, 
       themeMode: _themeMode,
       locale: Locale(languageCode),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
