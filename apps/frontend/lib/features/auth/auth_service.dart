@@ -124,6 +124,36 @@ Future<Map<String, dynamic>> me(String token) async {
   throw AuthException(body['message'] as String? ?? 'Failed to fetch user');
 }
 
+/// Updates name and/or bio for the authenticated user.
+Future<Map<String, dynamic>> updateProfile({
+  required String token,
+  String? name,
+  String? bio,
+}) async {
+  final payload = <String, dynamic>{};
+  if (name != null) payload['name'] = name;
+  if (bio != null) payload['bio'] = bio;
+
+  final response = await http
+      .put(
+        Uri.parse('$_baseUrl/profile'),
+        headers: _authHeaders(token),
+        body: jsonEncode(payload),
+      )
+      .timeout(const Duration(seconds: 15));
+
+  final body = jsonDecode(response.body) as Map<String, dynamic>;
+  if (response.statusCode == 200 && body['success'] == true) {
+    return body['data'] as Map<String, dynamic>;
+  }
+  if (body['errors'] != null) {
+    final errors = body['errors'] as Map<String, dynamic>;
+    final first = (errors.values.first as List).first as String;
+    throw AuthException(first);
+  }
+  throw AuthException(body['message'] as String? ?? 'Failed to update profile');
+}
+
 // ── Internal helpers ─────────────────────────────────────────────────────────
 
 AuthResult _parseAuthResponse(http.Response response) {

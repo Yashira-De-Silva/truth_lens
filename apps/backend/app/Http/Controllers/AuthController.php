@@ -192,4 +192,42 @@ class AuthController extends Controller
             'data'    => auth()->user(),
         ]);
     }
+
+    // ── Update Profile ────────────────────────────────────────────────────────
+
+    /**
+     * Update name, bio, and/or profile_image for the authenticated user.
+     *
+     * PUT /api/profile
+     * Header: Authorization: Bearer <token>
+     * Body: { name?, bio?, profile_image? }
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'name'          => 'sometimes|string|max:255',
+            'bio'           => 'sometimes|nullable|string|max:500',
+            'profile_image' => 'sometimes|nullable|string|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
+        $user->fill($request->only(['name', 'bio', 'profile_image']));
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data'    => $user->fresh(),
+        ]);
+    }
 }

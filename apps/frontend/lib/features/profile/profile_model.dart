@@ -4,6 +4,7 @@ class UserProfile {
   final String phone;
   final String bio;
   final String? avatarPath;
+  final String? apiKey;
 
   UserProfile({
     required this.name,
@@ -11,6 +12,7 @@ class UserProfile {
     this.phone = '',
     this.bio = '',
     this.avatarPath,
+    this.apiKey,
   });
 
   UserProfile copyWith({
@@ -19,6 +21,7 @@ class UserProfile {
     String? phone,
     String? bio,
     String? avatarPath,
+    String? apiKey,
   }) {
     return UserProfile(
       name: name ?? this.name,
@@ -26,6 +29,7 @@ class UserProfile {
       phone: phone ?? this.phone,
       bio: bio ?? this.bio,
       avatarPath: avatarPath ?? this.avatarPath,
+      apiKey: apiKey ?? this.apiKey,
     );
   }
 
@@ -36,6 +40,7 @@ class UserProfile {
       'phone': phone,
       'bio': bio,
       'avatarPath': avatarPath,
+      'apiKey': apiKey,
     };
   }
 
@@ -45,7 +50,19 @@ class UserProfile {
       email: json['email'] ?? 'user@example.com',
       phone: json['phone'] ?? '',
       bio: json['bio'] ?? '',
-      avatarPath: json['avatarPath'],
+      avatarPath: json['avatarPath'] ?? json['profile_image'],
+      apiKey: json['apiKey'] ?? json['api_key'],
+    );
+  }
+
+  /// Build from the raw backend user map (snake_case keys).
+  factory UserProfile.fromBackend(Map<String, dynamic> json) {
+    return UserProfile(
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      bio: json['bio'] ?? '',
+      avatarPath: json['profile_image'],
+      apiKey: json['api_key'],
     );
   }
 }
