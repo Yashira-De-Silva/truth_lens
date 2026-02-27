@@ -1,7 +1,0 @@
-/vendor/
-/.env
-/node_modules/
-/public/storage
-/storage/*.key
-/.idea/
-/.vscode/

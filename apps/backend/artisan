@@ -1,5 +1,18 @@
 #!/usr/bin/env php
 <?php
-// Minimal artisan stub to allow basic artisan commands until full Laravel installed.
-// This file is a placeholder; running real artisan requires full framework files.
-echo "Artisan placeholder - install full Laravel via Composer to use artisan commands.\n";
+
+use Illuminate\Foundation\Application;
+use Symfony\Component\Console\Input\ArgvInput;
+
+define('LARAVEL_START', microtime(true));
+
+// Register the Composer autoloader...
+require __DIR__.'/vendor/autoload.php';
+
+// Bootstrap Laravel and handle the command...
+/** @var Application $app */
+$app = require_once __DIR__.'/bootstrap/app.php';
+
+$status = $app->handleCommand(new ArgvInput);
+
+exit($status);
