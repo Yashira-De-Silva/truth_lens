@@ -8,6 +8,8 @@ const String _baseUrl = 'http://192.168.1.220:8000/api';
 
 const _tokenKey = 'auth_token';
 const _userKey = 'auth_user';
+const _loginTimestampKey = 'auth_login_timestamp';
+const _sessionDays = 30;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -37,6 +39,7 @@ Future<void> clearToken() async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.remove(_tokenKey);
   await prefs.remove(_userKey);
+  await prefs.remove(_loginTimestampKey);
 }
 
 Future<void> saveUser(Map<String, dynamic> user) async {
@@ -49,6 +52,24 @@ Future<Map<String, dynamic>?> loadUser() async {
   final raw = prefs.getString(_userKey);
   if (raw == null) return null;
   return jsonDecode(raw) as Map<String, dynamic>;
+}
+
+/// Saves the current UTC timestamp as the login time.
+Future<void> saveLoginTimestamp() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setInt(
+    _loginTimestampKey,
+    DateTime.now().toUtc().millisecondsSinceEpoch,
+  );
+}
+
+/// Returns true if more than [_sessionDays] days have passed since login.
+Future<bool> isSessionExpired() async {
+  final prefs = await SharedPreferences.getInstance();
+  final ts = prefs.getInt(_loginTimestampKey);
+  if (ts == null) return true; // no timestamp → treat as expired
+  final loginTime = DateTime.fromMillisecondsSinceEpoch(ts, isUtc: true);
+  return DateTime.now().toUtc().difference(loginTime).inDays >= _sessionDays;
 }
 
 // ── API calls ────────────────────────────────────────────────────────────────

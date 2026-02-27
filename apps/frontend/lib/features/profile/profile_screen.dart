@@ -20,6 +20,8 @@ import '../game/chess_game_screen.dart';
 import '../bookmarks/bookmarks_screen.dart';
 import 'help_support_screen.dart';
 import 'about_screen.dart';
+import '../auth/auth_provider.dart';
+import '../auth/login_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});

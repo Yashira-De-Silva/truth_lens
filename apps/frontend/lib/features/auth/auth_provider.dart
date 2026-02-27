@@ -44,10 +44,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   /// On startup, reload persisted token & user.
+  /// If the session is older than 30 days, treat as unauthenticated.
   Future<void> _restore() async {
     final token = await svc.loadToken();
     final user = await svc.loadUser();
     if (token != null && user != null) {
+      final expired = await svc.isSessionExpired();
+      if (expired) {
+        await svc.clearToken();
+        state = state.copyWith(status: AuthStatus.unauthenticated);
+        return;
+      }
       state = state.copyWith(
         status: AuthStatus.authenticated,
         token: token,
@@ -72,6 +79,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       await svc.saveToken(result.token);
       await svc.saveUser(result.user);
+      await svc.saveLoginTimestamp();
       state = state.copyWith(
         status: AuthStatus.authenticated,
         token: result.token,
@@ -96,6 +104,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final result = await svc.login(email: email, password: password);
       await svc.saveToken(result.token);
       await svc.saveUser(result.user);
+      await svc.saveLoginTimestamp();
       state = state.copyWith(
         status: AuthStatus.authenticated,
         token: result.token,
