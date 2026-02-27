@@ -1,33 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
+import '../auth/auth_provider.dart';
+import '../auth/login_screen.dart';
 import '../home/home_screen.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends ConsumerState<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1200));
+    _animation =
+        CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _controller.forward();
 
-    // Navigate when animation finishes. Check `mounted` to avoid using
-    // BuildContext across async gaps.
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         if (!mounted) return;
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+        _navigateNext();
       }
     });
+  }
+
+  void _navigateNext() {
+    final authState = ref.read(authProvider);
+    final destination = authState.isAuthenticated
+        ? const HomeScreen()
+        : const LoginScreen();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => destination),
+    );
   }
 
   @override
@@ -46,23 +60,44 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Placeholder for logo
               Container(
                 width: 110,
                 height: 110,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(22),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 10)],
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 10)
+                  ],
                 ),
                 child: Center(
-                  child: Text('TL', style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: AppColors.primary)),
+                  child: Text(
+                    'TL',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineLarge
+                        ?.copyWith(color: AppColors.primary),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
-              Text('TruthLens', style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white)),
+              Text(
+                'TruthLens',
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineMedium
+                    ?.copyWith(color: Colors.white),
+              ),
               const SizedBox(height: 8),
-              Text('See the Truth Behind the News', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70)),
+              Text(
+                'See the Truth Behind the News',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: Colors.white70),
+              ),
             ],
           ),
         ),

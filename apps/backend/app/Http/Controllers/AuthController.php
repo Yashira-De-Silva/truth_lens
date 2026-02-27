@@ -12,6 +12,21 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
 {
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Generate a unique 6-character uppercase alphanumeric API key.
+     * Retries until the generated key is not already taken.
+     */
+    private function generateApiKey(): string
+    {
+        do {
+            $key = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 6));
+        } while (User::where('api_key', $key)->exists());
+
+        return $key;
+    }
+
     // ── Register ─────────────────────────────────────────────────────────────
 
     /**
@@ -40,6 +55,7 @@ class AuthController extends Controller
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
+            'api_key'  => $this->generateApiKey(),
         ]);
 
         $token = JWTAuth::fromUser($user);
@@ -48,10 +64,10 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'User registered successfully',
             'data'    => [
-                'user'  => $user,
-                'token' => $token,
+                'user'       => $user,
+                'token'      => $token,
                 'token_type' => 'bearer',
-                'expires_in' => config('jwt.ttl') * 60, // seconds
+                'expires_in' => config('jwt.ttl') * 60,
             ],
         ], 201);
     }
