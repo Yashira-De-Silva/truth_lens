@@ -16,6 +16,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  bool _animationDone = false;
 
   @override
   void initState() {
@@ -29,13 +30,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         if (!mounted) return;
-        _navigateNext();
+        setState(() => _animationDone = true);
+        _tryNavigate();
       }
     });
   }
 
-  void _navigateNext() {
+  /// Called both when the animation finishes AND whenever the auth state
+  /// changes. Navigation only happens once both conditions are true:
+  ///   1. The splash animation has completed.
+  ///   2. _restore() has resolved (status is no longer AuthStatus.initial).
+  void _tryNavigate() {
+    if (!_animationDone) return;
     final authState = ref.read(authProvider);
+    if (authState.status == AuthStatus.initial) return; // still loading
     final destination = authState.isAuthenticated
         ? const HomeScreen()
         : const LoginScreen();
@@ -52,6 +60,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Re-attempt navigation whenever auth state settles from 'initial'.
+    ref.listen<AuthState>(authProvider, (_, next) {
+      if (next.status != AuthStatus.initial) {
+        _tryNavigate();
+      }
+    });
+
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: FadeTransition(
