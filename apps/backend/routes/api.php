@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ChatController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,6 +17,16 @@ use Illuminate\Support\Facades\Route;
 |   POST /api/logout    – invalidate token
 |   POST /api/refresh   – get a new token
 |   GET  /api/me        – return authenticated user
+|   PUT  /api/profile   – update name/bio/profile_image
+|
+| Chat endpoints (protected):
+|   GET    /api/chat/users                                  – all users except self
+|   POST   /api/chat/conversations                          – get or create conversation
+|   GET    /api/chat/conversations                          – list my conversations
+|   GET    /api/chat/conversations/{id}/messages            – fetch messages
+|   POST   /api/chat/conversations/{id}/messages            – send message
+|   POST   /api/chat/conversations/{id}/read               – mark as read
+|   DELETE /api/chat/messages/{id}                         – delete a message
 |
 */
 
@@ -29,4 +40,15 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/refresh',       [AuthController::class, 'refresh']);
     Route::get('/me',             [AuthController::class, 'me']);
     Route::put('/profile',        [AuthController::class, 'updateProfile']);
+
+    // Chat
+    Route::prefix('chat')->group(function () {
+        Route::get('/users',                                      [ChatController::class, 'users']);
+        Route::post('/conversations',                             [ChatController::class, 'getOrCreateConversation']);
+        Route::get('/conversations',                              [ChatController::class, 'conversations']);
+        Route::get('/conversations/{conversationId}/messages',    [ChatController::class, 'messages']);
+        Route::post('/conversations/{conversationId}/messages',   [ChatController::class, 'sendMessage']);
+        Route::post('/conversations/{conversationId}/read',       [ChatController::class, 'markRead']);
+        Route::delete('/messages/{messageId}',                    [ChatController::class, 'deleteMessage']);
+    });
 });
