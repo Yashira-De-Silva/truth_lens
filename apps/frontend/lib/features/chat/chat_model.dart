@@ -101,13 +101,15 @@ class ChatMessage {
 }
 
 class ChatConversation {
-  final String id;
+  final String id;           // local/display id
+  final String conversationId; // backend UUID
   final ChatUser user;
   final ChatMessage? lastMessage;
   final int unreadCount;
 
   ChatConversation({
     required this.id,
+    required this.conversationId,
     required this.user,
     this.lastMessage,
     this.unreadCount = 0,

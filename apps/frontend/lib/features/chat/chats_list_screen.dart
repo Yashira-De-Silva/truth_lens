@@ -1,121 +1,22 @@
 import 'dart:ui';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
-import 'chat_model.dart';
+import 'chat_provider.dart';
+import 'chat_service.dart';
 import 'chat_screen.dart';
 import 'select_user_screen.dart';
 
-class ChatsListScreen extends ConsumerStatefulWidget {
+class ChatsListScreen extends ConsumerWidget {
   const ChatsListScreen({super.key});
 
   @override
-  ConsumerState<ChatsListScreen> createState() => _ChatsListScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final state = ref.watch(conversationsProvider);
 
-class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
-  // Mock data for available users
-  final List<ChatUser> _availableUsers = [
-    ChatUser(
-      id: '1',
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      isOnline: true,
-    ),
-    ChatUser(
-      id: '2',
-      name: 'Michael Chen',
-      email: 'michael@example.com',
-      isOnline: false,
-    ),
-    ChatUser(
-      id: '3',
-      name: 'Emma Rodriguez',
-      email: 'emma@example.com',
-      isOnline: true,
-    ),
-  ];
-
-  List<ChatConversation> _conversations = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadConversations();
-  }
-
-  Future<void> _loadConversations() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<ChatConversation> loadedConversations = [];
-
-    for (final user in _availableUsers) {
-      final chatKey = 'chat_messages_${user.id}';
-      final messagesJson = prefs.getString(chatKey);
-
-      if (messagesJson != null) {
-        try {
-          final List<dynamic> decoded = jsonDecode(messagesJson);
-          final messages = decoded
-              .map((json) => ChatMessage.fromJson(json))
-              .toList();
-
-          if (messages.isNotEmpty) {
-            // Get the last message (even if deleted for everyone)
-            // Only skip messages deleted for me
-            ChatMessage? lastMessage;
-            int unreadCount = 0;
-
-            for (var i = messages.length - 1; i >= 0; i--) {
-              // Show last message even if deleted for everyone
-              // Only skip if deleted for me
-              if (lastMessage == null && !messages[i].isDeletedForMe) {
-                lastMessage = messages[i];
-              }
-              // Count unread messages
-              if (messages[i].senderId != 'me' &&
-                  !messages[i].isRead &&
-                  !messages[i].isDeletedForMe) {
-                unreadCount++;
-              }
-            }
-
-            if (lastMessage != null) {
-              loadedConversations.add(
-                ChatConversation(
-                  id: user.id,
-                  user: user,
-                  lastMessage: lastMessage,
-                  unreadCount: unreadCount,
-                ),
-              );
-            }
-          }
-        } catch (e) {
-          // Skip if there's an error loading this conversation
-          continue;
-        }
-      }
-    }
-
-    // Sort by last message timestamp (most recent first)
-    loadedConversations.sort((a, b) {
-      if (a.lastMessage == null && b.lastMessage == null) return 0;
-      if (a.lastMessage == null) return 1;
-      if (b.lastMessage == null) return -1;
-      return b.lastMessage!.timestamp.compareTo(a.lastMessage!.timestamp);
-    });
-
-    setState(() {
-      _conversations = loadedConversations;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -128,28 +29,23 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      AppLocalizations.of(context)!.messages,
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(
+                      l10n.messages,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                     ),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SelectUserScreen(),
-                          ),
-                        );
+                      onTap: () async {
+                        await Navigator.push(context,
+                            MaterialPageRoute(builder: (_) => const SelectUserScreen()));
+                        ref.read(conversationsProvider.notifier).load();
                       },
                       child: Container(
                         width: 48,
@@ -157,34 +53,33 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.secondary.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.secondary.withValues(alpha: 0.3),
-                          ),
+                          border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
                         ),
-                        child: Icon(
-                          Icons.edit_square,
-                          color: AppColors.secondary,
-                          size: 24,
-                        ),
+                        child: Icon(Icons.edit_square, color: AppColors.secondary, size: 24),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              // Conversations List
               Expanded(
-                child: _conversations.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _conversations.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final conversation = _conversations[index];
-                          return _buildConversationCard(conversation);
-                        },
-                      ),
+                child: state.isLoading
+                    ? const Center(child: CircularProgressIndicator(color: AppColors.secondary))
+                    : state.error != null
+                        ? _buildError(context, ref, state.error!)
+                        : state.conversations.isEmpty
+                            ? _buildEmptyState(context, ref)
+                            : RefreshIndicator(
+                                color: AppColors.secondary,
+                                backgroundColor: const Color(0xFF0B1220),
+                                onRefresh: () => ref.read(conversationsProvider.notifier).load(),
+                                child: ListView.separated(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  itemCount: state.conversations.length,
+                                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                  itemBuilder: (ctx, i) =>
+                                      _buildCard(ctx, ref, state.conversations[i]),
+                                ),
+                              ),
               ),
             ],
           ),
@@ -193,39 +88,33 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
     );
   }
 
-  Widget _buildConversationCard(ChatConversation conversation) {
+  Widget _buildCard(BuildContext context, WidgetRef ref, BackendConversation conv) {
     final l10n = AppLocalizations.of(context)!;
-    final formattedTime = _formatTime(conversation.lastMessage?.timestamp);
-    final lastMessage = conversation.lastMessage;
-
-    // Determine what to display based on message status
+    final last = conv.lastMessage;
     String displayMessage = l10n.noMessages;
     bool isItalic = false;
-
-    if (lastMessage != null) {
-      if (lastMessage.isDeletedForEveryone) {
+    if (last != null) {
+      if (last.deletedForEveryone) {
         displayMessage = l10n.thisMessageWasDeleted;
         isItalic = true;
-      } else if (lastMessage.isDeletedForMe) {
+      } else if (last.deletedForMe) {
         displayMessage = l10n.messageDeleted;
         isItalic = true;
       } else {
-        // Show "You: " prefix if you sent the message
-        final prefix = lastMessage.senderId == 'me' ? '${l10n.you}: ' : '';
-        displayMessage = prefix + lastMessage.message;
+        displayMessage = last.body;
       }
     }
+    final formattedTime = last != null ? _formatTime(DateTime.tryParse(last.createdAt)) : '';
 
     return GestureDetector(
       onTap: () async {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ChatScreen(user: conversation.user),
+            builder: (_) => ChatScreen(conversationId: conv.conversationId, otherUser: conv.otherUser),
           ),
         );
-        // Reload conversations when returning from chat
-        _loadConversations();
+        ref.read(conversationsProvider.notifier).load();
       },
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -233,7 +122,7 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
           color: const Color(0xFF0B1220).withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: conversation.unreadCount > 0
+            color: conv.unreadCount > 0
                 ? AppColors.secondary.withValues(alpha: 0.3)
                 : Colors.white.withValues(alpha: 0.1),
           ),
@@ -244,53 +133,24 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Row(
               children: [
-                // Avatar
-                Stack(
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.secondary,
-                            AppColors.secondary.withValues(alpha: 0.6),
-                          ],
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          conversation.user.name[0].toUpperCase(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(colors: [
+                      AppColors.secondary,
+                      AppColors.secondary.withValues(alpha: 0.6),
+                    ]),
+                  ),
+                  child: Center(
+                    child: Text(
+                      conv.otherUser.name[0].toUpperCase(),
+                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                     ),
-                    if (conversation.user.isOnline)
-                      Positioned(
-                        bottom: 2,
-                        right: 2,
-                        child: Container(
-                          width: 14,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: AppColors.success,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: const Color(0xFF0B1220),
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
                 const SizedBox(width: 16),
-                // Message Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,26 +158,23 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            conversation.user.name,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: conversation.unreadCount > 0
-                                  ? FontWeight.bold
-                                  : FontWeight.w600,
+                          Expanded(
+                            child: Text(
+                              conv.otherUser.name,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: conv.unreadCount > 0 ? FontWeight.bold : FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           Text(
                             formattedTime,
                             style: TextStyle(
-                              color: conversation.unreadCount > 0
-                                  ? AppColors.secondary
-                                  : Colors.white.withValues(alpha: 0.5),
+                              color: conv.unreadCount > 0 ? AppColors.secondary : Colors.white.withValues(alpha: 0.5),
                               fontSize: 12,
-                              fontWeight: conversation.unreadCount > 0
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
+                              fontWeight: conv.unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
                             ),
                           ),
                         ],
@@ -329,40 +186,27 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
                             child: Text(
                               displayMessage,
                               style: TextStyle(
-                                color: conversation.unreadCount > 0
+                                color: conv.unreadCount > 0
                                     ? Colors.white.withValues(alpha: 0.9)
                                     : Colors.white.withValues(alpha: 0.6),
                                 fontSize: 14,
-                                fontWeight: conversation.unreadCount > 0
-                                    ? FontWeight.w500
-                                    : FontWeight.normal,
-                                fontStyle: isItalic
-                                    ? FontStyle.italic
-                                    : FontStyle.normal,
+                                fontWeight: conv.unreadCount > 0 ? FontWeight.w500 : FontWeight.normal,
+                                fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (conversation.unreadCount > 0) ...[
+                          if (conv.unreadCount > 0) ...[
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
                                 color: AppColors.secondary,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Text(
-                                '${conversation.unreadCount}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              child: Text('${conv.unreadCount}',
+                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                             ),
                           ],
                         ],
@@ -378,44 +222,24 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 80,
-            color: Colors.white.withValues(alpha: 0.3),
-          ),
+          Icon(Icons.chat_bubble_outline, size: 80, color: Colors.white.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
-          Text(
-            l10n.noMessagesYet,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.6),
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(l10n.noMessagesYet,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 18, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          Text(
-            l10n.startConversation,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.4),
-              fontSize: 14,
-            ),
-          ),
+          Text(l10n.startConversation,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 14)),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SelectUserScreen(),
-                ),
-              );
+            onPressed: () async {
+              await Navigator.push(context, MaterialPageRoute(builder: (_) => const SelectUserScreen()));
+              ref.read(conversationsProvider.notifier).load();
             },
             icon: const Icon(Icons.add),
             label: Text(l10n.newMessage),
@@ -423,10 +247,27 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
               backgroundColor: AppColors.secondary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildError(BuildContext context, WidgetRef ref, String error) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.wifi_off_outlined, size: 64, color: Colors.white.withValues(alpha: 0.4)),
+          const SizedBox(height: 16),
+          Text('Could not load messages',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 16)),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => ref.read(conversationsProvider.notifier).load(),
+            child: const Text('Retry', style: TextStyle(color: AppColors.secondary)),
           ),
         ],
       ),
@@ -435,18 +276,12 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
 
   String _formatTime(DateTime? time) {
     if (time == null) return '';
-
     final now = DateTime.now();
-    final difference = now.difference(time);
-
-    if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}h';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d';
-    } else {
-      return DateFormat('MMM d').format(time);
-    }
+    final diff = now.difference(time.toLocal());
+    if (diff.inMinutes < 1) return 'now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    if (diff.inDays < 7) return '${diff.inDays}d';
+    return DateFormat('MMM d').format(time.toLocal());
   }
 }
