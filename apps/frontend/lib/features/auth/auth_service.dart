@@ -3,8 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Base URL of the Laravel backend.
-/// For a real device replace with your machine's LAN IP, e.g. http://192.168.x.x:8080
-const String _baseUrl = 'http://127.0.0.1:8080/api';
+/// Uses the Mac's LAN IP so real Android/iOS devices on the same Wi-Fi can reach it.
+const String _baseUrl = 'http://192.168.1.220:8000/api';
 
 const _tokenKey = 'auth_token';
 const _userKey = 'auth_user';
