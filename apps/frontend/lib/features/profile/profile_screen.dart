@@ -1,11 +1,9 @@
 import 'dart:ui';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/widgets/app_snackbar.dart';
 import '../../l10n/app_localizations.dart';
 import 'edit_profile_screen.dart';
 import 'language_screen.dart';
@@ -253,10 +251,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // ── API Key Card ──────────────────────────────────────────
-                _buildApiKeyCard(context),
                 const SizedBox(height: 24),
 
                 // Preview Profile Button
@@ -580,109 +574,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           fontSize: 16,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildApiKeyCard(BuildContext context) {
-    final apiKey = ref.watch(profileProvider).apiKey;
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.secondary.withValues(alpha: 0.15),
-            AppColors.primary.withValues(alpha: 0.4),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.secondary.withValues(alpha: 0.3),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.secondary.withValues(alpha: 0.1),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            child: Row(
-              children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: AppColors.secondary.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.vpn_key_outlined,
-                    color: AppColors.secondary,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Your API Key',
-                        style: TextStyle(
-                          color: Colors.white60,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        apiKey ?? '------',
-                        style: TextStyle(
-                          color: apiKey != null
-                              ? AppColors.secondary
-                              : Colors.white38,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 6,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Copy button
-                if (apiKey != null)
-                  GestureDetector(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: apiKey));
-                      AppSnackbar.showSuccess(context, 'API key copied!');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.secondary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.copy_outlined,
-                        color: AppColors.secondary,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
         ),
       ),
     );
