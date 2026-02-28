@@ -67,6 +67,7 @@ class BackendMessage {
   final int conversationId;
   final int senderId;
   final String body;
+  final String type;
   final bool isRead;
   final bool isEdited;
   final bool deletedForMe;
@@ -80,6 +81,7 @@ class BackendMessage {
     required this.conversationId,
     required this.senderId,
     required this.body,
+    this.type = 'text',
     required this.isRead,
     required this.isEdited,
     required this.deletedForMe,
@@ -94,6 +96,7 @@ class BackendMessage {
         conversationId: j['conversation_id'] as int,
         senderId: j['sender_id'] as int,
         body: j['body'] as String? ?? '',
+        type: j['type'] as String? ?? 'text',
         isRead: j['is_read'] as bool? ?? false,
         isEdited: j['is_edited'] as bool? ?? false,
         deletedForMe: j['deleted_for_me'] as bool? ?? false,

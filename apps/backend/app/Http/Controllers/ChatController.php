@@ -99,25 +99,26 @@ class ChatController extends Controller
             ->map(function (Conversation $conv) use ($me) {
                 $other = $conv->otherUser($me);
 
-                // Last visible message for this user
+                // Last message visible to this user (not deleted for them)
                 $last = Message::where('conversation_id', $conv->id)
+                    ->where('deleted_for_everyone', false)
                     ->where(function ($q) use ($me) {
-                        $q->where('sender_id', $me)
-                            ->where('deleted_for_sender', false);
-                    })
-                    ->orWhere(function ($q) use ($me, $conv) {
-                        $q->where('conversation_id', $conv->id)
-                            ->where('sender_id', '!=', $me)
-                            ->where('deleted_for_receiver', false);
+                        $q->whereNull('deleted_by_users')
+                          ->orWhereRaw("JSON_SEARCH(deleted_by_users, 'one', ?) IS NULL", [$me]);
                     })
                     ->orderByDesc('created_at')
                     ->first();
 
-                // Unread count (messages sent by other user that haven't been read)
+                // Unread count: messages NOT sent by me, not deleted for everyone,
+                // not deleted for me, and not yet read (no read receipt in metadata)
                 $unread = Message::where('conversation_id', $conv->id)
-                    ->where('sender_id', '!=', $me)
-                    ->where('is_read', false)
-                    ->where('deleted_for_receiver', false)
+                    ->where('customer_id', '!=', $me)
+                    ->where('deleted_for_everyone', false)
+                    ->where(function ($q) use ($me) {
+                        $q->whereNull('deleted_by_users')
+                          ->orWhereRaw("JSON_SEARCH(deleted_by_users, 'one', ?) IS NULL", [$me]);
+                    })
+                    ->whereRaw("JSON_EXTRACT(metadata, '$.read_by_?') IS NULL", [$me])
                     ->count();
 
                 return [
@@ -128,8 +129,7 @@ class ChatController extends Controller
                     'updated_at'      => $conv->updated_at,
                 ];
             })
-            ->filter(fn($c) => $c['last_message'] !== null)  // only show conversations with at least one message
-            ->sortByDesc(fn($c) => optional($c['last_message'])['created_at'])
+            ->sortByDesc(fn($c) => optional($c['last_message'])['created_at'] ?? $c['updated_at'])
             ->values();
 
         return response()->json([
@@ -154,16 +154,25 @@ class ChatController extends Controller
         }
 
         $messages = Message::where('conversation_id', $conv->id)
+            ->where('deleted_for_everyone', false)
+            ->where(function ($q) use ($me) {
+                $q->whereNull('deleted_by_users')
+                  ->orWhereRaw("JSON_SEARCH(deleted_by_users, 'one', ?) IS NULL", [$me]);
+            })
             ->with('replyTo')
             ->orderBy('created_at')
             ->get()
             ->map(fn($m) => $this->formatMessage($m, $me));
 
-        // Mark all unread messages from the other person as read
+        // Mark all unread messages from the other person as read via metadata
         Message::where('conversation_id', $conv->id)
-            ->where('sender_id', '!=', $me)
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
+            ->where('customer_id', '!=', $me)
+            ->whereRaw("JSON_EXTRACT(metadata, '$.read_by_{$me}') IS NULL")
+            ->each(function (Message $m) use ($me) {
+                $meta = $m->metadata ?? [];
+                $meta["read_by_{$me}"] = now()->toIso8601String();
+                $m->update(['metadata' => $meta]);
+            });
 
         return response()->json([
             'success' => true,
@@ -196,10 +205,11 @@ class ChatController extends Controller
         }
 
         $message = Message::create([
-            'conversation_id' => $conv->id,
-            'sender_id'       => $me,
-            'body'            => $request->body,
-            'reply_to_id'     => $request->reply_to_id,
+            'conversation_id'    => $conv->id,
+            'customer_id'        => $me,
+            'content'            => $request->body,
+            'type'               => 'text',
+            'reply_to_message_id'=> $request->reply_to_id,
         ]);
 
         // Touch conversation updated_at so list re-sorts
@@ -236,21 +246,21 @@ class ChatController extends Controller
         $scope = $request->input('scope', 'me');
 
         if ($scope === 'everyone') {
-            if ($message->sender_id !== $me) {
+            if ($message->customer_id !== $me) {
                 return response()->json(['success' => false, 'message' => 'Only sender can delete for everyone'], 403);
             }
-            $hoursAgo = now()->diffInHours($message->created_at);
-            if ($hoursAgo >= 2) {
+            if (now()->diffInHours($message->created_at) >= 2) {
                 return response()->json(['success' => false, 'message' => 'Can only delete for everyone within 2 hours'], 422);
             }
-            $message->update(['deleted_for_sender' => true, 'deleted_for_receiver' => true]);
+            $message->update([
+                'deleted_for_everyone'    => true,
+                'deleted_for_everyone_at' => now(),
+            ]);
         } else {
-            // Delete for me only
-            if ($message->sender_id === $me) {
-                $message->update(['deleted_for_sender' => true]);
-            } else {
-                $message->update(['deleted_for_receiver' => true]);
-            }
+            // Delete for me only — append user ID to deleted_by_users JSON array
+            $deletedBy   = $message->deleted_by_users ?? [];
+            $deletedBy[] = $me;
+            $message->update(['deleted_by_users' => array_values(array_unique($deletedBy))]);
         }
 
         return response()->json(['success' => true]);
@@ -271,9 +281,13 @@ class ChatController extends Controller
         }
 
         Message::where('conversation_id', $conv->id)
-            ->where('sender_id', '!=', $me)
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
+            ->where('customer_id', '!=', $me)
+            ->whereRaw("JSON_EXTRACT(metadata, '$.read_by_{$me}') IS NULL")
+            ->each(function (Message $m) use ($me) {
+                $meta = $m->metadata ?? [];
+                $meta["read_by_{$me}"] = now()->toIso8601String();
+                $m->update(['metadata' => $meta]);
+            });
 
         return response()->json(['success' => true]);
     }
@@ -291,22 +305,23 @@ class ChatController extends Controller
 
     private function formatMessage(Message $m, int $me): array
     {
-        $isMe = $m->sender_id === $me;
-
         return [
             'id'                    => $m->id,
             'conversation_id'       => $m->conversation_id,
-            'sender_id'             => $m->sender_id,
-            'body'                  => $m->body,
-            'is_read'               => $m->is_read,
-            'is_edited'             => false,   // reserved for future
-            'deleted_for_me'        => $isMe ? $m->deleted_for_sender : $m->deleted_for_receiver,
-            'deleted_for_everyone'  => $m->deleted_for_sender && $m->deleted_for_receiver,
-            'reply_to_id'           => $m->reply_to_id,
+            'sender_id'             => $m->customer_id,
+            'body'                  => $m->content,
+            'type'                  => $m->type,
+            'attachments'           => $m->attachments ?? [],
+            'is_read'               => isset(($m->metadata ?? [])["read_by_{$me}"]),
+            'is_edited'             => $m->is_edited,
+            'edited_at'             => $m->edited_at?->toIso8601String(),
+            'deleted_for_me'        => $m->isDeletedForUser($me),
+            'deleted_for_everyone'  => $m->deleted_for_everyone,
+            'reply_to_id'           => $m->reply_to_message_id,
             'reply_to'              => $m->replyTo ? [
                 'id'        => $m->replyTo->id,
-                'sender_id' => $m->replyTo->sender_id,
-                'body'      => $m->replyTo->body,
+                'sender_id' => $m->replyTo->customer_id,
+                'body'      => $m->replyTo->content,
             ] : null,
             'created_at'            => $m->created_at->toIso8601String(),
             'updated_at'            => $m->updated_at->toIso8601String(),
