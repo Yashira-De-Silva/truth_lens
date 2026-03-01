@@ -118,7 +118,7 @@ class ChatController extends Controller
                         $q->whereNull('deleted_by_users')
                           ->orWhereRaw("JSON_SEARCH(deleted_by_users, 'one', ?) IS NULL", [$me]);
                     })
-                    ->whereRaw("JSON_EXTRACT(metadata, '$.read_by_?') IS NULL", [$me])
+                    ->whereRaw("(metadata IS NULL OR JSON_EXTRACT(metadata, '$.read_by_{$me}') IS NULL)")
                     ->count();
 
                 return [
@@ -167,7 +167,7 @@ class ChatController extends Controller
         // Mark all unread messages from the other person as read via metadata
         Message::where('conversation_id', $conv->id)
             ->where('customer_id', '!=', $me)
-            ->whereRaw("JSON_EXTRACT(metadata, '$.read_by_{$me}') IS NULL")
+            ->whereRaw("(metadata IS NULL OR JSON_EXTRACT(metadata, '$.read_by_{$me}') IS NULL)")
             ->each(function (Message $m) use ($me) {
                 $meta = $m->metadata ?? [];
                 $meta["read_by_{$me}"] = now()->toIso8601String();
@@ -282,7 +282,7 @@ class ChatController extends Controller
 
         Message::where('conversation_id', $conv->id)
             ->where('customer_id', '!=', $me)
-            ->whereRaw("JSON_EXTRACT(metadata, '$.read_by_{$me}') IS NULL")
+            ->whereRaw("(metadata IS NULL OR JSON_EXTRACT(metadata, '$.read_by_{$me}') IS NULL)")
             ->each(function (Message $m) use ($me) {
                 $meta = $m->metadata ?? [];
                 $meta["read_by_{$me}"] = now()->toIso8601String();

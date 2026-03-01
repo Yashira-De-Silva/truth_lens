@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../core/services/api_constants.dart';
+import '../../core/services/api_config.dart';
 
 // ── Headers ───────────────────────────────────────────────────────────────────
 
@@ -128,8 +128,9 @@ class BackendReplyTo {
 
 /// Fetch all users except the logged-in user.
 Future<List<BackendUser>> getUsers(String token) async {
+  final base = await ApiConfig.baseUrl;
   final res = await http
-      .get(Uri.parse('$kBaseUrl/chat/users'), headers: _authHeaders(token))
+      .get(Uri.parse('$base/chat/users'), headers: _authHeaders(token))
       .timeout(const Duration(seconds: 15));
   final body = jsonDecode(res.body) as Map<String, dynamic>;
   if (res.statusCode == 200 && body['success'] == true) {
@@ -143,9 +144,10 @@ Future<List<BackendUser>> getUsers(String token) async {
 /// Get or create a conversation with another user. Returns conversationId + other user.
 Future<BackendConversation> getOrCreateConversation(
     String token, int otherUserId) async {
+  final base = await ApiConfig.baseUrl;
   final res = await http
       .post(
-        Uri.parse('$kBaseUrl/chat/conversations'),
+        Uri.parse('$base/chat/conversations'),
         headers: _authHeaders(token),
         body: jsonEncode({'other_user_id': otherUserId}),
       )
@@ -165,15 +167,14 @@ Future<BackendConversation> getOrCreateConversation(
 
 /// Fetch all conversations for the logged-in user.
 Future<List<BackendConversation>> getConversations(String token) async {
+  final base = await ApiConfig.baseUrl;
   final res = await http
-      .get(Uri.parse('$kBaseUrl/chat/conversations'),
-          headers: _authHeaders(token))
+      .get(Uri.parse('$base/chat/conversations'), headers: _authHeaders(token))
       .timeout(const Duration(seconds: 15));
   final body = jsonDecode(res.body) as Map<String, dynamic>;
   if (res.statusCode == 200 && body['success'] == true) {
     return (body['data'] as List)
-        .map((e) =>
-            BackendConversation.fromJson(e as Map<String, dynamic>))
+        .map((e) => BackendConversation.fromJson(e as Map<String, dynamic>))
         .toList();
   }
   throw Exception(body['message'] ?? 'Failed to load conversations');
@@ -182,9 +183,10 @@ Future<List<BackendConversation>> getConversations(String token) async {
 /// Fetch all messages in a conversation.
 Future<List<BackendMessage>> getMessages(
     String token, String conversationId) async {
+  final base = await ApiConfig.baseUrl;
   final res = await http
       .get(
-        Uri.parse('$kBaseUrl/chat/conversations/$conversationId/messages'),
+        Uri.parse('$base/chat/conversations/$conversationId/messages'),
         headers: _authHeaders(token),
       )
       .timeout(const Duration(seconds: 15));
@@ -206,10 +208,10 @@ Future<BackendMessage> sendMessage(
 }) async {
   final payload = <String, dynamic>{'body': messageBody};
   if (replyToId != null) payload['reply_to_id'] = replyToId;
-
+  final base = await ApiConfig.baseUrl;
   final res = await http
       .post(
-        Uri.parse('$kBaseUrl/chat/conversations/$conversationId/messages'),
+        Uri.parse('$base/chat/conversations/$conversationId/messages'),
         headers: _authHeaders(token),
         body: jsonEncode(payload),
       )
@@ -217,8 +219,7 @@ Future<BackendMessage> sendMessage(
   final body = jsonDecode(res.body) as Map<String, dynamic>;
   if ((res.statusCode == 200 || res.statusCode == 201) &&
       body['success'] == true) {
-    return BackendMessage.fromJson(
-        body['data'] as Map<String, dynamic>);
+    return BackendMessage.fromJson(body['data'] as Map<String, dynamic>);
   }
   throw Exception(body['message'] ?? 'Failed to send message');
 }
@@ -226,9 +227,10 @@ Future<BackendMessage> sendMessage(
 /// Delete a message. [scope] = "me" or "everyone".
 Future<void> deleteMessage(
     String token, int messageId, String scope) async {
+  final base = await ApiConfig.baseUrl;
   await http
       .delete(
-        Uri.parse('$kBaseUrl/chat/messages/$messageId'),
+        Uri.parse('$base/chat/messages/$messageId'),
         headers: _authHeaders(token),
         body: jsonEncode({'scope': scope}),
       )
@@ -238,9 +240,10 @@ Future<void> deleteMessage(
 /// Mark all messages in a conversation as read.
 Future<void> markConversationRead(
     String token, String conversationId) async {
+  final base = await ApiConfig.baseUrl;
   await http
       .post(
-        Uri.parse('$kBaseUrl/chat/conversations/$conversationId/read'),
+        Uri.parse('$base/chat/conversations/$conversationId/read'),
         headers: _authHeaders(token),
       )
       .timeout(const Duration(seconds: 10));

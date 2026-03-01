@@ -1,11 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../core/services/api_constants.dart';
-
-/// Base URL of the Laravel backend.
-/// Uses the Mac's LAN IP so real Android/iOS devices on the same Wi-Fi can reach it.
-const String _baseUrl = kBaseUrl;
+import '../../core/services/api_config.dart';
 
 const _tokenKey = 'auth_token';
 const _userKey = 'auth_user';
@@ -55,7 +51,6 @@ Future<Map<String, dynamic>?> loadUser() async {
   return jsonDecode(raw) as Map<String, dynamic>;
 }
 
-/// Saves the current UTC timestamp as the login time.
 Future<void> saveLoginTimestamp() async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.setInt(
@@ -64,27 +59,25 @@ Future<void> saveLoginTimestamp() async {
   );
 }
 
-/// Returns true if more than [_sessionDays] days have passed since login.
 Future<bool> isSessionExpired() async {
   final prefs = await SharedPreferences.getInstance();
   final ts = prefs.getInt(_loginTimestampKey);
-  if (ts == null) return true; // no timestamp → treat as expired
+  if (ts == null) return true;
   final loginTime = DateTime.fromMillisecondsSinceEpoch(ts, isUtc: true);
   return DateTime.now().toUtc().difference(loginTime).inDays >= _sessionDays;
 }
 
 // ── API calls ────────────────────────────────────────────────────────────────
 
-/// Registers a new user. Returns the JWT token string on success.
-/// Throws [AuthException] on failure.
 Future<AuthResult> register({
   required String name,
   required String email,
   required String password,
 }) async {
+  final base = await ApiConfig.baseUrl;
   final response = await http
       .post(
-        Uri.parse('$_baseUrl/register'),
+        Uri.parse('$base/register'),
         headers: _jsonHeaders,
         body: jsonEncode({
           'name': name,
@@ -94,51 +87,45 @@ Future<AuthResult> register({
         }),
       )
       .timeout(const Duration(seconds: 15));
-
   return _parseAuthResponse(response);
 }
 
-/// Logs in an existing user. Returns the JWT token string on success.
-/// Throws [AuthException] on failure.
 Future<AuthResult> login({
   required String email,
   required String password,
 }) async {
+  final base = await ApiConfig.baseUrl;
   final response = await http
       .post(
-        Uri.parse('$_baseUrl/login'),
+        Uri.parse('$base/login'),
         headers: _jsonHeaders,
         body: jsonEncode({'email': email, 'password': password}),
       )
       .timeout(const Duration(seconds: 15));
-
   return _parseAuthResponse(response);
 }
 
-/// Logs out and invalidates the server-side token.
 Future<void> logout(String token) async {
   try {
+    final base = await ApiConfig.baseUrl;
     await http
         .post(
-          Uri.parse('$_baseUrl/logout'),
+          Uri.parse('$base/logout'),
           headers: _authHeaders(token),
         )
         .timeout(const Duration(seconds: 10));
-  } catch (_) {
-    // Even if the request fails, clear locally.
-  }
+  } catch (_) {}
   await clearToken();
 }
 
-/// Fetches the currently authenticated user's profile.
 Future<Map<String, dynamic>> me(String token) async {
+  final base = await ApiConfig.baseUrl;
   final response = await http
       .get(
-        Uri.parse('$_baseUrl/me'),
+        Uri.parse('$base/me'),
         headers: _authHeaders(token),
       )
       .timeout(const Duration(seconds: 10));
-
   final body = jsonDecode(response.body) as Map<String, dynamic>;
   if (response.statusCode == 200 && body['success'] == true) {
     return body['data'] as Map<String, dynamic>;
@@ -146,7 +133,6 @@ Future<Map<String, dynamic>> me(String token) async {
   throw AuthException(body['message'] as String? ?? 'Failed to fetch user');
 }
 
-/// Updates name and/or bio for the authenticated user.
 Future<Map<String, dynamic>> updateProfile({
   required String token,
   String? name,
@@ -156,9 +142,10 @@ Future<Map<String, dynamic>> updateProfile({
   if (name != null) payload['name'] = name;
   if (bio != null) payload['bio'] = bio;
 
+  final base = await ApiConfig.baseUrl;
   final response = await http
       .put(
-        Uri.parse('$_baseUrl/profile'),
+        Uri.parse('$base/profile'),
         headers: _authHeaders(token),
         body: jsonEncode(payload),
       )
@@ -180,7 +167,6 @@ Future<Map<String, dynamic>> updateProfile({
 
 AuthResult _parseAuthResponse(http.Response response) {
   final body = jsonDecode(response.body) as Map<String, dynamic>;
-
   if ((response.statusCode == 200 || response.statusCode == 201) &&
       body['success'] == true) {
     final data = body['data'] as Map<String, dynamic>;
@@ -189,14 +175,11 @@ AuthResult _parseAuthResponse(http.Response response) {
       user: data['user'] as Map<String, dynamic>,
     );
   }
-
-  // Validation errors (422)
   if (body['errors'] != null) {
     final errors = body['errors'] as Map<String, dynamic>;
     final first = (errors.values.first as List).first as String;
     throw AuthException(first);
   }
-
   throw AuthException(body['message'] as String? ?? 'An error occurred');
 }
 
