@@ -212,55 +212,16 @@ The following functional requirements define what the TruthLens system must be c
 
 ### 3.3 Hardware / Software Requirements
 
-#### Development Environment
-
-- **Operating System** — macOS 12+ / Windows 10+ / Ubuntu 20.04+
-- **RAM** — Minimum 8 GB (16 GB recommended for running emulator and server simultaneously)
-- **Storage** — Minimum 20 GB free disk space
-- **CPU** — Intel Core i5 / Apple M1 or equivalent
-
-#### Software Requirements
-
-- **Mobile Frontend** — Flutter SDK 3.x (Dart 3.x)
-- **Backend Framework** — Laravel 12 (PHP ≥ 8.2)
-- **AI Microservice** — FastAPI (Python 3.11+)
-- **Database** — MySQL 8.0+ (via Laravel Eloquent ORM)
-- **Authentication** — tymon/jwt-auth 2.x (Laravel)
-- **Social Auth** — Laravel Socialite 5.x / Google Sign-In Flutter
-- **State Management** — Flutter Riverpod 2.x
-- **NLP Model** — BERT (via HuggingFace Transformers)
-- **HTTP Client** — Dart `http` / `dio` package
-- **Version Control** — Git / GitHub
-- **Package Manager (PHP)** — Composer 2.x
-- **Package Manager (Dart)** — pub (Flutter)
-- **IDE** — VS Code / Android Studio / IntelliJ IDEA
-- **API Testing** — Postman / Insomnia
-- **Android Emulator** — Android Studio AVD (API 21+)
-- **iOS Simulator** — Xcode 14+ (macOS only)
-
-#### Runtime / Deployment Requirements
-
-- **Web Server** — Apache / Nginx with PHP-FPM
-- **PHP** — Version 8.2 or higher
-- **MySQL** — Version 8.0 or higher
-- **Python Runtime** — Version 3.11+ (for FastAPI service)
-- **SSL Certificate** — Required for production HTTPS (Let's Encrypt — free)
-- **Mobile Device** — Android 5.0+ (API 21+) or iOS 12.0+
-- **MySQL Server** — MySQL 8.0+ instance accessible from the backend server
-
----
-
-### 3.4 Networking Requirements
-
-- **API Protocol** — RESTful HTTP/HTTPS API with JSON payloads
-- **Data Format** — JSON (`application/json`)
-- **Authentication Header** — `Authorization: Bearer <JWT>` required on all protected endpoints
-- **Internet Connectivity** — Active internet connection required for article analysis, AI chat, and news digest features
-- **API Base URL** — Configurable via environment variable (`API_BASE_URL`) for environment switching
-- **CORS Policy** — Backend must enforce strict CORS rules, permitting only authorised mobile and web client origins
-- **Rate Limiting** — API endpoints must implement rate limiting (60 requests/minute per authenticated user)
-- **Ports** — Backend: 8000 (development), 443 (production HTTPS); FastAPI: 8001 (internal)
-- **Database Connection** — Persistent MySQL connection pooling via Laravel's database layer
+- **Server:** Cloud-based VPS (e.g., DigitalOcean, Fly.io) for hosting the backend API and AI microservice.
+- **Backend:** Laravel 12 (PHP 8.2+) for managing the primary REST API, with FastAPI (Python 3.11+) serving the AI model inference.
+- **Frontend:** Flutter (Dart 3.x) for building a dynamic, cross-platform mobile application targeting Android and iOS.
+- **Database:** MySQL 8.0+ for structured storage of user profiles, articles, analysis results, bookmarks, chat history, and badges, accessed via Laravel Eloquent ORM.
+- **Authentication:** JWT-based token authentication (tymon/jwt-auth 2.x) with Google OAuth support via Laravel Socialite.
+- **AI / NLP:** BERT model via HuggingFace Transformers running inside the FastAPI microservice for credibility inference.
+- **State Management:** Flutter Riverpod 2.x for reactive state handling across the mobile application.
+- **Version Control:** Git and GitHub for source control and collaboration.
+- **Client:** Any Android 5.0+ (API 21+) or iOS 12.0+ mobile device capable of running the Flutter application.
+- **Hardware (Development):** Minimum 8 GB RAM and an Intel Core i5 / Apple M1 processor (or equivalent) for running local emulators and development servers.
 
 ---
 
@@ -282,24 +243,15 @@ TruthLens is operationally feasible for the following reasons:
 
 ### 4.2 Economical Feasibility
 
-Estimated costs for the project are as follows:
+This will assess the cost effectiveness of the project, as well as the benefits of the project's implementation.
 
-- **Development Labour** — £0 (academic project, developed by student contributor)
-- **Backend Hosting** — £5–£20/month (VPS such as DigitalOcean, Railway, or Fly.io)
-- **Database (MySQL)** — £0–£10/month (typically included with most hosting plans)
-- **FastAPI Hosting** — £0–£10/month (lightweight Python server instance)
+Open Source Cost Efficiency: The project has opted to use a cost-efficient set of technologies, such as Flutter, Laravel, FastAPI, and MySQL, which do not require the project to pay the high costs of purchasing proprietary software. All core frameworks are open-source and freely available.
 
-- **AI / NLP API** — £0–£50/month (free tiers available via OpenAI and Google Gemini)
-- **Domain Name** — ~£10/year (one-time or annual recurring cost)
-- **SSL Certificate** — £0 (Let's Encrypt, free)
-- **App Store Distribution** — £25 (Google Play, one-time) / £99/year (Apple Developer Program)
-- **Total Estimated (MVP)** — ~£40–£215/month, highly scalable based on user volume
+Research & Data Sourcing: By using publicly available datasets and free-tier AI APIs (such as OpenAI and Google Gemini), the project has avoided the high costs of purchasing private data or commercial NLP solutions, keeping operational expenditure minimal.
 
-**Projected Benefits:**
+Reduced Infrastructure Overhead: The project is developed by a single student contributor, eliminating development labour costs entirely. The backend is hosted on an affordable VPS, and the SSL certificate is provided free of charge via Let's Encrypt.
 
-- Potential path to monetisation through a freemium model (premium AI analysis credits, ad-free experience, advanced analytics).
-- Significant social value through improved digital literacy, public trust, and reduced misinformation impact.
-- Low barrier to entry makes the project viable within both academic and early-stage startup budgets.
+Scalable Infrastructure: The project's use of a modular microservices architecture (Laravel API + FastAPI AI service) allows the project to scale the resources used independently without incurring unnecessary cloud hosting costs as user demand grows.
 
 > **Conclusion:** The project is economically feasible at both development and operational stages. Open-source frameworks (Laravel, Flutter, FastAPI) eliminate all licensing costs, and cloud hosting keeps operational costs well within a student or startup budget.
 
@@ -323,7 +275,7 @@ Estimated costs for the project are as follows:
 
 ### 5.1 System Architecture
 
-TruthLens follows a **multi-tier, microservices-influenced architecture** to ensure separation of concerns, scalability, and maintainability.
+The diagram below illustrates the high-level multi-tier architecture of TruthLens, showing how the Flutter mobile app communicates with the Laravel backend API, the FastAPI AI microservice, and the MySQL database. The full Mermaid source is available in [DIAGRAMS_README.md](./DIAGRAMS_README.md).
 
 ```
 ┌────────────────────────────┐
@@ -346,284 +298,238 @@ TruthLens follows a **multi-tier, microservices-influenced architecture** to ens
 └────────────────────────────┘
 ```
 
-**Key Architecture Decisions:**
-
-- **Flutter Frontend** — Single codebase for Android and iOS reduces development time and maintenance overhead.
-- **Laravel REST API** — Mature PHP framework with built-in ORM (Eloquent), queue management, and JWT integration.
-- **FastAPI AI Microservice** — Python's ML ecosystem (PyTorch, HuggingFace) far exceeds PHP for AI tasks; isolating AI in a dedicated service prevents blocking the main API.
-- **MySQL Database** — Single relational database handles all persistent data including users, articles, analysis results, chat history, bookmarks, and badges — keeping the stack simple and consistent.
-- **JWT Authentication** — Stateless, scalable token-based auth suited for mobile applications with no session affinity requirements.
-
 ---
 
 ### 5.2 Use Case Diagram
 
-> See [DIAGRAMS_README.md](./DIAGRAMS_README.md) for the full Mermaid source to generate all diagrams.
-
-**Actors:**
-
-- **Guest User** — Can view limited public news feed
-- **Registered User** — Full access to all features
-- **System (AI Service)** — Performs automated credibility analysis
-
-**Key Use Cases:**
-
-- Register / Login / Social Login (Google OAuth)
-- Submit Article for Credibility Analysis
-- Browse Personalised News Digest
-- Use AI Fact-Checking Chat
-- Bookmark Articles
-- Play Fact vs Fiction Quiz
-- View Badges & Leaderboard
-- Switch Application Language
+The Use Case Diagram identifies the key actors in the system — Guest User, Registered User, and the AI System — and maps out all interactions available to each, including article submission, fact-checking chat, quiz participation, and profile management.
 
 ---
 
 ### 5.3 Class Diagram
 
-**Core Domain Classes:**
-
-- **`User`** — Attributes: id, name, email, password_hash, locale, points. Methods: register(), login(), logout(), updateProfile()
-- **`Article`** — Attributes: id, url, title, content, credibility_score, source. Methods: analyse(), bookmark(), share()
-- **`AnalysisResult`** — Attributes: id, article_id, user_id, score, summary, created_at. Methods: getScore(), getSummary()
-- **`Bookmark`** — Attributes: id, user_id, article_id, created_at. Methods: save(), remove()
-- **`ChatSession`** — Attributes: id, user_id, messages[], created_at. Methods: sendMessage(), getHistory()
-- **`QuizGame`** — Attributes: id, user_id, score, questions[], completed_at. Methods: start(), submitAnswer(), getScore()
-- **`Badge`** — Attributes: id, name, description, icon_url, criteria. Methods: award(), check()
-- **`UserBadge`** — Attributes: user_id, badge_id, awarded_at
+The Class Diagram depicts the core domain classes of the TruthLens system, their attributes, methods, and the relationships between them, including User, Article, AnalysisResult, ChatSession, QuizAttempt, and Badge.
 
 ---
 
 ### 5.4 ER Diagram
 
-**Core Database Entities and Relationships:**
-
-```
-users (id PK, name, email UNIQUE, password, google_id, locale, points, created_at)
-  │
-  ├──< bookmarks (id PK, user_id FK, article_id FK, created_at)
-  │
-  ├──< analysis_results (id PK, user_id FK, article_id FK, credibility_score, summary, created_at)
-  │
-  ├──< chat_sessions (id PK, user_id FK, created_at)
-  │       └──< chat_messages (id PK, session_id FK, role, content, created_at)
-  │
-  ├──< quiz_attempts (id PK, user_id FK, score, total_questions, completed_at)
-  │
-  └──< user_badges (user_id FK, badge_id FK, awarded_at)
-          └── badges (id PK, name, description, icon_url, criteria_json)
-
-articles (id PK, url UNIQUE, title, body, source, published_at, cached_score)
-  └──< bookmarks (referenced above)
-  └──< analysis_results (referenced above)
-```
+The Entity-Relationship Diagram models the MySQL database schema, showing all tables, primary and foreign key relationships, and how entities such as users, articles, bookmarks, analysis results, and badges relate to one another.
 
 ---
 
 ### 5.5 Activity Diagram – Article Analysis
 
-> See [DIAGRAMS_README.md](./DIAGRAMS_README.md) for Mermaid source.
-
-**Flow:**
-
-1. User submits article URL or text
-2. Laravel API validates input and checks cache for existing result
-3. If cached: return stored result
-4. If new: forward to FastAPI AI service
-5. FastAPI runs BERT-based NLP model on article content
-6. Score and summary returned to Laravel API
-7. Result stored in database and returned to Flutter app
-8. Flutter UI displays credibility score, summary, and analysis detail
+The Activity Diagram illustrates the step-by-step flow of an article credibility analysis request, from user submission through Laravel API validation, Redis cache lookup, FastAPI BERT inference, and the final result returned to the Flutter application.
 
 ---
 
 ### 5.6 Sequence Diagram – User Login
 
-> See [DIAGRAMS_README.md](./DIAGRAMS_README.md) for Mermaid source.
-
-**Flow:**
-
-1. User enters credentials in Flutter login screen
-2. Flutter sends POST /api/auth/login to Laravel API
-3. Laravel validates credentials against MySQL users table
-4. On success: JWT token generated and returned
-5. Flutter stores JWT in secure storage (flutter_secure_storage)
-6. Subsequent API calls include `Authorization: Bearer <token>`
+The Sequence Diagram shows the interaction between the Flutter app, the Laravel API, and the MySQL database during the user authentication flow, including JWT token generation and secure storage on the mobile device.
 
 ---
 
 ## Chapter 06 – Development Tools & Technologies
 
-### 6.1 Frontend Technologies
+## Chapter 06 – Development Tools and Technologies
 
-- **Flutter** (SDK 3.x) — Cross-platform mobile framework targeting Android and iOS
-- **Dart** (3.x) — Programming language used for all Flutter development
-- **Riverpod** (2.x) — Reactive state management for Flutter
-- **Go Router** (13.x) — Declarative routing and deep linking
-- **Dio** (5.x) — HTTP client with interceptors for automatic JWT injection
-- **flutter_secure_storage** (9.x) — Secure local storage for JWT tokens
-- **google_sign_in** (6.x) — Google OAuth integration on Android and iOS
+### 6.1 Development Methodology
 
-- **intl** (Latest) — Internationalisation and localisation (EN / SI / TA)
+The project is being executed following the Agile Methodology, adopting an iterative and incremental software development approach. Unlike the conventional "Waterfall" approach, Agile allows for refinement of individual components in parallel — for example, refining the AI inference service at the same time as developing new frontend screens — without blocking the overall development pipeline.
 
-### 6.2 Backend Technologies
+The importance of adopting this methodology for TruthLens lies in the nature of AI-powered systems, where the accuracy and confidence of the credibility analysis model must be evaluated and tuned iteratively based on real test inputs. By breaking development into short sprints, it is possible to bring core features — such as article analysis, user authentication, and the AI chat assistant — to a functional state early, and then refine them progressively until the final submission.
 
-- **Laravel** (12.x) — PHP RESTful API framework
-- **PHP** (8.2+) — Backend programming language
-- **MySQL** (8.0+) — Relational database for persistent storage
-- **tymon/jwt-auth** (2.x) — JWT token generation and validation
-- **Laravel Socialite** (5.x) — Google OAuth server-side flow
-- **Eloquent ORM** — Database object-relational mapping (Laravel built-in)
-- **Laravel Queue** — Async job processing for AI analysis tasks (Laravel built-in)
-- **Redis** (7.x) — Caching layer for API responses and analysis results
+### 6.2 Programming Languages and Tools
 
-### 6.3 AI / ML Technologies
+The technology stack has been chosen to provide a clean separation between the mobile client, the business logic layer, and the AI engine.
 
-- **FastAPI** (0.110+) — Python-based AI inference microservice
-- **PyTorch** (2.x) — Deep learning framework for model inference
-- **HuggingFace Transformers** (4.x) — Pre-trained BERT model for NLP tasks
-- **scikit-learn** (1.x) — Supporting ML utilities
-- **OpenAI API / Google Gemini** (Latest) — LLM for AI chat assistant responses
-- **uvicorn** (0.29+) — ASGI server for running FastAPI
+Flutter (Frontend): Flutter has been chosen for building a dynamic, cross-platform mobile application targeting both Android and iOS from a single codebase. This allows for the development of a consistent, responsive user interface for features such as article credibility analysis, news digest, AI chat, and gamified quizzes, while minimising the overhead of maintaining separate native codebases.
 
-### 6.4 Development Tools
+Laravel 12 (Backend API): Laravel has been selected as the primary backend API framework. It handles all critical business logic including user authentication, article management, bookmark handling, and AI chat proxying. Laravel's built-in Eloquent ORM manages all interactions with the MySQL database, which stores user profiles, articles, analysis results, bookmarks, and badge data.
 
-- **Git** (2.x) — Version control
-- **GitHub** — Remote repository and team collaboration
-- **Postman** — API endpoint testing and documentation
-- **Android Studio** (Hedgehog+) — Flutter development IDE and Android AVD emulator
-- **Xcode** (15+) — iOS simulator (macOS only)
-- **VS Code** (Latest) — Backend and AI service development
-- **Figma** — UI/UX wireframing and prototyping
-- **Docker** (24+) — Containerisation for deployment
+FastAPI (AI Microservice): FastAPI is a high-performance Python framework used to serve the AI inference pipeline. When a user submits an article for analysis, the Laravel API forwards the request to the FastAPI microservice, which runs the BERT-based NLP model and returns a credibility score and summary. FastAPI was chosen for its asynchronous request handling and seamless integration with the Python machine learning ecosystem.
+
+MySQL 8.0+ (Database): MySQL serves as the single relational database for all persistent data across the system. All entities — users, articles, analysis results, chat sessions, bookmarks, quiz attempts, and badges — are stored and queried via Laravel's Eloquent ORM, keeping the data layer consistent and straightforward to maintain.
+
+### 6.3 Third-Party Components and Libraries
+
+To ensure that high-quality output is achieved, a number of well-established open-source libraries have been integrated into the project. On the frontend, Riverpod is used for reactive state management across the Flutter application, while Dio provides an HTTP client with automatic JWT injection for all authenticated API requests. The `flutter_secure_storage` package ensures that JWT tokens are stored securely on the device, and `google_sign_in` facilitates federated identity via Google OAuth on both Android and iOS.
+
+On the backend, the `tymon/jwt-auth` library handles JWT token generation, validation, and refresh within Laravel. Laravel Socialite manages the Google OAuth server-side callback flow. Redis is used as a caching layer to store previously computed analysis results, reducing redundant AI inference calls and improving API response times.
+
+For the AI microservice, HuggingFace Transformers provides access to pre-trained BERT and DistilBERT models for natural language processing, while PyTorch serves as the underlying deep learning runtime. The OpenAI API and Google Gemini API are used as the language model backends for the AI chat assistant feature.
+
+### 6.4 Algorithms
+
+The core algorithm used in TruthLens is a BERT-based (Bidirectional Encoder Representations from Transformers) natural language processing model for article credibility classification. BERT was selected over simpler approaches such as logistic regression or naive Bayes classifiers because of its ability to understand the contextual meaning of words within a sentence — both from left-to-right and right-to-left — making it significantly more effective at detecting subtle linguistic patterns associated with misinformation.
+
+The reason BERT is used over a simpler model is its robustness when applied to diverse news content. As the model has been pre-trained on large corpora of text, it generalises well to new articles without requiring extensive domain-specific training data. For performance reasons, the lighter DistilBERT variant is used in production, which retains approximately 97% of BERT's accuracy at roughly half the inference time. The model outputs a credibility score between 0 and 100, which is then classified into three bands: Likely True (≥ 70), Uncertain (40–69), and Likely False (< 40).
 
 ---
 
 ## Chapter 07 – Implementation Progress
 
-### 7.1 Progress Summary
+### 7.1 Development Environment Setup
 
-The following summarises the development progress as of the interim submission date:
+In order to establish a solid and extensible software development process for the TruthLens project, a modern full-stack mobile development environment has been configured. It emphasises type safety, modular architecture, and database management efficiency.
 
-**Completed ✅**
+- Prerequisites & Runtimes
+  The project requires Flutter SDK 3.x and Dart 3.x for mobile development, PHP 8.2+ with Composer for the Laravel backend, and Python 3.11+ for the FastAPI AI microservice. A MySQL 8.0+ server is required locally to manage the structured relational storage of user data, articles, and analysis results.
 
-- Laravel project initialisation with Composer
-- MySQL database schema — migrations for all core entities
-- JWT authentication (login/register) — tested via Postman
-- Google OAuth via Socialite — redirect and callback flows implemented
-- User profile API — GET/PUT `/api/user` endpoints functional
-- Article analysis API — URL and text submission endpoints complete
-- FastAPI AI microservice — BERT model inference service running
-- AI chat API proxy — Laravel proxies to OpenAI/Gemini API
-- Bookmark API — CRUD endpoints functional
-- Flutter project setup with feature-based folder structure
-- Flutter auth screens — Login, Register, Google Sign-In
-- Flutter news digest screen — displays news from backend
-- Flutter article analysis screen — URL/text input + score display
-- Flutter AI chat screen — conversational UI with message bubbles
-- Flutter bookmark screen — saved articles list with removal
-- Flutter profile screen — user details and settings view
-- Dark mode support — theme toggle implemented via Riverpod
+- Project Structure & Configuration
+  The project follows a feature-first folder structure on the Flutter frontend, separating concerns by feature module (auth, news, chat, bookmarks, game, profile). The Laravel backend is organised using the standard MVC pattern with dedicated Controllers, Models, and Migrations directories.
 
-**In Progress 🔄**
+- Database ORM & Migration
+  Laravel's built-in Eloquent ORM is used for all database interactions. Automated migration scripts define and version the database schema, ensuring consistency across development environments. All core entities — users, articles, analysis results, bookmarks, chat sessions, quiz attempts, and badges — have dedicated migration files.
 
-- News digest API — news aggregation from external RSS/APIs
-- Search API — full-text search implementation ongoing
-- Flutter quiz/game screen — quiz logic 80% complete; scoring remaining
-- Multilingual support — English complete; Sinhala/Tamil pending
+- Environment Variables
+  The project's security posture is maintained by separating sensitive credentials — database passwords, JWT secrets, API keys (OpenAI, Gemini) — into `.env` files, which are excluded from version control via `.gitignore`.
 
 ---
 
-### 7.2 Backend Implementation
+### 7.2 Implemented Features
 
-The Laravel 12 backend provides a comprehensive RESTful API. The route structure is as follows:
+Implementation has been carried out according to the Agile methodology. The basic infrastructure and necessary user workflows are now fully functional.
 
-```
-/api/auth
-  POST   /register           → Register new user
-  POST   /login              → Login with JWT token response
-  POST   /logout             → Invalidate JWT token
-  GET    /auth/google        → Initiate Google OAuth flow
-  GET    /auth/google/callback → Handle Google OAuth callback
+#### 7.2.1 Authentication & Security
 
-/api/user
-  GET    /user               → Get authenticated user profile
-  PUT    /user               → Update user profile
+- Secure Authentication
+  The application has a secure authentication process through the use of JWT-based tokens generated by the `tymon/jwt-auth` library, combined with bcrypt password hashing for all stored credentials. Registration and login endpoints have been fully tested via Postman.
 
-/api/articles
-  POST   /articles/analyse   → Submit URL or text for credibility analysis
-  GET    /articles/digest    → Get personalised news digest
-  GET    /articles/search    → Search articles by keyword
+- Google OAuth (Social Login)
+  The application supports federated identity via Google Sign-In on both Android and iOS. The Laravel Socialite library manages the OAuth callback flow server-side, and the `google_sign_in` Flutter package handles the mobile-side token acquisition. Separate OAuth client IDs are configured for Android and iOS platforms.
 
-/api/chat
-  POST   /chat/message       → Send message to AI fact-checking assistant
+- Profile Management
+  Users have the functional capability to manage their profiles, including viewing and editing display names and application preferences. The GET and PUT `/api/user` endpoints are implemented and functional, with corresponding Flutter profile screen built and integrated.
 
-/api/bookmarks
-  GET    /bookmarks          → List user's bookmarks
-  POST   /bookmarks          → Add article to bookmarks
-  DELETE /bookmarks/{id}     → Remove bookmark
+#### 7.2.2 Backend API & Database
 
-/api/game
-  GET    /game/quiz          → Get quiz questions
-  POST   /game/quiz/submit   → Submit quiz answers and get score
-  GET    /game/leaderboard   → Get top users leaderboard
+- RESTful API Implementation
+  The Laravel 12 backend exposes a comprehensive set of REST API endpoints covering authentication, user management, article analysis, AI chat, bookmarks, quiz, leaderboard, and badge retrieval. All endpoints are protected by JWT middleware and have been verified via Postman.
 
-/api/badges
-  GET    /badges             → Get user's earned badges
-```
+- MySQL Database Schema
+  All core database entities are in place via Laravel migration files. The schema covers: users, articles, analysis_results, bookmarks, chat_sessions, chat_messages, quiz_attempts, badges, and user_badges tables with all necessary foreign key constraints.
 
----
+- AI Chat Proxy API
+  The Laravel backend successfully proxies user messages to the OpenAI GPT-4 or Google Gemini API, stores the conversation history (session + messages) in MySQL, and returns AI-generated responses to the Flutter client.
 
-### 7.3 Frontend Implementation
+#### 7.2.3 Content & Analysis Features
 
-The Flutter application follows a **feature-first folder structure** for maintainability:
+- Article Credibility Analysis
+  The application has successfully implemented the core feature of submitting a news article URL or plain text for AI-powered credibility analysis. The Flutter frontend sends the content to the Laravel API, which forwards it to the FastAPI BERT microservice, returning a credibility score (0–100), a classification label, and a natural-language summary.
 
-```
-lib/
-├── core/
-│   ├── constants/           # App constants, API URLs, colours
-│   ├── theme/               # Material 3 theme (light/dark)
-│   ├── utils/               # Helper utilities
-│   └── services/            # HTTP client, secure storage
-├── features/
-│   ├── auth/                # Login, Register, Google OAuth screens
-│   ├── news/                # News digest feed and article cards
-│   ├── article/             # Article submission and analysis result
-│   ├── chat/                # AI chat interface
-│   ├── bookmarks/           # Saved articles screen
-│   ├── search/              # Search bar and results screen
-│   ├── game/                # Fact vs Fiction quiz screen
-│   ├── profile/             # User profile and settings
-│   └── digest/              # Personalised news digest
-└── main.dart                # Entry point with provider scope
-```
+- FastAPI AI Microservice
+  The FastAPI Python microservice is running and serving BERT/DistilBERT model inference requests. It receives article content from the Laravel API, tokenises it, runs NLP inference, and returns a structured JSON result including the credibility score and summary.
+
+- Personalised News Digest
+  The application provides users with a news feed aggregated from external RSS sources. Articles are retrieved and displayed with their source, headline, and a cached credibility score where available.
+
+- Article Bookmarking
+  Users have the functional capability to bookmark any article for later reference. The bookmark CRUD API is complete, and the Flutter bookmark screen displays saved articles with the option to remove them individually.
+
+#### 7.2.4 Mobile Frontend & UX
+
+- Flutter Screens Implemented
+  The following Flutter screens are fully built and integrated with the backend API: Login, Register, Google Sign-In, News Digest, Article Analysis (URL/text input + score display), AI Chat (conversational message bubbles), Bookmarks (saved articles list), and Profile (user details and settings).
+
+- Dark Mode & Theming
+  The application implements both light and dark themes using Material 3, with a toggle managed via Riverpod state. The theme preference persists locally across sessions.
+
+#### 7.2.5 Gamification (Fully Implemented)
+
+- Chess Game
+  The application has successfully implemented a fully functional Chess game. Users choose to play as White or Black, with the AI opponent making random valid moves. The game features a live 8×8 chess board with piece highlighting, real-time check detection (highlighted in red on the king's square), a scrollable move history panel, and three outcome dialogs — Victory, Defeat, and Draw — triggered on checkmate, stalemate, or insufficient material. Users can reset and start a new game at any time.
+
+- Fact vs Fiction Game
+  The application has implemented a timed headline classification game. Users are presented with shuffled news headlines and must classify each as "FACT" or "FICTION" within a 15-second countdown. The scoring system awards points based on correctness plus a streak multiplier and time-remaining bonus. The game tracks a persistent local high score using `SharedPreferences`, displays real-time score, streak, and timer statistics, and shows an explanatory feedback card after each answer. A game-over dialog displays the final score and accuracy rate.
+
+- News Quiz Challenge
+  The application has implemented a multiple-choice media literacy quiz covering 8 questions on topics such as misinformation, deepfakes, confirmation bias, fact-checking, and clickbait. Each question presents four options (A–D) with colour-coded answer highlighting and a "Did you know?" explanation panel revealed after answering. A results screen displays the total score out of 80, percentage accuracy, and a contextual performance message, with options to replay or exit.
 
 ---
 
-### 7.4 AI Integration
+### 7.3 Screenshots / Code Snippets
 
-The AI credibility analysis pipeline works as follows:
-
-1. **Input** — User submits a news article URL or plain text via the Flutter app.
-2. **Laravel API** receives the request, validates it, and checks the MySQL cache for an existing result.
-3. **FastAPI Service** — If no cached result exists, Laravel forwards the content to the Python FastAPI microservice running on a dedicated port.
-4. **NLP Processing** — FastAPI processes the text using a fine-tuned **BERT model** (from HuggingFace Transformers) trained on fake news detection datasets (e.g., LIAR dataset, FakeNewsNet).
-5. **Scoring** — The model outputs a credibility score (0–100) and a classification label (Likely True / Uncertain / Likely False).
-6. **Response** — The score and natural-language summary are returned to Laravel, stored in the database, and forwarded to the Flutter app.
-7. **Display** — The Flutter UI renders the credibility score with a visual gauge, summary card, and detailed analysis breakdown.
+The following table describes each screenshot to be captured for the final report, based on the implemented screens in the Flutter frontend codebase.
 
 ---
 
-### 7.5 Project Timeline
+**Screenshot 1 — Login Screen**
+Capture the Login screen showing the TruthLens logo ("TL" in white on a dark blue rounded square) and tagline "See the Truth Behind the News" at the top, followed by the glassmorphism card containing the "Welcome back / Sign in to your account" header, the Email and Password input fields with icons, the "Forgot password?" link, the "Sign In" button in the accent colour, and the "Don't have an account? Sign up" row at the bottom. Background should show the dark blue-to-teal gradient.
 
-- **Phase 1 – Initiation** (Sep–Oct 2025) ✅ — Requirements gathering, PID submission, project planning
-- **Phase 2 – Design** (Oct–Nov 2025) ✅ — System architecture, wireframes, database schema, UML diagrams
-- **Phase 3 – Backend Development** (Nov–Dec 2025) ✅ — Laravel API, MySQL schema, JWT auth, Google OAuth
-- **Phase 4 – AI Service** (Dec 2025) ✅ — FastAPI setup, BERT model integration, inference API
-- **Phase 5 – Frontend Development** (Jan–Feb 2026) ✅ 85% — Flutter screens, state management, API integration
-- **Phase 6 – Feature Completion** (Feb–Mar 2026) 🔄 — Search, multilingual support, quiz scoring and leaderboard
-- **Phase 7 – Testing** (Mar–Apr 2026) ⏳ — Unit testing, integration testing, user acceptance testing
-- **Phase 8 – Final Submission** (Apr 2026) ⏳ — Report writing, presentation, deployment
+**Screenshot 2 — Register Screen**
+Capture the Register screen with the same TruthLens logo at the top and the glass card containing the registration form fields: Name, Email, Password, and Confirm Password. The "Create Account" button and "Already have an account? Sign in" link should be visible.
+
+**Screenshot 3 — Home Screen — News Feed Tab (Tab 1)**
+Capture the main home screen with the bottom navigation bar visible, showing the "News" tab as active. The news feed should display a list of article cards each containing the article headline, source name, publication date, and a credibility badge/indicator. The floating action button or article analysis entry point should also be visible.
+
+**Screenshot 4 — Article Details Screen**
+Capture the article details view after tapping a news card. This should show the full article content, the AI credibility score displayed as a gauge or badge (0–100), the classification label (Likely True / Uncertain / Likely False), and the AI-generated natural-language summary below the article metadata.
+
+**Screenshot 5 — Search / Explore Screen (Tab 2)**
+Capture the Search screen showing the search bar at the top with a placeholder prompt, and the results list below it populated with matching article cards. The screen should have the dark background and the bottom nav bar visible with "Explore" tab active.
+
+**Screenshot 6 — Digest Screen (Tab 3)**
+Capture the Digest screen showing the personalised news digest dashboard. This should display categorised news sections or a curated feed with article cards, headlines, and credibility indicators, all on the dark gradient background with the bottom nav bar showing "Digest" as active.
+
+**Screenshot 7 — AI Chat Screen (Tab 4 — Chats List)**
+Capture the Chats list screen showing previous conversation threads with the AI fact-checking assistant. Each thread should show the last message preview and timestamp.
+
+**Screenshot 8 — AI Chat Conversation**
+Capture an active chat conversation screen showing user message bubbles and AI response bubbles in the conversational interface. The screen should show a question about a news topic and the AI's fact-checked response with source references.
+
+**Screenshot 9 — Profile Screen (Tab 5)**
+Capture the Profile screen showing the user's avatar, display name, and account details at the top, followed by the settings menu list including: Edit Profile, Reading History, Categories, Language, Privacy & Security, Manage Devices, Subscription, Help & Support, About, and the Log Out button at the bottom. Dark themed with glassmorphism card sections.
+
+**Screenshot 10 — Edit Profile Screen**
+Capture the Edit Profile screen showing the editable fields for name, bio, and profile photo upload option. The "Save Changes" button should be visible.
+
+**Screenshot 11 — Chess Game — Board View**
+Capture the Chess game screen during an active game, showing the full 8×8 chess board with pieces rendered using Unicode chess symbols (♔♛♟ etc.), with a selected piece highlighted in yellow/amber and the current player's turn shown in the header. The move history panel should be visible at the bottom.
+
+**Screenshot 12 — Chess Game — Game Over Dialog**
+Capture the Victory or Defeat dialog overlay — the glassmorphism dialog with backdrop blur, the gold trophy icon (for Victory) or red sad icon (for Defeat), the "Congratulations! You Won!" / "Game Over" text, and the "Play Again" and "Exit" buttons.
+
+**Screenshot 13 — Fact vs Fiction Game**
+Capture the Fact vs Fiction game screen mid-game, showing the Stats Bar at the top (Score, Streak, Timer countdown), the progress bar, the news headline card in the centre, and the two answer buttons — green "FACT" and red "FICTION" — at the bottom.
+
+**Screenshot 14 — Fact vs Fiction — Answer Feedback**
+Capture the moment after answering, showing the feedback card within the headline card: the green tick "Correct!" or red cross "Wrong!" indicator and the plain-English explanation text below it.
+
+**Screenshot 15 — News Quiz Challenge**
+Capture the News Quiz screen showing a multiple-choice question (e.g., "What does 'misinformation' mean?") with four answer options (A, B, C, D) displayed as cards. The progress bar and score should be visible in the header.
+
+**Screenshot 16 — News Quiz — Results Screen**
+Capture the Quiz results/game-over screen showing the trophy icon, the performance message (e.g., "Great Job! 🎉"), the score (e.g., 60/80), the percentage accuracy, and the correct/wrong count stats, with the "Play Again" and "Back to Profile" buttons.
+
+---
+
+### 7.4 Challenges Encountered and Solutions
+
+- AI Model Performance
+  Initial BERT model inference was slow (>5 seconds per request) on a standard VPS. This was resolved by switching to the lighter DistilBERT variant, which retains approximately 97% of BERT's accuracy at roughly half the inference latency, and by processing analysis requests through Laravel's async job queue to avoid blocking the main API thread.
+
+- Cross-Platform Authentication
+  Google Sign-In required separate OAuth client IDs for Android and iOS. This was resolved by configuring distinct OAuth clients for each platform in the Google Cloud Console and referencing both in the Flutter `google_sign_in` configuration.
+
+- State Management Race Conditions
+  Riverpod providers occasionally produced stale state during multi-screen navigation flows. This was resolved by refactoring affected providers to use the `AsyncNotifier` pattern with proper state invalidation triggered on navigation events.
+
+- CORS Configuration
+  Early integration testing revealed CORS policy issues between the Flutter web build and the Laravel API. This was resolved by configuring strict CORS middleware in Laravel with a precise origin allowlist, rejecting all unauthorised cross-origin requests.
+
+---
+
+### 7.5 Current System Limitations
+
+- Multilingual support is partially implemented. The English locale is fully functional; Sinhala and Tamil translations require completion of the ARB localisation files and RTL layout adjustments.
+
+- The news digest feature currently aggregates from a limited set of RSS feeds. A more robust and configurable news source management system is planned for the final phase.
+
+- The Fact vs Fiction quiz leaderboard is not yet publicly accessible. The backend endpoint exists but the Flutter leaderboard screen is pending final integration and ranking logic.
+
+- Full-text article search is implemented at the API level but the Flutter search UI and filter options require further development before the feature is release-ready.
 
 ---
 
