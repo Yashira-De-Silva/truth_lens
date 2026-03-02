@@ -60,8 +60,7 @@ graph TB
     end
 
     subgraph DB["🗄️ Data Layer"]
-        Q[(MySQL 8.0\nUsers, Articles,\nBookmarks, Results)]
-        R[(Firebase Firestore\nReal-time Messaging\nNotifications)]
+        Q[(MySQL 8.0\nUsers, Articles,\nBookmarks, Chat,\nBadges, Results)]
         S[(Redis Cache\nAPI Response Cache)]
     end
 
@@ -72,7 +71,6 @@ graph TB
     end
 
     Mobile -->|HTTPS REST JSON| Backend
-    Mobile -->|Firebase SDK WebSocket| R
     Backend -->|HTTP Internal| AI
     Backend -->|Eloquent ORM| Q
     Backend -->|Cache R/W| S
@@ -536,7 +534,7 @@ gantt
     section Phase 6: Features
     Quiz / Game Screen          :active,  p6a, 2026-02-28, 2026-03-14
     Multilingual Support        :active,  p6b, 2026-03-01, 2026-03-14
-    Firebase Integration        :active,  p6c, 2026-03-01, 2026-03-21
+    SQL Query Optimisation      :active,  p6c, 2026-03-01, 2026-03-21
     Search Feature              :         p6d, 2026-03-14, 2026-03-28
 
     section Phase 7: Testing

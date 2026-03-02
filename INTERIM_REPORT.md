@@ -67,7 +67,7 @@ The system is built using a robust multi-tier architecture:
 - **Flutter (Dart)** — Cross-platform mobile frontend targeting Android and iOS
 - **Laravel 12 (PHP 8.2+)** — RESTful backend API with JWT-based secure authentication
 - **FastAPI (Python)** — Dedicated microservice for AI/NLP model inference
-- **Firebase** — Real-time database and push notification services
+- **MySQL 8.0+** — Primary relational database for all persistent data storage
 
 Together, these technologies deliver a scalable, secure, and performant platform capable of real-time content analysis and interactive user engagement.
 
@@ -113,7 +113,7 @@ The following research techniques were employed to understand the problem domain
 - **Existing System Analysis** — Evaluated existing tools including Snopes, FactCheck.org, NewsGuard, ClaimBuster, and Google Fact Check Tools to identify capability gaps and user pain points.
 - **User Surveys** — Conducted informal surveys among university students and young professionals to understand mobile news consumption habits, fact-checking behaviours, and pain points.
 - **Prototype Walkthroughs** — Created early wireframes and interactive mockups using Figma, gathering iterative usability feedback on navigation, feature layout, and visual design.
-- **Technical Documentation Review** — Studied official documentation for Flutter, Laravel 12, FastAPI, Firebase SDK, BERT NLP models, and JWT authentication libraries to assess integration feasibility.
+- **Technical Documentation Review** — Studied official documentation for Flutter, Laravel 12, FastAPI, MySQL 8, BERT NLP models, and JWT authentication libraries to assess integration feasibility.
 - **Industry Reports** — Referenced the Reuters Institute Digital News Report 2024, MIT Media Lab misinformation studies, and WHO reports on health misinformation for project contextualisation.
 - **Supervisor Consultations** — Regular meetings with project supervisor Mrs. Nimesha Hewawasam to validate the project scope, technical direction, and interim deliverables.
 
@@ -224,8 +224,7 @@ The following functional requirements define what the TruthLens system must be c
 - **Mobile Frontend** — Flutter SDK 3.x (Dart 3.x)
 - **Backend Framework** — Laravel 12 (PHP ≥ 8.2)
 - **AI Microservice** — FastAPI (Python 3.11+)
-- **Real-time Database** — Firebase Firestore (Flutter SDK)
-- **Relational Database** — MySQL 8.0+
+- **Database** — MySQL 8.0+ (via Laravel Eloquent ORM)
 - **Authentication** — tymon/jwt-auth 2.x (Laravel)
 - **Social Auth** — Laravel Socialite 5.x / Google Sign-In Flutter
 - **State Management** — Flutter Riverpod 2.x
@@ -247,7 +246,7 @@ The following functional requirements define what the TruthLens system must be c
 - **Python Runtime** — Version 3.11+ (for FastAPI service)
 - **SSL Certificate** — Required for production HTTPS (Let's Encrypt — free)
 - **Mobile Device** — Android 5.0+ (API 21+) or iOS 12.0+
-- **Firebase Project** — Active Firebase project with Firestore and Cloud Messaging enabled
+- **MySQL Server** — MySQL 8.0+ instance accessible from the backend server
 
 ---
 
@@ -261,7 +260,7 @@ The following functional requirements define what the TruthLens system must be c
 - **CORS Policy** — Backend must enforce strict CORS rules, permitting only authorised mobile and web client origins
 - **Rate Limiting** — API endpoints must implement rate limiting (60 requests/minute per authenticated user)
 - **Ports** — Backend: 8000 (development), 443 (production HTTPS); FastAPI: 8001 (internal)
-- **Firebase Connection** — Persistent WebSocket connection via Firebase SDK for real-time data synchronisation
+- **Database Connection** — Persistent MySQL connection pooling via Laravel's database layer
 
 ---
 
@@ -289,7 +288,7 @@ Estimated costs for the project are as follows:
 - **Backend Hosting** — £5–£20/month (VPS such as DigitalOcean, Railway, or Fly.io)
 - **Database (MySQL)** — £0–£10/month (typically included with most hosting plans)
 - **FastAPI Hosting** — £0–£10/month (lightweight Python server instance)
-- **Firebase** — £0–£25/month (generous free tier; pay-as-you-go for scale)
+
 - **AI / NLP API** — £0–£50/month (free tiers available via OpenAI and Google Gemini)
 - **Domain Name** — ~£10/year (one-time or annual recurring cost)
 - **SSL Certificate** — £0 (Let's Encrypt, free)
@@ -308,10 +307,10 @@ Estimated costs for the project are as follows:
 
 ### 4.3 Technical Feasibility
 
-- **Technology Maturity** — All core technologies (Flutter 3.x, Laravel 12, FastAPI, MySQL 8, Firebase) are production-grade, well-documented, and widely adopted across the industry.
+- **Technology Maturity** — All core technologies (Flutter 3.x, Laravel 12, FastAPI, MySQL 8) are production-grade, well-documented, and widely adopted across the industry.
 - **AI Integration** — BERT-based NLP models via HuggingFace Transformers and LLM APIs (OpenAI GPT-4, Google Gemini) provide reliable, well-documented interfaces for content analysis and conversational AI.
 - **Cross-Platform Capability** — Flutter's single codebase compiles natively to Android, iOS, web, and desktop — maximising reach with minimal additional development overhead.
-- **Security** — JWT authentication, bcrypt password hashing, HTTPS enforcement, Firebase security rules, and CORS policies provide a solid, industry-standard security baseline.
+- **Security** — JWT authentication, bcrypt password hashing, HTTPS enforcement, MySQL access controls, and CORS policies provide a solid, industry-standard security baseline.
 - **Scalability** — Laravel's queue system, caching (Redis), and support for containerised deployment (Docker, AWS, GCP) enable horizontal scaling. FastAPI's async nature handles concurrent inference efficiently.
 - **Developer Competence** — The developer has demonstrated competency in Flutter, Laravel, and Python development, with existing backend API endpoints and Flutter screens already implemented.
 - **Third-Party Risk** — External AI API availability and rate limits represent the primary technical risk; mitigated by designing the system with abstraction layers to support multiple AI providers as fallbacks.
@@ -332,7 +331,6 @@ TruthLens follows a **multi-tier, microservices-influenced architecture** to ens
 │  (Frontend Client Layer)   │
 └─────────────┬──────────────┘
               │ HTTPS / REST API (JSON)
-              │ Firebase SDK (WebSocket)
               ▼
 ┌────────────────────────────┐     ┌──────────────────────────┐
 │     Laravel 12 Backend     │────▶│    FastAPI AI Service     │
@@ -341,10 +339,11 @@ TruthLens follows a **multi-tier, microservices-influenced architecture** to ens
 └─────────────┬──────────────┘     └──────────────────────────┘
               │
               ▼
-┌────────────────────────────┐     ┌──────────────────────────┐
-│       MySQL Database       │     │   Firebase Firestore      │
-│  (Users, Articles, Auth)   │     │  (Real-time / Messaging)  │
-└────────────────────────────┘     └──────────────────────────┘
+┌────────────────────────────┐
+│       MySQL Database       │
+│  (Users, Articles, Auth,   │
+│   Bookmarks, Chat, Badges) │
+└────────────────────────────┘
 ```
 
 **Key Architecture Decisions:**
@@ -352,7 +351,7 @@ TruthLens follows a **multi-tier, microservices-influenced architecture** to ens
 - **Flutter Frontend** — Single codebase for Android and iOS reduces development time and maintenance overhead.
 - **Laravel REST API** — Mature PHP framework with built-in ORM (Eloquent), queue management, and JWT integration.
 - **FastAPI AI Microservice** — Python's ML ecosystem (PyTorch, HuggingFace) far exceeds PHP for AI tasks; isolating AI in a dedicated service prevents blocking the main API.
-- **Firebase Firestore** — Native real-time synchronisation required for messaging and live notifications at low cost.
+- **MySQL Database** — Single relational database handles all persistent data including users, articles, analysis results, chat history, bookmarks, and badges — keeping the stack simple and consistent.
 - **JWT Authentication** — Stateless, scalable token-based auth suited for mobile applications with no session affinity requirements.
 
 ---
@@ -464,7 +463,7 @@ articles (id PK, url UNIQUE, title, body, source, published_at, cached_score)
 - **Dio** (5.x) — HTTP client with interceptors for automatic JWT injection
 - **flutter_secure_storage** (9.x) — Secure local storage for JWT tokens
 - **google_sign_in** (6.x) — Google OAuth integration on Android and iOS
-- **firebase_core / firebase_auth** (Latest) — Firebase SDK integration
+
 - **intl** (Latest) — Internationalisation and localisation (EN / SI / TA)
 
 ### 6.2 Backend Technologies
@@ -532,7 +531,6 @@ The following summarises the development progress as of the interim submission d
 - Search API — full-text search implementation ongoing
 - Flutter quiz/game screen — quiz logic 80% complete; scoring remaining
 - Multilingual support — English complete; Sinhala/Tamil pending
-- Firebase Firestore integration — collection structure designed; read/write in progress
 
 ---
 
@@ -623,7 +621,7 @@ The AI credibility analysis pipeline works as follows:
 - **Phase 3 – Backend Development** (Nov–Dec 2025) ✅ — Laravel API, MySQL schema, JWT auth, Google OAuth
 - **Phase 4 – AI Service** (Dec 2025) ✅ — FastAPI setup, BERT model integration, inference API
 - **Phase 5 – Frontend Development** (Jan–Feb 2026) ✅ 85% — Flutter screens, state management, API integration
-- **Phase 6 – Feature Completion** (Feb–Mar 2026) 🔄 — Search, multilingual, quiz, Firebase integration
+- **Phase 6 – Feature Completion** (Feb–Mar 2026) 🔄 — Search, multilingual support, quiz scoring and leaderboard
 - **Phase 7 – Testing** (Mar–Apr 2026) ⏳ — Unit testing, integration testing, user acceptance testing
 - **Phase 8 – Final Submission** (Apr 2026) ⏳ — Report writing, presentation, deployment
 
@@ -648,9 +646,8 @@ The project is on track according to the planned timeline, with approximately **
 ### 8.2 Challenges Faced
 
 - **AI Model Performance** — Initial BERT model inference was slow (>5s per request) on a standard VPS. Resolved by implementing async queued jobs in Laravel and switching to `DistilBERT` for faster inference.
-- **Cross-Platform Auth** — Google Sign-In required different OAuth client IDs for Android and iOS. Resolved by configuring separate OAuth clients per platform in Firebase and Google Cloud Console.
+- **Cross-Platform Auth** — Google Sign-In required different OAuth client IDs for Android and iOS. Resolved by configuring separate OAuth clients per platform in Google Cloud Console.
 - **Race Conditions in State** — Riverpod providers occasionally produced stale state in multi-screen navigation flows. Resolved by refactoring to the `AsyncNotifier` pattern with proper invalidation on navigation events.
-- **Firebase + Laravel Dual Auth** — Managing authentication tokens for both Firebase SDK (real-time) and Laravel JWT simultaneously was complex. Resolved by introducing a token exchange endpoint where Laravel exchanges a Firebase token for a JWT.
 - **CORS Configuration** — Early testing revealed CORS policy issues between Flutter web build and Laravel API. Resolved by configuring strict CORS middleware with a proper origin allowlist in Laravel.
 
 ---
@@ -660,7 +657,7 @@ The project is on track according to the planned timeline, with approximately **
 The following work remains to bring TruthLens to full project completion:
 
 1. **Complete multilingual support** — Implement full Sinhala and Tamil translations using the `intl` package and ARB files.
-2. **Finalise Firebase Firestore integration** — Complete real-time messaging and live notification features.
+2. **Implement real-time features** — Explore lightweight polling or WebSocket approach via Laravel Echo/Pusher for messaging and live notifications using the existing MySQL backend.
 3. **Complete the Fact vs Fiction quiz game** — Finalise scoring logic, badge awarding, and the competitive leaderboard.
 4. **Implement comprehensive search** — Build full-text search across the article dataset with filter and sort capabilities.
 5. **Conduct user acceptance testing (UAT)** — Recruit target users (university students, young professionals) for structured testing sessions.
@@ -722,7 +719,7 @@ truth_lens/
 - **AI Microservice** — FastAPI + BERT via HuggingFace (Python 3.11+)
 - **Authentication** — JWT (tymon/jwt-auth 2.x) + Google OAuth
 - **Relational Database** — MySQL 8.0+
-- **Real-time Database** — Firebase Firestore (Latest)
+
 - **State Management** — Flutter Riverpod 2.x
 - **Version Control** — Git / GitHub
 - **Deployment Target** — DigitalOcean / Fly.io + Docker
