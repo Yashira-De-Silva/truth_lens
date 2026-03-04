@@ -451,57 +451,71 @@ Implementation has been carried out according to the Agile methodology. The basi
 
 ### 7.3 Screenshots / Code Snippets
 
-The following table describes each screenshot to be captured for the final report, based on the implemented screens in the Flutter frontend codebase.
+The screenshots below must be taken to document all implemented screens. Each description specifies exactly what should be visible in the capture.
 
 ---
 
-**Screenshot 1 — Login Screen**
-Capture the Login screen showing the TruthLens logo ("TL" in white on a dark blue rounded square) and tagline "See the Truth Behind the News" at the top, followed by the glassmorphism card containing the "Welcome back / Sign in to your account" header, the Email and Password input fields with icons, the "Forgot password?" link, the "Sign In" button in the accent colour, and the "Don't have an account? Sign up" row at the bottom. Background should show the dark blue-to-teal gradient.
+**SS 1 — Splash Screen** _(splash)_
+Capture the app launch screen showing the large "TL" logo in white on a dark blue rounded square, the "TruthLens" title in white, and the tagline "See the Truth Behind the News" in white/70 opacity below — all centred on the solid dark primary background. The screen uses a fade-in animation, so capture it at full opacity.
 
-**Screenshot 2 — Register Screen**
-Capture the Register screen with the same TruthLens logo at the top and the glass card containing the registration form fields: Name, Email, Password, and Confirm Password. The "Create Account" button and "Already have an account? Sign in" link should be visible.
+**SS 2 — Login Screen** _(auth)_
+Capture the Login screen: TruthLens logo and tagline at the top on the dark blue-to-teal gradient background, then the glassmorphism card below containing "Welcome back / Sign in to your account", the Email and Password fields with outline borders, the "Forgot password?" link, the accent-coloured "Sign In" button, and "Don't have an account? Sign up" at the bottom.
 
-**Screenshot 3 — Home Screen — News Feed Tab (Tab 1)**
-Capture the main home screen with the bottom navigation bar visible, showing the "News" tab as active. The news feed should display a list of article cards each containing the article headline, source name, publication date, and a credibility badge/indicator. The floating action button or article analysis entry point should also be visible.
+**SS 3 — Register Screen** _(auth)_
+Capture the Register screen with the same logo at top and the glass card showing the registration fields (Name, Email, Password, Confirm Password), the "Create Account" button, and "Already have an account? Sign in" link.
 
-**Screenshot 4 — Article Details Screen**
-Capture the article details view after tapping a news card. This should show the full article content, the AI credibility score displayed as a gauge or badge (0–100), the classification label (Likely True / Uncertain / Likely False), and the AI-generated natural-language summary below the article metadata.
+**SS 4 — Home Screen — News Feed** _(home / news)_
+Capture the main home screen with the bottom navigation bar showing 5 tabs (News, Explore, Digest, Chat, Profile) with "News" active. The feed shows a list of article cards — each with headline, source name badge, and credibility indicator — on the dark gradient background.
 
-**Screenshot 5 — Search / Explore Screen (Tab 2)**
-Capture the Search screen showing the search bar at the top with a placeholder prompt, and the results list below it populated with matching article cards. The screen should have the dark background and the bottom nav bar visible with "Explore" tab active.
+**SS 5 — Article Details Screen** _(article)_
+Capture the article detail view after tapping a news card. Must show: article headline and source at the top, the AI credibility score badge (0–100) with colour-coded label (Likely True / Uncertain / Likely False), and the natural-language AI summary section below.
 
-**Screenshot 6 — Digest Screen (Tab 3)**
-Capture the Digest screen showing the personalised news digest dashboard. This should display categorised news sections or a curated feed with article cards, headlines, and credibility indicators, all on the dark gradient background with the bottom nav bar showing "Digest" as active.
+**SS 6 — Search / Explore Screen** _(search)_
+Capture the Search screen with the search bar prominently at the top, and below it a list of populated search results (article cards with headline and source). The bottom nav bar should show "Explore" as active.
 
-**Screenshot 7 — AI Chat Screen (Tab 4 — Chats List)**
-Capture the Chats list screen showing previous conversation threads with the AI fact-checking assistant. Each thread should show the last message preview and timestamp.
+**SS 7 — Digest Screen** _(digest)_
+Capture the Digest screen — the personalised content dashboard — with article sections or a curated feed visible and the bottom nav "Digest" tab active.
 
-**Screenshot 8 — AI Chat Conversation**
-Capture an active chat conversation screen showing user message bubbles and AI response bubbles in the conversational interface. The screen should show a question about a news topic and the AI's fact-checked response with source references.
+**SS 8 — Bookmarks Screen** _(bookmarks)_
+Capture the Bookmarks screen showing:
 
-**Screenshot 9 — Profile Screen (Tab 5)**
-Capture the Profile screen showing the user's avatar, display name, and account details at the top, followed by the settings menu list including: Edit Profile, Reading History, Categories, Language, Privacy & Security, Manage Devices, Subscription, Help & Support, About, and the Log Out button at the bottom. Dark themed with glassmorphism card sections.
+- The header row with back arrow, amber bookmark icon, "Saved Articles" title, and article count (e.g., "3 articles saved")
+- Below it, 2–3 bookmark cards each showing the source badge (teal), article title, summary snippet, and the red "remove bookmark" icon on the right
+- Bottom-right of each card shows "Read Article →" in the accent colour
+- Dark gradient background with glassmorphism blur on each card
 
-**Screenshot 10 — Edit Profile Screen**
-Capture the Edit Profile screen showing the editable fields for name, bio, and profile photo upload option. The "Save Changes" button should be visible.
+**SS 9 — AI Chat List** _(chat)_
+Capture the Chats list screen showing a list of previous conversation sessions with the AI assistant. Each row should show the chat session name/topic and the last message preview.
 
-**Screenshot 11 — Chess Game — Board View**
-Capture the Chess game screen during an active game, showing the full 8×8 chess board with pieces rendered using Unicode chess symbols (♔♛♟ etc.), with a selected piece highlighted in yellow/amber and the current player's turn shown in the header. The move history panel should be visible at the bottom.
+**SS 10 — AI Chat Conversation** _(chat)_
+Capture an active AI chat conversation screen. Must show user message bubbles (right-aligned) and AI response bubbles (left-aligned) with a fact-checking response to a news-related question, and the message input field at the bottom.
 
-**Screenshot 12 — Chess Game — Game Over Dialog**
-Capture the Victory or Defeat dialog overlay — the glassmorphism dialog with backdrop blur, the gold trophy icon (for Victory) or red sad icon (for Defeat), the "Congratulations! You Won!" / "Game Over" text, and the "Play Again" and "Exit" buttons.
+**SS 11 — Profile Screen** _(profile)_
+Capture the full Profile screen showing the user avatar and display name at the top, followed by the full settings menu: Edit Profile, Reading History, Categories, Language, Privacy & Security, Manage Devices, Subscription, Help & Support, About, and the Log Out button. Dark themed, glassmorphism card sections.
 
-**Screenshot 13 — Fact vs Fiction Game**
-Capture the Fact vs Fiction game screen mid-game, showing the Stats Bar at the top (Score, Streak, Timer countdown), the progress bar, the news headline card in the centre, and the two answer buttons — green "FACT" and red "FICTION" — at the bottom.
+**SS 12 — Edit Profile Screen** _(profile)_
+Capture the Edit Profile screen with editable fields (name, bio, profile photo upload area) and the "Save Changes" button visible.
 
-**Screenshot 14 — Fact vs Fiction — Answer Feedback**
-Capture the moment after answering, showing the feedback card within the headline card: the green tick "Correct!" or red cross "Wrong!" indicator and the plain-English explanation text below it.
+**SS 13 — Chess Game — Color Selection** _(game)_
+Capture the Chess color selection screen showing "Choose Your Color" with two large option tiles — white king "♔ WHITE" and black king "♚ BLACK" — on the dark indigo gradient background.
 
-**Screenshot 15 — News Quiz Challenge**
-Capture the News Quiz screen showing a multiple-choice question (e.g., "What does 'misinformation' mean?") with four answer options (A, B, C, D) displayed as cards. The progress bar and score should be visible in the header.
+**SS 14 — Chess Game — Board View** _(game)_
+Capture the active chess board with the full 8×8 grid rendered in the indigo/dark theme, pieces as Unicode symbols (♔ ♛ ♟), one selected square highlighted in gold, the player turn indicator in the header, and the Move History panel at the bottom.
 
-**Screenshot 16 — News Quiz — Results Screen**
-Capture the Quiz results/game-over screen showing the trophy icon, the performance message (e.g., "Great Job! 🎉"), the score (e.g., 60/80), the percentage accuracy, and the correct/wrong count stats, with the "Play Again" and "Back to Profile" buttons.
+**SS 15 — Chess Game — Victory Dialog** _(game)_
+Capture the glassmorphism victory dialog with backdrop blur: the gold trophy icon, "🎉 Congratulations! 🎉" and "You Won! — Checkmate! Well played!" text, and the "Play Again" and "Exit" buttons.
+
+**SS 16 — Fact vs Fiction — Active Game** _(game)_
+Capture mid-game: the Stats Bar at the top (Score, Streak, Timer — e.g., "8 seconds left" in green), the question progress bar, the news headline card in the centre, and the green "FACT" and red "FICTION" answer buttons at the bottom.
+
+**SS 17 — Fact vs Fiction — Answer Feedback** _(game)_
+Capture the moment immediately after tapping an answer showing the feedback card inside the headline card: green "✓ Correct!" or red "✗ Wrong!" with the explanation paragraph below it, and "Next question loading..." overlay at the bottom.
+
+**SS 18 — News Quiz Challenge — Question View** _(game)_
+Capture the News Quiz challenge screen showing a question (e.g., "What does 'misinformation' mean?"), the score badge in the top-right header, the progress bar, and the four answer option cards (A, B, C, D) with rounded glassmorphism style on the dark background.
+
+**SS 19 — News Quiz — Results Screen** _(game)_
+Capture the quiz results screen: trophy icon, performance message (e.g., "Great Job! 🎉"), the total score (e.g., "60 / 80") in large indigo text, the accuracy percentage, correct/wrong stat icons, and the "Play Again" and "Back to Profile" buttons.
 
 ---
 
@@ -533,43 +547,56 @@ Capture the Quiz results/game-over screen showing the trophy icon, the performan
 
 ---
 
-## Chapter 08 – Conclusion
+## Chapter 08 – Discussion
 
-### 8.1 Summary of Work Done
+### 8.1 Summary of the Report
 
-Significant progress has been made on the TruthLens project since the project initiation phase. The following key deliverables have been completed at the interim stage:
+TruthLens is a cross-platform mobile application designed to empower users to identify misinformation and evaluate the credibility of news content using AI-powered analysis. The application has been developed using Flutter for the frontend, Laravel 12 as the backend REST API, FastAPI as the AI inference microservice, and MySQL 8.0 as the primary relational database.
 
-- **Full Laravel 12 backend API** with JWT authentication, Google OAuth, user management, article analysis, AI chat proxy, and bookmark management endpoints — all tested and functional.
-- **FastAPI AI microservice** with BERT-based NLP model integration providing credibility scoring and classification on submitted article content.
-- **Flutter mobile frontend** with completed screens for authentication, news digest, article analysis, AI chat, bookmarks, profile management, and dark/light theme support.
-- **Feature-based project architecture** established for both frontend and backend, enabling modular development and clean separation of concerns.
-- **Database schema** fully migrated with all core entities (users, articles, analysis results, bookmarks, chat sessions, quiz attempts, badges) in place.
+At the interim stage, the core functionality of the application is fully implemented. This includes a complete authentication system with JWT and Google OAuth, a BERT-based article credibility analysis pipeline, an AI fact-checking chat assistant, a personalised news digest, article bookmarking, a rich user profile and settings system, and a gamification module containing three fully functional games — a Chess Game with AI opponent, a Fact vs Fiction timed headline quiz, and a News Quiz Challenge on media literacy. Approximately 85% of the planned features are complete, with multilingual support and the competitive leaderboard remaining as the primary outstanding items.
 
-The project is on track according to the planned timeline, with approximately **85% of core features implemented** at the interim submission point.
+The project has adhered to the Agile development methodology, allowing core infrastructure and key user-facing features to be delivered in a functional state early and refined in subsequent sprints, consistent with what was outlined in the original Project Initiation Document.
 
 ---
 
-### 8.2 Challenges Faced
+### 8.2 What has changed from the Proposal
 
-- **AI Model Performance** — Initial BERT model inference was slow (>5s per request) on a standard VPS. Resolved by implementing async queued jobs in Laravel and switching to `DistilBERT` for faster inference.
-- **Cross-Platform Auth** — Google Sign-In required different OAuth client IDs for Android and iOS. Resolved by configuring separate OAuth clients per platform in Google Cloud Console.
-- **Race Conditions in State** — Riverpod providers occasionally produced stale state in multi-screen navigation flows. Resolved by refactoring to the `AsyncNotifier` pattern with proper invalidation on navigation events.
-- **CORS Configuration** — Early testing revealed CORS policy issues between Flutter web build and Laravel API. Resolved by configuring strict CORS middleware with a proper origin allowlist in Laravel.
+The primary change from the original project proposal relates to the database technology. In the PID, **Firebase Firestore** was proposed as the backend database, chosen for its real-time synchronisation capabilities and managed cloud infrastructure.
+
+During the development phase, the decision was made to replace Firebase Firestore with **MySQL 8.0+** as the single relational database for all persistent data storage. This change was driven by several technical considerations. MySQL provides a structured, schema-enforced relational model that is better suited to the interconnected entities in TruthLens — users, articles, analysis results, bookmarks, chat sessions, and quiz records — allowing for proper foreign key constraints and relational integrity. It also integrates natively with the Laravel framework through the Eloquent ORM, significantly reducing the complexity of the data access layer. Additionally, MySQL eliminates the dependency on a third-party cloud service for the database, giving greater control over data structure, query optimisation, and deployment environment.
+
+The real-time features originally envisioned for Firebase (such as live chat updates) will instead be implemented using Laravel Echo and a lightweight WebSocket approach in the final phase of development, maintaining equivalent functionality without requiring Firebase.
+
+No other significant changes have been made to the original project scope, architecture, or feature set as defined in the PID.
 
 ---
 
-### 8.3 Future Work
+### 8.3 Future Plans / Upcoming Work
 
-The following work remains to bring TruthLens to full project completion:
+The following items remain to be completed before the final project submission:
 
-1. **Complete multilingual support** — Implement full Sinhala and Tamil translations using the `intl` package and ARB files.
-2. **Implement real-time features** — Explore lightweight polling or WebSocket approach via Laravel Echo/Pusher for messaging and live notifications using the existing MySQL backend.
-3. **Complete the Fact vs Fiction quiz game** — Finalise scoring logic, badge awarding, and the competitive leaderboard.
-4. **Implement comprehensive search** — Build full-text search across the article dataset with filter and sort capabilities.
-5. **Conduct user acceptance testing (UAT)** — Recruit target users (university students, young professionals) for structured testing sessions.
-6. **Performance and security audit** — Conduct load testing (k6/Locust), penetration testing, and code security review before production deployment.
-7. **Production deployment** — Containerise services with Docker and deploy to a cloud provider (DigitalOcean / Fly.io) with CI/CD pipelines.
-8. **App Store submission** — Prepare store listings, screenshots, and compliance documentation for Google Play and Apple App Store.
+- **Multilingual support** — Complete Sinhala and Tamil localisation by finishing the ARB translation files and applying RTL layout adjustments where necessary.
+- **Competitive leaderboard** — Finalise the Flutter leaderboard screen for the Fact vs Fiction and News Quiz games, integrating with the existing backend ranking endpoint.
+- **Full-text search UI** — Complete the search results filtering and sorting interface on the Flutter frontend.
+- **Expanded news digest** — Integrate a broader set of RSS sources and implement user-configurable category preferences for the personalised digest.
+- **User Acceptance Testing (UAT)** — Conduct structured testing sessions with target users (university students and young professionals) to gather feedback on usability and credibility scoring accuracy.
+- **Performance and security audit** — Run load testing using tools such as k6 or Locust, and perform a security review of all API endpoints before production deployment.
+- **Production deployment** — Deploy the Laravel API, FastAPI microservice, and MySQL database to a cloud provider (DigitalOcean or Fly.io) with a CI/CD pipeline.
+- **App Store submission** — Prepare store listings, screenshots, and compliance documentation for submission to the Google Play Store and Apple App Store.
+
+---
+
+### 8.4 References
+
+1. Flutter Documentation — https://docs.flutter.dev
+2. Laravel 12 Documentation — https://laravel.com/docs
+3. FastAPI Documentation — https://fastapi.tiangolo.com
+4. HuggingFace Transformers — https://huggingface.co/docs/transformers
+5. MySQL 8.0 Reference Manual — https://dev.mysql.com/doc/refman/8.0/en
+6. Devlin, J., Chang, M.-W., Lee, K., & Toutanova, K. (2019). _BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding_. arXiv:1810.04805.
+7. Shu, K., Sliva, A., Wang, S., Tang, J., & Liu, H. (2017). _Fake News Detection on Social Media: A Data Mining Perspective_. ACM SIGKDD Explorations Newsletter, 19(1), 22–36.
+8. Riverpod State Management — https://riverpod.dev/docs
+9. tymon/jwt-auth for Laravel — https://jwt-auth.readthedocs.io
 
 ---
 
