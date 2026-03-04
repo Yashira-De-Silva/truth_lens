@@ -593,66 +593,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nameRequired => 'Name is required';
 
   @override
-  String get article1Title => 'Breaking: AI Revolutionizes News Verification';
-
-  @override
-  String get article1Summary =>
-      'New AI technology can detect fake news with 98% accuracy using advanced machine learning algorithms.';
-
-  @override
-  String get article1Source => 'Tech News';
-
-  @override
-  String get article2Title => 'Political Summit Addresses Climate Change';
-
-  @override
-  String get article2Summary =>
-      'World leaders gather to discuss climate action and sustainable development goals for 2026.';
-
-  @override
-  String get article2Source => 'World Politics';
-
-  @override
-  String get article3Title => 'Stock Market Reaches New Heights';
-
-  @override
-  String get article3Summary =>
-      'Technology stocks lead market gains as investors show confidence in AI sector growth.';
-
-  @override
-  String get article3Source => 'Business Today';
-
-  @override
-  String get article4Title => 'Medical Breakthrough in Cancer Treatment';
-
-  @override
-  String get article4Summary =>
-      'Scientists develop new immunotherapy that shows promising results in clinical trials.';
-
-  @override
-  String get article4Source => 'Health News';
-
-  @override
-  String get article5Title => 'SpaceX Announces Mars Mission Timeline';
-
-  @override
-  String get article5Summary =>
-      'Elon Musk reveals updated plans for the first crewed mission to Mars in 2028.';
-
-  @override
-  String get article5Source => 'Space Journal';
-
-  @override
-  String get article6Title => 'Olympics 2026 Preparations Underway';
-
-  @override
-  String get article6Summary =>
-      'Host city unveils state-of-the-art facilities for upcoming Olympic Games.';
-
-  @override
-  String get article6Source => 'Sports World';
-
-  @override
   String get biased => 'Biased';
 
   @override

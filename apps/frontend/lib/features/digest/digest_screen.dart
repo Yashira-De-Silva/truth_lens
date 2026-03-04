@@ -1,39 +1,32 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/services/api_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../news/article_model.dart';
 import '../article/article_details_screen.dart';
 
-class DigestScreen extends StatelessWidget {
-  DigestScreen({super.key});
+// ── Provider ──────────────────────────────────────────────────────────────────
+final _digestServiceProvider = Provider<NewsApiService>(
+  (ref) => NewsApiService(),
+);
 
-  // Mock top verified articles
-  final List<Article> _topArticles = [
-    Article(
-      id: 101,
-      title: 'Global Climate Agreement Reaches Historic Milestone',
-      summary: 'World leaders unite to commit to carbon neutrality by 2030, marking a significant breakthrough in climate action.',
-      source: 'World News',
-    ),
-    Article(
-      id: 102,
-      title: 'Medical AI Achieves 99% Accuracy in Early Cancer Detection',
-      summary: 'Revolutionary artificial intelligence system can now detect 12 types of cancer in early stages with unprecedented precision.',
-      source: 'Health Tech',
-    ),
-    Article(
-      id: 103,
-      title: 'Renewable Energy Now Powers 60% of Global Grid',
-      summary: 'Solar and wind energy surpass fossil fuels for the first time in history, transforming the global energy landscape.',
-      source: 'Energy Today',
-    ),
-  ];
+final digestProvider = FutureProvider.autoDispose<List<Article>>((ref) async {
+  final svc = ref.watch(_digestServiceProvider);
+  return svc.fetchDigest(limit: 3);
+});
+
+// ── Screen ────────────────────────────────────────────────────────────────────
+
+class DigestScreen extends ConsumerWidget {
+  const DigestScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    
+    final asyncDigest = ref.watch(digestProvider);
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -46,7 +39,7 @@ class DigestScreen extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
+              // ── Header ──────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -82,36 +75,152 @@ class DigestScreen extends StatelessWidget {
                             children: [
                               Text(
                                 l10n.digest,
-                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                               Text(
                                 l10n.todayDigest,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                ),
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.7,
+                                      ),
+                                    ),
                               ),
                             ],
+                          ),
+                        ),
+                        // Refresh button
+                        GestureDetector(
+                          onTap: () => ref.refresh(digestProvider),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFF0B1220,
+                              ).withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.1),
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.refresh,
+                              color: Colors.white.withValues(alpha: 0.7),
+                              size: 18,
+                            ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _buildStatsRow(),
+                    asyncDigest.when(
+                      data: (articles) => _buildStatsRow(articles.length),
+                      loading: () => _buildStatsRow(0),
+                      error: (_, __) => _buildStatsRow(0),
+                    ),
                   ],
                 ),
               ),
 
-              // Articles List
+              // ── Articles ─────────────────────────────────────────
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                  itemCount: _topArticles.length,
-                  itemBuilder: (context, index) {
-                    return _buildDigestCard(context, _topArticles[index], index + 1);
-                  },
+                child: asyncDigest.when(
+                  loading: () => Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(color: AppColors.success),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Finding top verified articles…',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  error: (err, _) => Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: AppColors.error,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Could not load digest',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Make sure the ML service is running',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        GestureDetector(
+                          onTap: () => ref.refresh(digestProvider),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.success,
+                                  AppColors.success.withValues(alpha: 0.8),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              'Retry',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  data: (articles) => articles.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No verified articles found',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                          itemCount: articles.length,
+                          itemBuilder: (context, index) {
+                            return _buildDigestCard(
+                              context,
+                              articles[index],
+                              index + 1,
+                            );
+                          },
+                        ),
                 ),
               ),
             ],
@@ -121,14 +230,15 @@ class DigestScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsRow() {
+  Widget _buildStatsRow(int articleCount) {
+    final count = articleCount == 0 ? '—' : '$articleCount';
     return Row(
       children: [
-        _buildStatChip(Icons.article, '3', 'Articles'),
+        _buildStatChip(Icons.article, count, 'Articles'),
         const SizedBox(width: 8),
         _buildStatChip(Icons.verified_user, '100%', 'Verified'),
         const SizedBox(width: 8),
-        _buildStatChip(Icons.trending_up, '98%', 'Accuracy'),
+        _buildStatChip(Icons.trending_up, 'ML', 'Accuracy'),
       ],
     );
   }
@@ -140,9 +250,7 @@ class DigestScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF0B1220).withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.1),
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
         child: Column(
           children: [
@@ -150,7 +258,7 @@ class DigestScreen extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               value,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -170,6 +278,8 @@ class DigestScreen extends StatelessWidget {
   }
 
   Widget _buildDigestCard(BuildContext context, Article article, int rank) {
+    final confidencePct = (article.confidence * 100).toInt();
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: GestureDetector(
@@ -245,9 +355,14 @@ class DigestScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.success.withValues(alpha: 0.2),
+                                  color: AppColors.success.withValues(
+                                    alpha: 0.2,
+                                  ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
@@ -260,7 +375,7 @@ class DigestScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Verified',
+                                      'Verified • $confidencePct%',
                                       style: TextStyle(
                                         color: AppColors.success,
                                         fontSize: 11,
@@ -311,7 +426,10 @@ class DigestScreen extends StatelessWidget {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.secondary.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
@@ -320,13 +438,13 @@ class DigestScreen extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.access_time,
+                                Icons.auto_awesome,
                                 size: 14,
                                 color: AppColors.secondary,
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${rank}h ago',
+                                'AI Verified',
                                 style: TextStyle(
                                   color: AppColors.secondary,
                                   fontSize: 12,

@@ -1,0 +1,5 @@
+flask
+flask-cors
+kagglehub
+pandas
+scikit-learn

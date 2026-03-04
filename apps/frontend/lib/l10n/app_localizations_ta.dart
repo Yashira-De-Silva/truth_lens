@@ -599,68 +599,6 @@ class AppLocalizationsTa extends AppLocalizations {
   String get nameRequired => 'பெயர் தேவை';
 
   @override
-  String get article1Title =>
-      'அவசர: AI செய்தி சரிபார்ப்பில் புரட்சியை ஏற்படுத்துகிறது';
-
-  @override
-  String get article1Summary =>
-      'புதிய AI தொழில்நுட்பம் மேம்பட்ட இயந்திர கற்றல் வழிமுறைகளைப் பயன்படுத்தி 98% துல்லியத்துடன் போலி செய்திகளைக் கண்டறிய முடியும்.';
-
-  @override
-  String get article1Source => 'தொழில்நுட்ப செய்திகள்';
-
-  @override
-  String get article2Title =>
-      'அரசியல் உச்சிமாநாடு காலநிலை மாற்றத்தை உரையாற்றுகிறது';
-
-  @override
-  String get article2Summary =>
-      'உலக தலைவர்கள் 2026க்கான காலநிலை நடவடிக்கை மற்றும் நிலையான அபிவிருத்தி இலக்குகளை விவாதிக்க ஒன்று கூடுகின்றனர்.';
-
-  @override
-  String get article2Source => 'உலக அரசியல்';
-
-  @override
-  String get article3Title => 'பங்குச் சந்தை புதிய உயரங்களை அடைகிறது';
-
-  @override
-  String get article3Summary =>
-      'AI துறை வளர்ச்சியில் முதலீட்டாளர்கள் நம்பிக்கை காட்டும் போது தொழில்நுட்ப பங்குகள் சந்தை ஆதாயங்களை வழிநடத்துகின்றன.';
-
-  @override
-  String get article3Source => 'இன்றைய வணிகம்';
-
-  @override
-  String get article4Title => 'புற்றுநோய் சிகிச்சையில் மருத்துவ முன்னேற்றம்';
-
-  @override
-  String get article4Summary =>
-      'விஞ்ஞானிகள் மருத்துவ பரிசோதனைகளில் நம்பிக்கைக்குரிய முடிவுகளைக் காட்டும் புதிய நோயெதிர்ப்பு சிகிச்சையை உருவாக்குகின்றனர்.';
-
-  @override
-  String get article4Source => 'சுகாதார செய்திகள்';
-
-  @override
-  String get article5Title => 'SpaceX செவ்வாய் பயண காலவரிசையை அறிவிக்கிறது';
-
-  @override
-  String get article5Summary =>
-      'Elon Musk 2028 இல் செவ்வாய் கிரகத்திற்கான முதல் பணியாளர் பயணத்திற்கான புதுப்பிக்கப்பட்ட திட்டங்களை வெளியிடுகிறார்.';
-
-  @override
-  String get article5Source => 'விண்வெளி இதழ்';
-
-  @override
-  String get article6Title => 'ஒலிம்பிக் 2026 தயாரிப்புகள் நடந்து வருகின்றன';
-
-  @override
-  String get article6Summary =>
-      'புரவலன் நகரம் வரவிருக்கும் ஒலிம்பிக் விளையாட்டுகளுக்கான அதிநவீன வசதிகளை வெளியிடுகிறது.';
-
-  @override
-  String get article6Source => 'விளையாட்டு உலகம்';
-
-  @override
   String get biased => 'பக்கச்சார்பு';
 
   @override

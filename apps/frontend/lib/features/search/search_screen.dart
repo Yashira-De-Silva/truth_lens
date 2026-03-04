@@ -2,66 +2,28 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/services/api_service.dart';
 import '../../core/widgets/app_snackbar.dart';
 import '../../l10n/app_localizations.dart';
 import '../news/article_model.dart';
 import '../news/bookmarks_provider.dart';
 import '../article/article_details_screen.dart';
 
-class SearchScreen extends StatefulWidget {
+class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  ConsumerState<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final NewsApiService _svc = NewsApiService();
+
   String _selectedCategory = 'All';
   String _searchQuery = '';
-  List<Article> _searchResults = [];
-  bool _isSearching = false;
-
-  List<Article> _getTranslatedArticles(AppLocalizations l10n) {
-    return [
-      Article(
-        id: 1,
-        title: l10n.article1Title,
-        summary: l10n.article1Summary,
-        source: l10n.article1Source,
-      ),
-      Article(
-        id: 2,
-        title: l10n.article2Title,
-        summary: l10n.article2Summary,
-        source: l10n.article2Source,
-      ),
-      Article(
-        id: 3,
-        title: l10n.article3Title,
-        summary: l10n.article3Summary,
-        source: l10n.article3Source,
-      ),
-      Article(
-        id: 4,
-        title: l10n.article4Title,
-        summary: l10n.article4Summary,
-        source: l10n.article4Source,
-      ),
-      Article(
-        id: 5,
-        title: l10n.article5Title,
-        summary: l10n.article5Summary,
-        source: l10n.article5Source,
-      ),
-      Article(
-        id: 6,
-        title: l10n.article6Title,
-        summary: l10n.article6Summary,
-        source: l10n.article6Source,
-      ),
-    ];
-  }
+  List<Article> _articles = [];
+  bool _isLoading = false;
 
   final List<String> _categories = [
     'All',
@@ -77,7 +39,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    // Search results will be initialized in build method with translations
+    _loadInitial();
   }
 
   @override
@@ -86,69 +48,57 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  void _performSearch() {
-    final l10n = AppLocalizations.of(context)!;
-    final translatedArticles = _getTranslatedArticles(l10n);
+  Future<void> _loadInitial() async {
+    setState(() => _isLoading = true);
+    try {
+      final results = await _svc.fetchNews(limit: 20);
+      setState(() => _articles = results);
+    } catch (_) {
+      // silently ignore — empty list shown
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
-    setState(() {
-      _isSearching = true;
-      _searchQuery = _searchController.text.toLowerCase();
-    });
-
-    // Simulate network delay
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (!mounted) return;
-
-      setState(() {
-        _searchResults = translatedArticles.where((article) {
-          final matchesQuery =
-              _searchQuery.isEmpty ||
-              article.title.toLowerCase().contains(_searchQuery) ||
-              article.summary.toLowerCase().contains(_searchQuery) ||
-              article.source.toLowerCase().contains(_searchQuery);
-
-          final matchesCategory =
-              _selectedCategory == 'All' ||
-              article.source.toLowerCase().contains(
-                _selectedCategory.toLowerCase(),
-              ) ||
-              article.title.toLowerCase().contains(
-                _selectedCategory.toLowerCase(),
-              );
-
-          return matchesQuery && matchesCategory;
-        }).toList();
-        _isSearching = false;
-      });
-
-      if (_searchResults.isEmpty && _searchQuery.isNotEmpty) {
+  Future<void> _performSearch() async {
+    setState(() => _isLoading = true);
+    try {
+      final results = await _svc.searchNews(
+        query: _searchController.text.trim(),
+        category: _selectedCategory,
+      );
+      setState(() => _articles = results);
+      if (results.isEmpty && mounted) {
         final l10n = AppLocalizations.of(context)!;
         AppSnackbar.showError(
           context,
-          '${l10n.noResultsFound} "$_searchQuery"',
+          '${l10n.noResultsFound} "${_searchController.text}"',
         );
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.showError(
+          context,
+          'Search failed. Is the ML service running?',
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   void _clearSearch() {
+    _searchController.clear();
     setState(() {
-      _searchController.clear();
       _searchQuery = '';
-      _searchResults = [];
       _selectedCategory = 'All';
     });
+    _loadInitial();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final translatedArticles = _getTranslatedArticles(l10n);
-
-    // Initialize search results on first build if empty
-    if (_searchResults.isEmpty && !_isSearching) {
-      _searchResults = translatedArticles;
-    }
 
     return Scaffold(
       body: Container(
@@ -162,7 +112,7 @@ class _SearchScreenState extends State<SearchScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
+              // ── Header ──────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -216,24 +166,22 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
 
-              // Search Bar
+              // ── Search Bar ──────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: _buildModernSearchBar(),
+                child: _buildSearchBar(),
               ),
-
               const SizedBox(height: 16),
 
-              // Category Pills & Filter
+              // ── Categories ──────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: _buildCategoryFilter(),
               ),
-
               const SizedBox(height: 16),
 
-              // Results
-              Expanded(child: _buildSearchResults()),
+              // ── Results ─────────────────────────────────────────
+              Expanded(child: _buildResults()),
             ],
           ),
         ),
@@ -241,7 +189,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildModernSearchBar() {
+  Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF0B1220).withValues(alpha: 0.6),
@@ -283,10 +231,8 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
             onChanged: (value) {
-              setState(() {});
-              if (value.isEmpty) {
-                _clearSearch();
-              }
+              setState(() => _searchQuery = value);
+              if (value.isEmpty) _clearSearch();
             },
           ),
         ),
@@ -304,149 +250,164 @@ class _SearchScreenState extends State<SearchScreen> {
               scrollDirection: Axis.horizontal,
               itemCount: _categories.length,
               itemBuilder: (context, index) {
-                final category = _categories[index];
-                final isSelected = _selectedCategory == category;
+                final cat = _categories[index];
+                final isSelected = _selectedCategory == cat;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
-                  child: _buildCategoryChip(category, isSelected),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() => _selectedCategory = cat);
+                      _performSearch();
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.secondary.withValues(alpha: 0.2)
+                            : const Color(0xFF0B1220).withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.secondary
+                              : Colors.white.withValues(alpha: 0.1),
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Text(
+                        cat,
+                        style: TextStyle(
+                          color: isSelected
+                              ? AppColors.secondary
+                              : Colors.white.withValues(alpha: 0.7),
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
                 );
               },
             ),
           ),
         ),
         const SizedBox(width: 8),
-        _buildFilterButton(),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF0B1220).withValues(alpha: 0.8),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: _performSearch,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.tune, color: AppColors.secondary, size: 20),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Filter',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildCategoryChip(String category, bool isSelected) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedCategory = category;
-        });
-        if (_searchController.text.isNotEmpty) {
-          _performSearch();
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.secondary.withValues(alpha: 0.2)
-              : const Color(0xFF0B1220).withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.secondary
-                : Colors.white.withValues(alpha: 0.1),
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Text(
-          category,
-          style: TextStyle(
-            color: isSelected
-                ? AppColors.secondary
-                : Colors.white.withValues(alpha: 0.7),
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            fontSize: 14,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF0B1220).withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: _performSearch,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.tune, color: AppColors.secondary, size: 20),
-                const SizedBox(width: 8),
-                const Text(
-                  'Filter',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchResults() {
-    if (_isSearching) {
+  Widget _buildResults() {
+    if (_isLoading) {
       return Center(
         child: CircularProgressIndicator(color: AppColors.secondary),
       );
     }
 
-    if (_searchResults.isEmpty && _searchQuery.isNotEmpty) {
-      return _buildNoResults();
+    if (_articles.isEmpty && _searchQuery.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off,
+              size: 64,
+              color: Colors.white.withValues(alpha: 0.4),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No Results Found',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try different keywords or categories',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_articles.isEmpty) {
+      return Center(
+        child: Text(
+          'No articles available',
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+        ),
+      );
     }
 
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-      itemCount: _searchResults.length,
-      itemBuilder: (context, index) {
-        return _buildResultCard(_searchResults[index]);
-      },
-    );
-  }
-
-  Widget _buildNoResults() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.search_off,
-            size: 64,
-            color: Colors.white.withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No Results Found',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Try different keywords or categories',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.6),
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
+      itemCount: _articles.length,
+      itemBuilder: (context, index) => _buildResultCard(_articles[index]),
     );
   }
 
   Widget _buildResultCard(Article article) {
+    // Determine badge from ML label
+    final isReal = article.label == 'REAL';
+    final highConf = article.confidence >= 0.75;
+    Color badgeColor;
+    String badgeText;
+    if (isReal && highConf) {
+      badgeColor = AppColors.success;
+      badgeText = 'Verified';
+    } else if (!isReal && highConf) {
+      badgeColor = AppColors.error;
+      badgeText = 'Fake';
+    } else {
+      badgeColor = AppColors.accent;
+      badgeText = 'Uncertain';
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: GestureDetector(
@@ -493,6 +454,25 @@ class _SearchScreenState extends State<SearchScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: badgeColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '$badgeText · ${(article.confidence * 100).toInt()}%',
+                            style: TextStyle(
+                              color: badgeColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                         const Spacer(),
                         Consumer(
                           builder: (context, ref, _) {
@@ -500,7 +480,6 @@ class _SearchScreenState extends State<SearchScreen> {
                             final isSaved = bookmarks.any(
                               (a) => a.id == article.id,
                             );
-
                             return GestureDetector(
                               onTap: () async {
                                 final l10n = AppLocalizations.of(context)!;
@@ -508,22 +487,20 @@ class _SearchScreenState extends State<SearchScreen> {
                                   await ref
                                       .read(bookmarksProvider.notifier)
                                       .removeById(article.id);
-                                  if (context.mounted) {
+                                  if (context.mounted)
                                     AppSnackbar.showSuccess(
                                       context,
                                       l10n.removedFromBookmarks,
                                     );
-                                  }
                                 } else {
                                   await ref
                                       .read(bookmarksProvider.notifier)
                                       .add(article);
-                                  if (context.mounted) {
+                                  if (context.mounted)
                                     AppSnackbar.showSuccess(
                                       context,
                                       l10n.savedToBookmarks,
                                     );
-                                  }
                                 }
                               },
                               child: Container(
@@ -566,13 +543,13 @@ class _SearchScreenState extends State<SearchScreen> {
                     Row(
                       children: [
                         Icon(
-                          Icons.access_time,
+                          Icons.auto_awesome,
                           size: 14,
-                          color: Colors.white.withValues(alpha: 0.5),
+                          color: AppColors.secondary.withValues(alpha: 0.7),
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '2 hours ago',
+                          'ML classified',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.5),
                             fontSize: 12,
