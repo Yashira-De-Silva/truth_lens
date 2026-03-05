@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../news/article_model.dart';
 import 'comment_model.dart';
+import 'comment_provider.dart';
 import '../profile/profile_provider.dart';
 
 class ArticleDetailsScreen extends ConsumerStatefulWidget {
@@ -20,39 +21,19 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
   bool showSummary = true;
   double fakeProbability = 0.18; // mock
 
-  // Comments state
-  final List<Comment> _comments = [
-    Comment(
-      id: 1,
-      userName: 'Kasun Silva',
-      userAvatar: 'assets/avatar1.png',
-      text: 'This is very informative. Thanks for sharing!',
-      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      likes: 12,
-      isLiked: false,
-    ),
-    Comment(
-      id: 2,
-      userName: 'Nimali Fernando',
-      userAvatar: 'assets/avatar2.png',
-      text: 'I had doubts about this news. Good to see the verification.',
-      timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-      likes: 8,
-      isLiked: true,
-    ),
-    Comment(
-      id: 3,
-      userName: 'Ravindu Perera',
-      userAvatar: 'assets/avatar3.png',
-      text: 'Can you provide more sources?',
-      timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      likes: 3,
-      isLiked: false,
-    ),
-  ];
-
   final TextEditingController _commentController = TextEditingController();
   final FocusNode _commentFocusNode = FocusNode();
+
+  int get _articleId => widget.article?.id ?? 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load comments from backend after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(commentsProvider(_articleId).notifier).load();
+    });
+  }
 
   @override
   void dispose() {
@@ -61,41 +42,20 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
     super.dispose();
   }
 
-  void _addComment() {
-    if (_commentController.text.trim().isEmpty) return;
-
-    // Read current user profile from provider
-    final profile = ref.read(profileProvider);
-    final displayName = profile.name.isNotEmpty ? profile.name : 'User';
-
-    setState(() {
-      _comments.insert(
-        0,
-        Comment(
-          id: _comments.length + 1,
-          userName: displayName,
-          userAvatar: 'assets/default_avatar.png',
-          text: _commentController.text.trim(),
-          timestamp: DateTime.now(),
-          likes: 0,
-          isLiked: false,
-        ),
-      );
-      _commentController.clear();
-      _commentFocusNode.unfocus();
-    });
+  Future<void> _addComment() async {
+    final text = _commentController.text.trim();
+    if (text.isEmpty) return;
+    _commentController.clear();
+    _commentFocusNode.unfocus();
+    await ref.read(commentsProvider(_articleId).notifier).addComment(text);
   }
 
-  void _toggleLike(Comment comment) {
-    setState(() {
-      final index = _comments.indexWhere((c) => c.id == comment.id);
-      if (index != -1) {
-        _comments[index] = comment.copyWith(
-          isLiked: !comment.isLiked,
-          likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
-        );
-      }
-    });
+  Future<void> _toggleLike(Comment comment) async {
+    await ref.read(commentsProvider(_articleId).notifier).toggleLike(comment.id);
+  }
+
+  Future<void> _deleteComment(int commentId) async {
+    await ref.read(commentsProvider(_articleId).notifier).deleteComment(commentId);
   }
 
   String _getTimeAgo(DateTime timestamp) {
@@ -460,22 +420,38 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                             const SizedBox(width: 8),
                             GestureDetector(
                               onTap: _addComment,
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      AppColors.secondary,
-                                      Color(0xFF4338CA),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.send,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
+                              child: Consumer(
+                                builder: (context, ref, _) {
+                                  final isSubmitting = ref
+                                      .watch(commentsProvider(_articleId))
+                                      .isSubmitting;
+                                  return Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          AppColors.secondary,
+                                          Color(0xFF4338CA),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: isSubmitting
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.send,
+                                            color: Colors.white,
+                                            size: 18,
+                                          ),
+                                  );
+                                },
                               ),
                             ),
                           ],
@@ -484,8 +460,51 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
 
                       const SizedBox(height: 16),
 
-                      // Comments list
-                      ..._comments.map((comment) => _buildCommentItem(comment)),
+                      // Comments list — from backend
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final state = ref.watch(commentsProvider(_articleId));
+                          if (state.isLoading) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(24),
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+                          if (state.error != null && state.comments.isEmpty) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Text(
+                                  'Could not load comments.',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.5),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          if (state.comments.isEmpty) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Text(
+                                  'No comments yet. Be the first!',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.5),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          return Column(
+                            children: state.comments
+                                .map((c) => _buildCommentItem(c))
+                                .toList(),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -498,6 +517,8 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
   }
 
   Widget _buildCommentItem(Comment comment) {
+    final profile = ref.read(profileProvider);
+    final isOwn = profile.id != null && profile.id == comment.userId;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -539,6 +560,7 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                   ],
                 ),
               ),
+              // Like button
               GestureDetector(
                 onTap: () => _toggleLike(comment),
                 child: Row(
@@ -561,6 +583,18 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                   ],
                 ),
               ),
+              // Delete button (own comments only)
+              if (isOwn) ...[
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () => _deleteComment(comment.id),
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: Colors.white.withValues(alpha: 0.4),
+                    size: 18,
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 12),

@@ -44,7 +44,7 @@ fi
 # Replace the kBaseUrl line
 sed -i '' "s|const String kBaseUrl      = 'http://[^']*';|const String kBaseUrl      = 'http://${IP}:8000/api';|" "$CONSTANTS_FILE"
 # Replace the kMlServiceUrl line
-sed -i '' "s|const String kMlServiceUrl = 'http://[^']*';|const String kMlServiceUrl = 'http://${IP}:5000';|" "$CONSTANTS_FILE"
+sed -i '' "s|const String kMlServiceUrl = 'http://[^']*';|const String kMlServiceUrl = 'http://${IP}:5001';|" "$CONSTANTS_FILE"
 
 echo "✅  Updated api_constants.dart → Laravel: http://${IP}:8000/api | ML: http://${IP}:5000"
 

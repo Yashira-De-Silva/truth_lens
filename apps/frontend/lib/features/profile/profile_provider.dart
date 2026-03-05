@@ -39,6 +39,7 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
         bio: data['bio'] as String? ?? '',
         apiKey: data['api_key'] as String?,
         avatarPath: data['profile_image'] as String? ?? state.avatarPath,
+        id: data['id'] as int?,
       );
       await _save();
     } catch (_) {
