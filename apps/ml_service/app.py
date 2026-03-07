@@ -19,9 +19,11 @@ Run:
 """
 
 import os
+import signal
 import pickle
 import random
 import logging
+import subprocess
 from typing import Optional, Tuple
 
 import kagglehub
@@ -485,5 +487,25 @@ def get_live_news():
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
+def _free_port(port: int) -> None:
+    """Kill any process currently listening on *port* so Flask can bind cleanly.
+    This prevents the 'Address already in use' error when restarting the service.
+    """
+    try:
+        result = subprocess.run(
+            ["lsof", "-ti", f":{port}"],
+            capture_output=True, text=True, timeout=5,
+        )
+        pids = result.stdout.strip().split()
+        for pid in pids:
+            pid = pid.strip()
+            if pid and pid.isdigit():
+                os.kill(int(pid), signal.SIGKILL)
+                log.info(f"Freed port {port} by killing PID {pid}")
+    except Exception as e:
+        log.warning(f"Could not free port {port}: {e}")
+
+
 if __name__ == "__main__":
+    _free_port(5001)
     app.run(host="0.0.0.0", port=5001, debug=False)

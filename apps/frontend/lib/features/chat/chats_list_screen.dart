@@ -36,15 +36,20 @@ class ChatsListScreen extends ConsumerWidget {
                   children: [
                     Text(
                       l10n.messages,
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                     ),
                     GestureDetector(
                       onTap: () async {
-                        await Navigator.push(context,
-                            MaterialPageRoute(builder: (_) => const SelectUserScreen()));
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SelectUserScreen(),
+                          ),
+                        );
                         ref.read(conversationsProvider.notifier).load();
                       },
                       child: Container(
@@ -53,9 +58,15 @@ class ChatsListScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: AppColors.secondary.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
+                          border: Border.all(
+                            color: AppColors.secondary.withValues(alpha: 0.3),
+                          ),
                         ),
-                        child: Icon(Icons.edit_square, color: AppColors.secondary, size: 24),
+                        child: Icon(
+                          Icons.edit_square,
+                          color: AppColors.secondary,
+                          size: 24,
+                        ),
                       ),
                     ),
                   ],
@@ -63,23 +74,31 @@ class ChatsListScreen extends ConsumerWidget {
               ),
               Expanded(
                 child: state.isLoading
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.secondary))
-                    : state.error != null
-                        ? _buildError(context, ref, state.error!)
-                        : state.conversations.isEmpty
-                            ? _buildEmptyState(context, ref)
-                            : RefreshIndicator(
-                                color: AppColors.secondary,
-                                backgroundColor: const Color(0xFF0B1220),
-                                onRefresh: () => ref.read(conversationsProvider.notifier).load(),
-                                child: ListView.separated(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  itemCount: state.conversations.length,
-                                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                                  itemBuilder: (ctx, i) =>
-                                      _buildCard(ctx, ref, state.conversations[i]),
-                                ),
-                              ),
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.secondary,
+                        ),
+                      )
+                    : !state.isAuthenticated
+                    ? _buildNotLoggedIn(context)
+                    : state.error != null && state.conversations.isEmpty
+                    ? _buildError(context, ref, state.error!)
+                    : state.conversations.isEmpty
+                    ? _buildEmptyState(context, ref)
+                    : RefreshIndicator(
+                        color: AppColors.secondary,
+                        backgroundColor: const Color(0xFF0B1220),
+                        onRefresh: () =>
+                            ref.read(conversationsProvider.notifier).load(),
+                        child: ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: state.conversations.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (ctx, i) =>
+                              _buildCard(ctx, ref, state.conversations[i]),
+                        ),
+                      ),
               ),
             ],
           ),
@@ -88,7 +107,11 @@ class ChatsListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCard(BuildContext context, WidgetRef ref, BackendConversation conv) {
+  Widget _buildCard(
+    BuildContext context,
+    WidgetRef ref,
+    BackendConversation conv,
+  ) {
     final l10n = AppLocalizations.of(context)!;
     final last = conv.lastMessage;
     String displayMessage = l10n.noMessages;
@@ -104,14 +127,19 @@ class ChatsListScreen extends ConsumerWidget {
         displayMessage = last.body;
       }
     }
-    final formattedTime = last != null ? _formatTime(DateTime.tryParse(last.createdAt)) : '';
+    final formattedTime = last != null
+        ? _formatTime(DateTime.tryParse(last.createdAt))
+        : '';
 
     return GestureDetector(
       onTap: () async {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ChatScreen(conversationId: conv.conversationId, otherUser: conv.otherUser),
+            builder: (_) => ChatScreen(
+              conversationId: conv.conversationId,
+              otherUser: conv.otherUser,
+            ),
           ),
         );
         ref.read(conversationsProvider.notifier).load();
@@ -138,15 +166,21 @@ class ChatsListScreen extends ConsumerWidget {
                   height: 56,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: LinearGradient(colors: [
-                      AppColors.secondary,
-                      AppColors.secondary.withValues(alpha: 0.6),
-                    ]),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.secondary,
+                        AppColors.secondary.withValues(alpha: 0.6),
+                      ],
+                    ),
                   ),
                   child: Center(
                     child: Text(
                       conv.otherUser.name[0].toUpperCase(),
-                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -164,7 +198,9 @@ class ChatsListScreen extends ConsumerWidget {
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
-                                fontWeight: conv.unreadCount > 0 ? FontWeight.bold : FontWeight.w600,
+                                fontWeight: conv.unreadCount > 0
+                                    ? FontWeight.bold
+                                    : FontWeight.w600,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -172,9 +208,13 @@ class ChatsListScreen extends ConsumerWidget {
                           Text(
                             formattedTime,
                             style: TextStyle(
-                              color: conv.unreadCount > 0 ? AppColors.secondary : Colors.white.withValues(alpha: 0.5),
+                              color: conv.unreadCount > 0
+                                  ? AppColors.secondary
+                                  : Colors.white.withValues(alpha: 0.5),
                               fontSize: 12,
-                              fontWeight: conv.unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
+                              fontWeight: conv.unreadCount > 0
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
                             ),
                           ),
                         ],
@@ -190,8 +230,12 @@ class ChatsListScreen extends ConsumerWidget {
                                     ? Colors.white.withValues(alpha: 0.9)
                                     : Colors.white.withValues(alpha: 0.6),
                                 fontSize: 14,
-                                fontWeight: conv.unreadCount > 0 ? FontWeight.w500 : FontWeight.normal,
-                                fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
+                                fontWeight: conv.unreadCount > 0
+                                    ? FontWeight.w500
+                                    : FontWeight.normal,
+                                fontStyle: isItalic
+                                    ? FontStyle.italic
+                                    : FontStyle.normal,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -200,13 +244,22 @@ class ChatsListScreen extends ConsumerWidget {
                           if (conv.unreadCount > 0) ...[
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.secondary,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Text('${conv.unreadCount}',
-                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                              child: Text(
+                                '${conv.unreadCount}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ],
                         ],
@@ -222,23 +275,73 @@ class ChatsListScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildNotLoggedIn(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.lock_outline,
+            size: 72,
+            color: Colors.white.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Log in to access messages',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Sign in to start chatting with other users',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.4),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.chat_bubble_outline, size: 80, color: Colors.white.withValues(alpha: 0.3)),
+          Icon(
+            Icons.chat_bubble_outline,
+            size: 80,
+            color: Colors.white.withValues(alpha: 0.3),
+          ),
           const SizedBox(height: 16),
-          Text(l10n.noMessagesYet,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 18, fontWeight: FontWeight.w600)),
+          Text(
+            l10n.noMessagesYet,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.6),
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(l10n.startConversation,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 14)),
+          Text(
+            l10n.startConversation,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.4),
+              fontSize: 14,
+            ),
+          ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () async {
-              await Navigator.push(context, MaterialPageRoute(builder: (_) => const SelectUserScreen()));
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SelectUserScreen()),
+              );
               ref.read(conversationsProvider.notifier).load();
             },
             icon: const Icon(Icons.add),
@@ -247,7 +350,9 @@ class ChatsListScreen extends ConsumerWidget {
               backgroundColor: AppColors.secondary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],
@@ -260,14 +365,26 @@ class ChatsListScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.wifi_off_outlined, size: 64, color: Colors.white.withValues(alpha: 0.4)),
+          Icon(
+            Icons.wifi_off_outlined,
+            size: 64,
+            color: Colors.white.withValues(alpha: 0.4),
+          ),
           const SizedBox(height: 16),
-          Text('Could not load messages',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 16)),
+          Text(
+            'Could not load messages',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 16,
+            ),
+          ),
           const SizedBox(height: 8),
           TextButton(
             onPressed: () => ref.read(conversationsProvider.notifier).load(),
-            child: const Text('Retry', style: TextStyle(color: AppColors.secondary)),
+            child: const Text(
+              'Retry',
+              style: TextStyle(color: AppColors.secondary),
+            ),
           ),
         ],
       ),

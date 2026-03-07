@@ -1,13 +1,15 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_provider.dart';
 import 'chat_service.dart' as svc;
 
 // ── Users list provider ───────────────────────────────────────────────────────
 
-final chatUsersProvider =
-    FutureProvider.autoDispose<List<svc.BackendUser>>((ref) async {
+final chatUsersProvider = FutureProvider.autoDispose<List<svc.BackendUser>>((
+  ref,
+) async {
   final token = ref.watch(authProvider).token;
-  if (token == null) return [];
+  if (token == null || token.isEmpty) return [];
   return svc.getUsers(token);
 });
 
@@ -17,51 +19,102 @@ class ConversationsState {
   final List<svc.BackendConversation> conversations;
   final bool isLoading;
   final String? error;
+  final bool isAuthenticated;
 
   const ConversationsState({
     this.conversations = const [],
     this.isLoading = false,
     this.error,
+    this.isAuthenticated = true,
   });
 
   ConversationsState copyWith({
     List<svc.BackendConversation>? conversations,
     bool? isLoading,
     String? error,
-  }) =>
-      ConversationsState(
-        conversations: conversations ?? this.conversations,
-        isLoading: isLoading ?? this.isLoading,
-        error: error,
-      );
+    bool clearError = false,
+    bool? isAuthenticated,
+  }) => ConversationsState(
+    conversations: conversations ?? this.conversations,
+    isLoading: isLoading ?? this.isLoading,
+    error: clearError ? null : (error ?? this.error),
+    isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+  );
 }
 
 class ConversationsNotifier extends StateNotifier<ConversationsState> {
   final String token;
+  Timer? _pollTimer;
+  static const _pollInterval = Duration(seconds: 15);
 
   ConversationsNotifier(this.token)
-      : super(const ConversationsState(isLoading: true)) {
-    load();
+    : super(const ConversationsState(isLoading: true)) {
+    if (token.isEmpty) {
+      state = const ConversationsState(isAuthenticated: false);
+    } else {
+      load();
+      _startPolling();
+    }
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(_pollInterval, (_) => _silentRefresh());
+  }
+
+  /// Silently refresh in background (no loading spinner).
+  Future<void> _silentRefresh() async {
+    if (token.isEmpty) return;
+    try {
+      final convs = await svc.getConversations(token);
+      if (mounted) {
+        state = state.copyWith(conversations: convs, clearError: true);
+      }
+    } catch (_) {
+      // Silent — don't overwrite existing data with an error
+    }
   }
 
   Future<void> load() async {
-    state = state.copyWith(isLoading: true, error: null);
+    if (token.isEmpty) {
+      state = const ConversationsState(isAuthenticated: false);
+      return;
+    }
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final convs = await svc.getConversations(token);
-      state = state.copyWith(conversations: convs, isLoading: false);
+      state = state.copyWith(
+        conversations: convs,
+        isLoading: false,
+        isAuthenticated: true,
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      final errStr = e.toString();
+      final isAuth =
+          !errStr.contains('401') && !errStr.contains('Unauthenticated');
+      state = state.copyWith(
+        isLoading: false,
+        error: errStr,
+        isAuthenticated: isAuth,
+      );
     }
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
   }
 }
 
 final conversationsProvider =
-    StateNotifierProvider.autoDispose<ConversationsNotifier, ConversationsState>(
-  (ref) {
-    final token = ref.watch(authProvider).token ?? '';
-    return ConversationsNotifier(token);
-  },
-);
+    StateNotifierProvider.autoDispose<
+      ConversationsNotifier,
+      ConversationsState
+    >((ref) {
+      final token = ref.watch(authProvider).token ?? '';
+      return ConversationsNotifier(token);
+    });
 
 // ── Messages state ────────────────────────────────────────────────────────────
 
@@ -83,26 +136,45 @@ class MessagesState {
     bool? isLoading,
     bool? isSending,
     String? error,
-  }) =>
-      MessagesState(
-        messages: messages ?? this.messages,
-        isLoading: isLoading ?? this.isLoading,
-        isSending: isSending ?? this.isSending,
-        error: error,
-      );
+    bool clearError = false,
+  }) => MessagesState(
+    messages: messages ?? this.messages,
+    isLoading: isLoading ?? this.isLoading,
+    isSending: isSending ?? this.isSending,
+    error: clearError ? null : (error ?? this.error),
+  );
 }
 
 class MessagesNotifier extends StateNotifier<MessagesState> {
   final String token;
   final String conversationId;
+  Timer? _pollTimer;
+  static const _pollInterval = Duration(seconds: 5);
 
   MessagesNotifier(this.token, this.conversationId)
-      : super(const MessagesState(isLoading: true)) {
+    : super(const MessagesState(isLoading: true)) {
     load();
+    _startPolling();
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(_pollInterval, (_) => _silentRefresh());
+  }
+
+  /// Poll for new messages without showing a loading state.
+  Future<void> _silentRefresh() async {
+    if (token.isEmpty) return;
+    try {
+      final msgs = await svc.getMessages(token, conversationId);
+      if (mounted && msgs.length != state.messages.length) {
+        state = state.copyWith(messages: msgs, clearError: true);
+      }
+    } catch (_) {}
   }
 
   Future<void> load() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final msgs = await svc.getMessages(token, conversationId);
       state = state.copyWith(messages: msgs, isLoading: false);
@@ -115,8 +187,12 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     if (body.trim().isEmpty) return;
     state = state.copyWith(isSending: true);
     try {
-      final msg = await svc.sendMessage(token, conversationId, body.trim(),
-          replyToId: replyToId);
+      final msg = await svc.sendMessage(
+        token,
+        conversationId,
+        body.trim(),
+        replyToId: replyToId,
+      );
       state = state.copyWith(
         messages: [...state.messages, msg],
         isSending: false,
@@ -129,7 +205,6 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
   Future<void> delete(int messageId, String scope) async {
     try {
       await svc.deleteMessage(token, messageId, scope);
-      // Reload to get fresh deleted flags from server
       await load();
     } catch (_) {}
   }
@@ -139,13 +214,17 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
       await svc.markConversationRead(token, conversationId);
     } catch (_) {}
   }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
 }
 
 /// Family provider — one MessagesNotifier per conversationId.
 final messagesProvider = StateNotifierProvider.autoDispose
-    .family<MessagesNotifier, MessagesState, String>(
-  (ref, conversationId) {
-    final token = ref.watch(authProvider).token ?? '';
-    return MessagesNotifier(token, conversationId);
-  },
-);
+    .family<MessagesNotifier, MessagesState, String>((ref, conversationId) {
+      final token = ref.watch(authProvider).token ?? '';
+      return MessagesNotifier(token, conversationId);
+    });
