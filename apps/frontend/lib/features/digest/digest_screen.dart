@@ -6,15 +6,29 @@ import '../../core/services/api_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../news/article_model.dart';
 import '../article/article_details_screen.dart';
+import '../news/bookmarks_provider.dart';
+import '../../core/widgets/app_snackbar.dart';
 
 // ── Provider ──────────────────────────────────────────────────────────────────
-final _digestServiceProvider = Provider<NewsApiService>(
-  (ref) => NewsApiService(),
-);
 
+final _digestSvcProvider = Provider<NewsApiService>((ref) => NewsApiService());
+
+/// Fetches live Guardian news, picks the top 5 most-confidently REAL articles.
+/// Falls back to the Kaggle /news/digest endpoint if Guardian key not set.
 final digestProvider = FutureProvider.autoDispose<List<Article>>((ref) async {
-  final svc = ref.watch(_digestServiceProvider);
-  return svc.fetchDigest(limit: 3);
+  final svc = ref.watch(_digestSvcProvider);
+
+  // Try live first (Guardian endpoint returns [] if no API key configured)
+  final live = await svc.fetchLiveNews(limit: 30);
+  if (live.isNotEmpty) {
+    // Keep only REAL articles, sorted by confidence desc, top 5
+    final real = live.where((a) => a.label == 'REAL').toList()
+      ..sort((a, b) => b.confidence.compareTo(a.confidence));
+    if (real.isNotEmpty) return real.take(5).toList();
+  }
+
+  // Fallback: Kaggle dataset top verified articles
+  return svc.fetchDigest(limit: 5);
 });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -26,6 +40,7 @@ class DigestScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final asyncDigest = ref.watch(digestProvider);
+    final isLive = asyncDigest.value?.any((a) => a.isLive) ?? false;
 
     return Scaffold(
       body: Container(
@@ -41,7 +56,7 @@ class DigestScreen extends ConsumerWidget {
             children: [
               // ── Header ──────────────────────────────────────────
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -83,19 +98,46 @@ class DigestScreen extends ConsumerWidget {
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
-                              Text(
-                                l10n.todayDigest,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.7,
+                              Row(
+                                children: [
+                                  if (isLive) ...[
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      margin: const EdgeInsets.only(right: 5),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.redAccent,
+                                        shape: BoxShape.circle,
                                       ),
                                     ),
+                                    Text(
+                                      'Live from The Guardian',
+                                      style: TextStyle(
+                                        color: Colors.redAccent.withValues(
+                                          alpha: 0.9,
+                                        ),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    Text(
+                                      l10n.todayDigest,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.7,
+                                            ),
+                                          ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ],
                           ),
                         ),
-                        // Refresh button
                         GestureDetector(
                           onTap: () => ref.refresh(digestProvider),
                           child: Container(
@@ -118,17 +160,17 @@ class DigestScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     asyncDigest.when(
-                      data: (articles) => _buildStatsRow(articles.length),
-                      loading: () => _buildStatsRow(0),
-                      error: (_, __) => _buildStatsRow(0),
+                      data: (articles) => _buildStatsRow(articles, isLive),
+                      loading: () => _buildStatsRow([], false),
+                      error: (_, __) => _buildStatsRow([], false),
                     ),
                   ],
                 ),
               ),
 
-              // ── Articles ─────────────────────────────────────────
+              // ── Article List ─────────────────────────────────────
               Expanded(
                 child: asyncDigest.when(
                   loading: () => Center(
@@ -156,7 +198,7 @@ class DigestScreen extends ConsumerWidget {
                           size: 48,
                         ),
                         const SizedBox(height: 16),
-                        Text(
+                        const Text(
                           'Could not load digest',
                           style: TextStyle(
                             color: Colors.white,
@@ -213,13 +255,10 @@ class DigestScreen extends ConsumerWidget {
                       : ListView.builder(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                           itemCount: articles.length,
-                          itemBuilder: (context, index) {
-                            return _buildDigestCard(
-                              context,
-                              articles[index],
-                              index + 1,
-                            );
-                          },
+                          itemBuilder: (context, index) => _DigestCard(
+                            article: articles[index],
+                            rank: index + 1,
+                          ),
                         ),
                 ),
               ),
@@ -230,20 +269,34 @@ class DigestScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsRow(int articleCount) {
-    final count = articleCount == 0 ? '—' : '$articleCount';
+  Widget _buildStatsRow(List<Article> articles, bool isLive) {
+    final count = articles.isEmpty ? '—' : '${articles.length}';
+    final avgConf = articles.isEmpty
+        ? 0
+        : (articles.map((a) => a.confidence).reduce((a, b) => a + b) /
+                  articles.length *
+                  100)
+              .toInt();
+    final confText = articles.isEmpty ? '—' : '$avgConf%';
+
     return Row(
       children: [
-        _buildStatChip(Icons.article, count, 'Articles'),
+        _statChip(Icons.article, count, 'Articles'),
         const SizedBox(width: 8),
-        _buildStatChip(Icons.verified_user, '100%', 'Verified'),
+        _statChip(Icons.verified_user, confText, 'Avg Conf'),
         const SizedBox(width: 8),
-        _buildStatChip(Icons.trending_up, 'ML', 'Accuracy'),
+        _statChip(
+          isLive ? Icons.cell_tower : Icons.psychology,
+          isLive ? 'Live' : 'Dataset',
+          'Source',
+          accent: isLive ? Colors.redAccent : AppColors.secondary,
+        ),
       ],
     );
   }
 
-  Widget _buildStatChip(IconData icon, String value, String label) {
+  Widget _statChip(IconData icon, String value, String label, {Color? accent}) {
+    final col = accent ?? AppColors.secondary;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -254,7 +307,7 @@ class DigestScreen extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, color: AppColors.secondary, size: 20),
+            Icon(icon, color: col, size: 20),
             const SizedBox(height: 4),
             Text(
               value,
@@ -276,32 +329,44 @@ class DigestScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildDigestCard(BuildContext context, Article article, int rank) {
+// ── Digest Card ───────────────────────────────────────────────────────────────
+
+class _DigestCard extends ConsumerWidget {
+  final Article article;
+  final int rank;
+  const _DigestCard({required this.article, required this.rank});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final confidencePct = (article.confidence * 100).toInt();
+    final bookmarks = ref.watch(bookmarksProvider);
+    final isSaved = bookmarks.any((a) => a.id == article.id);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 16),
       child: GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ArticleDetailsScreen(article: article),
-            ),
-          );
-        },
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ArticleDetailsScreen(article: article),
+          ),
+        ),
         child: Container(
           decoration: BoxDecoration(
             color: const Color(0xFF0B1220).withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppColors.success.withValues(alpha: 0.3),
+              color: article.isLive
+                  ? Colors.redAccent.withValues(alpha: 0.4)
+                  : AppColors.success.withValues(alpha: 0.3),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.success.withValues(alpha: 0.1),
+                color: AppColors.success.withValues(alpha: 0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -312,13 +377,15 @@ class DigestScreen extends ConsumerWidget {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ── Top row: rank + badge + bookmark ────────────
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Rank Badge
+                        // Rank circle
                         Container(
                           width: 40,
                           height: 40,
@@ -343,7 +410,7 @@ class DigestScreen extends ConsumerWidget {
                               '#$rank',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 16,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -354,6 +421,47 @@ class DigestScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Live pill
+                              if (article.isLive)
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: Colors.redAccent.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.fiber_manual_record,
+                                        color: Colors.redAccent,
+                                        size: 8,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'LIVE',
+                                        style: TextStyle(
+                                          color: Colors.redAccent,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 1,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              // Verified badge
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
@@ -375,7 +483,7 @@ class DigestScreen extends ConsumerWidget {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Verified • $confidencePct%',
+                                      'Verified · $confidencePct%',
                                       style: TextStyle(
                                         color: AppColors.success,
                                         fontSize: 11,
@@ -386,24 +494,83 @@ class DigestScreen extends ConsumerWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
+                              // Source + date
                               Text(
                                 article.source,
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.6),
                                   fontSize: 12,
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
+                              if (article.published != null &&
+                                  article.published!.isNotEmpty) ...[
+                                const SizedBox(height: 3),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.access_time_rounded,
+                                      size: 11,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _formatDigestDate(article.published!),
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ],
                           ),
                         ),
-                        Icon(
-                          Icons.bookmark_outline,
-                          color: Colors.white.withValues(alpha: 0.6),
-                          size: 20,
+                        // Bookmark icon
+                        GestureDetector(
+                          onTap: () async {
+                            if (isSaved) {
+                              await ref
+                                  .read(bookmarksProvider.notifier)
+                                  .removeById(article.id);
+                              if (context.mounted)
+                                AppSnackbar.showSuccess(
+                                  context,
+                                  l10n.removedFromBookmarks,
+                                );
+                            } else {
+                              await ref
+                                  .read(bookmarksProvider.notifier)
+                                  .add(article);
+                              if (context.mounted)
+                                AppSnackbar.showSuccess(
+                                  context,
+                                  l10n.savedToBookmarks,
+                                );
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              isSaved ? Icons.bookmark : Icons.bookmark_outline,
+                              color: isSaved
+                                  ? AppColors.accent
+                                  : Colors.white.withValues(alpha: 0.6),
+                              size: 20,
+                            ),
+                          ),
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 16),
+
+                    // ── Title ──────────────────────────────────────
                     Text(
                       article.title,
                       style: const TextStyle(
@@ -413,7 +580,10 @@ class DigestScreen extends ConsumerWidget {
                         height: 1.3,
                       ),
                     ),
+
                     const SizedBox(height: 12),
+
+                    // ── Summary ────────────────────────────────────
                     Text(
                       article.summary,
                       style: TextStyle(
@@ -421,8 +591,13 @@ class DigestScreen extends ConsumerWidget {
                         fontSize: 14,
                         height: 1.5,
                       ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
+
                     const SizedBox(height: 16),
+
+                    // ── Footer row ─────────────────────────────────
                     Row(
                       children: [
                         Container(
@@ -479,5 +654,34 @@ class DigestScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Format date for the digest card.
+  static String _formatDigestDate(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(trimmed).toLocal();
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+      final minute = dt.minute.toString().padLeft(2, '0');
+      final amPm = dt.hour < 12 ? 'AM' : 'PM';
+      return '${months[dt.month - 1]} ${dt.day}, ${dt.year} · $hour:$minute $amPm';
+    } catch (_) {
+      return trimmed;
+    }
   }
 }
