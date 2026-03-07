@@ -639,6 +639,28 @@ class _ArticleCard extends ConsumerWidget {
                               ),
                             ],
                           ),
+                          // Date / time
+                          if (article.published != null &&
+                              article.published!.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time_rounded,
+                                  size: 11,
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _formatDate(article.published!),
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.4),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -805,6 +827,38 @@ class _ArticleCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+/// Format a date string for display.
+/// Handles Guardian ISO-8601 (e.g. "2026-03-08T00:00:00Z") and
+/// Kaggle plain date strings (e.g. "Jan 8, 2017").
+String _formatDate(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return '';
+  try {
+    final dt = DateTime.parse(trimmed).toLocal();
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final month = months[dt.month - 1];
+    final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final amPm = dt.hour < 12 ? 'AM' : 'PM';
+    return '$month ${dt.day}, ${dt.year} · $hour:$minute $amPm';
+  } catch (_) {
+    return trimmed;
   }
 }
 

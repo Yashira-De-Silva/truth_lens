@@ -249,7 +249,16 @@ def row_to_article(pipe: Pipeline, idx: int, row: pd.Series) -> dict:
         "source":     source,
         "label":      label,
         "confidence": round(real_prob if label == "REAL" else fake_prob, 4),
+        "published":  _safe_date(row.get("date")),
     }
+
+
+def _safe_date(val) -> "str | None":
+    """Convert a pandas date cell to a clean string or None."""
+    if val is None:
+        return None
+    s = str(val).strip()
+    return None if s.lower() in ("nan", "nat", "", "none") else s
 
 
 # ── API Startup ───────────────────────────────────────────────────────────────
