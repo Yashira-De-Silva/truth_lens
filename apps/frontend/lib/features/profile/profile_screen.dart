@@ -16,7 +16,7 @@ import '../search/user_search_screen.dart';
 import 'subscription_screen.dart';
 import '../game/fact_fiction_game_screen.dart';
 import '../game/news_quiz_game_screen.dart';
-import '../game/chess_game_screen.dart';
+import '../game/chess_lobby_screen.dart';
 import '../bookmarks/bookmarks_screen.dart';
 import 'help_support_screen.dart';
 import 'about_screen.dart';
@@ -503,7 +503,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ChessGameScreen(),
+                              builder: (context) => const ChessLobbyScreen(),
                             ),
                           );
                         },
