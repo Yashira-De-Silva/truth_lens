@@ -1,25 +1,24 @@
 """
 TruthLens — Python ML Service
 ==============================
-Downloads the Kaggle WELFake fake-news dataset, trains a
-TF-IDF + Logistic Regression classifier, and exposes a REST API
-so the Flutter app can fetch real articles with fake/real predictions.
+Downloads the Kaggle fake-news dataset, trains a TF-IDF + LR classifier,
+and exposes a REST API for the Flutter app.
 
 Endpoints:
-  GET  /health                         — health check
-  GET  /news?limit=20&offset=0         — paginated article list
-  GET  /news/digest?limit=3            — top REAL-confidence articles
-  GET  /news/search?q=...&category=... — keyword + category filter
-  POST /predict  {title, text}         — classify a custom article
+  GET  /health                              — health check
+  GET  /news?limit=20&offset=0             — paginated dataset articles
+  GET  /news/live?limit=10&section=...     — live Guardian API news + ML label
+  GET  /news/digest?limit=3                — top REAL-confidence articles
+  GET  /news/search?q=...&category=...     — keyword + category filter
+  POST /predict  {title, text}             — classify a custom article
 
 Run:
   cd apps/ml_service
-  pip install -r requirements.txt
-  python app.py
+  pip3 install -r requirements.txt
+  python3 app.py
 """
 
 import os
-import json
 import pickle
 import random
 import logging
@@ -27,6 +26,7 @@ from typing import Optional, Tuple
 
 import kagglehub
 import pandas as pd
+import requests as http_requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -43,6 +43,24 @@ CORS(app)  # Allow Flutter app to call from any origin
 # ── Paths ─────────────────────────────────────────────────────────────────────
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
+
+# ── Guardian API config ───────────────────────────────────────────────────────
+# Get a free key at: https://open-platform.theguardian.com/access
+# Then set it here OR export GUARDIAN_API_KEY=your_key before running.
+GUARDIAN_API_KEY = os.environ.get("GUARDIAN_API_KEY", "c6d32650-a403-4157-8569-4e39624a022d")
+GUARDIAN_BASE    = "https://content.guardianapis.com"
+
+# ── Guardian section → category mapping ──────────────────────────────────────
+GUARDIAN_SECTIONS = {
+    "All":           "news",
+    "Politics":      "politics",
+    "Business":      "business",
+    "Technology":    "technology",
+    "Science":       "science",
+    "Health":        "society",
+    "Sports":        "sport",
+    "Entertainment": "film",
+}
 
 # ── Global state ──────────────────────────────────────────────────────────────
 pipeline: Optional[Pipeline] = None
@@ -351,10 +369,11 @@ def search_news():
 
 @app.route("/predict", methods=["POST"])
 def predict():
+    """Classify a custom article title+text submitted by the app."""
     pipe, _ = get_pipeline_and_data()
-    body    = request.get_json(force=True, silent=True) or {}
-    title   = str(body.get("title", ""))
-    text    = str(body.get("text",  ""))
+    body     = request.get_json(force=True, silent=True) or {}
+    title    = str(body.get("title", ""))
+    text     = str(body.get("text",  ""))
     combined = f"{title} {text}".strip()
 
     if not combined:
@@ -371,6 +390,88 @@ def predict():
         "real_prob":  round(real_prob, 4),
         "fake_prob":  round(float(proba[0]), 4),
     })
+
+
+@app.route("/news/live")
+def get_live_news():
+    """
+    Fetch real-time articles from The Guardian API and classify each one
+    using the trained ML model.
+
+    Query params:
+      limit    — number of articles (default 10, max 50)
+      section  — category name matching the Flutter categories (default 'All')
+    """
+    pipe, _ = get_pipeline_and_data()
+
+    limit   = min(int(request.args.get("limit", 10)), 50)
+    section = request.args.get("section", "All")
+
+    if not GUARDIAN_API_KEY:
+        return jsonify({
+            "success": False,
+            "message": (
+                "Guardian API key not configured. "
+                "Set GUARDIAN_API_KEY env variable or edit GUARDIAN_API_KEY in app.py. "
+                "Get a free key at https://open-platform.theguardian.com/access"
+            ),
+            "data": []
+        }), 503
+
+    guardian_section = GUARDIAN_SECTIONS.get(section, "news")
+
+    try:
+        resp = http_requests.get(
+            f"{GUARDIAN_BASE}/search",
+            params={
+                "api-key":       GUARDIAN_API_KEY,
+                "section":       guardian_section,
+                "show-fields":   "trailText,bodyText,headline",
+                "page-size":     limit,
+                "order-by":      "newest",
+            },
+            timeout=10,
+        )
+        resp.raise_for_status()
+    except Exception as e:
+        log.error(f"Guardian API error: {e}")
+        return jsonify({"success": False, "message": str(e), "data": []}), 502
+
+    raw      = resp.json()
+    results  = raw.get("response", {}).get("results", [])
+    articles = []
+
+    for i, item in enumerate(results):
+        fields   = item.get("fields", {})
+        title    = fields.get("headline") or item.get("webTitle", "")
+        body     = fields.get("bodyText", "") or fields.get("trailText", "")
+        trail    = fields.get("trailText", body[:250])
+        section_name = item.get("sectionName", "The Guardian")
+
+        combined = f"{title} {body}".strip()
+        if not combined:
+            continue
+
+        proba     = pipe.predict_proba([combined])[0]
+        real_prob = float(proba[1])
+        fake_prob = float(proba[0])
+        label     = "REAL" if real_prob >= 0.5 else "FAKE"
+
+        summary = trail[:250].rstrip() + ("…" if len(trail) > 250 else "")
+
+        articles.append({
+            "id":         90000 + i,   # offset to avoid collisions with dataset IDs
+            "title":      title,
+            "summary":    summary,
+            "source":     f"The Guardian – {section_name}",
+            "label":      label,
+            "confidence": round(real_prob if label == "REAL" else fake_prob, 4),
+            "url":        item.get("webUrl", ""),
+            "published":  item.get("webPublicationDate", ""),
+            "is_live":    True,
+        })
+
+    return jsonify({"success": True, "data": articles, "source": "guardian"})
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
