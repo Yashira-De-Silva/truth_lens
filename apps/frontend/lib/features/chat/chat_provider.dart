@@ -44,12 +44,17 @@ class ConversationsState {
 
 class ConversationsNotifier extends StateNotifier<ConversationsState> {
   final String token;
+  final AuthStatus authStatus;
   Timer? _pollTimer;
   static const _pollInterval = Duration(seconds: 15);
 
-  ConversationsNotifier(this.token)
+  ConversationsNotifier(this.token, this.authStatus)
     : super(const ConversationsState(isLoading: true)) {
-    if (token.isEmpty) {
+    if (authStatus == AuthStatus.initial) {
+      // Token is still being restored from SharedPreferences — show a
+      // loading spinner instead of flashing the "Log in" screen.
+      state = const ConversationsState(isLoading: true, isAuthenticated: true);
+    } else if (token.isEmpty) {
       state = const ConversationsState(isAuthenticated: false);
     } else {
       load();
@@ -107,13 +112,12 @@ class ConversationsNotifier extends StateNotifier<ConversationsState> {
   }
 }
 
+// NOT autoDispose — keeps the provider alive while switching tabs so the
+// user never sees the "Log in" screen mid-session.
 final conversationsProvider =
-    StateNotifierProvider.autoDispose<
-      ConversationsNotifier,
-      ConversationsState
-    >((ref) {
-      final token = ref.watch(authProvider).token ?? '';
-      return ConversationsNotifier(token);
+    StateNotifierProvider<ConversationsNotifier, ConversationsState>((ref) {
+      final authState = ref.watch(authProvider);
+      return ConversationsNotifier(authState.token ?? '', authState.status);
     });
 
 // ── Messages state ────────────────────────────────────────────────────────────
