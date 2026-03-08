@@ -5,10 +5,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
+import '../../core/services/follow_service.dart' as fsvc;
+import '../auth/auth_provider.dart';
+import '../chat/chat_service.dart' as csvc;
+import '../chat/chat_screen.dart';
+import '../chess/chess_screen.dart';
+import '../chess/chess_service.dart' as chess;
+import '../social/follow_provider.dart';
 import 'edit_profile_screen.dart';
 import 'profile_provider.dart';
 
 class PublicProfileScreen extends ConsumerStatefulWidget {
+  final int? userId; // null = own profile
   final String userName;
   final String userEmail;
   final String? userBio;
@@ -18,6 +26,7 @@ class PublicProfileScreen extends ConsumerStatefulWidget {
 
   const PublicProfileScreen({
     super.key,
+    this.userId,
     required this.userName,
     required this.userEmail,
     this.userBio,
@@ -33,6 +42,7 @@ class PublicProfileScreen extends ConsumerStatefulWidget {
 
 class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
   String? _currentVisibility;
+  bool _followLoading = false;
 
   @override
   void initState() {
@@ -370,7 +380,9 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                         ? profile.avatarPath
                                         : null;
 
-                                    if (avatarPath != null && avatarPath.isNotEmpty && File(avatarPath).existsSync()) {
+                                    if (avatarPath != null &&
+                                        avatarPath.isNotEmpty &&
+                                        File(avatarPath).existsSync()) {
                                       return Container(
                                         width: 100,
                                         height: 100,
@@ -380,7 +392,9 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                         clipBehavior: Clip.antiAlias,
                                         child: CircleAvatar(
                                           radius: 50,
-                                          backgroundImage: FileImage(File(avatarPath)),
+                                          backgroundImage: FileImage(
+                                            File(avatarPath),
+                                          ),
                                         ),
                                       );
                                     }
@@ -565,52 +579,165 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 
                       const SizedBox(height: 20),
 
-                      // Stats
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0B1220).withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
-                          ),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: stats.entries.map((stat) {
-                                return Column(
-                                  children: [
-                                    Text(
-                                      stat.value,
-                                      style: const TextStyle(
-                                        color: AppColors.secondary,
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
+                      // ── Follower stats (live if userId known) ──────
+                      if (!widget.isOwnProfile && widget.userId != null)
+                        Consumer(
+                          builder: (_, ref, __) {
+                            final profileAsync = ref.watch(
+                              publicProfileProvider(widget.userId!),
+                            );
+                            return profileAsync.when(
+                              loading: () => const SizedBox.shrink(),
+                              error: (_, __) => const SizedBox.shrink(),
+                              data: (profile) {
+                                final followers = profile?.followersCount ?? 0;
+                                final following = profile?.followingCount ?? 0;
+                                return Container(
+                                  padding: const EdgeInsets.all(20),
+                                  margin: const EdgeInsets.only(bottom: 20),
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFF0B1220,
+                                    ).withValues(alpha: 0.6),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.1,
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      stat.key,
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.6,
-                                        ),
-                                        fontSize: 12,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
+                                    children: [
+                                      _statItem('$followers', 'Followers'),
+                                      _statItem('$following', 'Following'),
+                                      _statItem(
+                                        stats['Articles Read']!,
+                                        'Articles',
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 );
-                              }).toList(),
+                              },
+                            );
+                          },
+                        )
+                      else
+                        // Stats for own profile
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          margin: const EdgeInsets.only(bottom: 20),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF0B1220,
+                            ).withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.1),
                             ),
                           ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: stats.entries.map((stat) {
+                              return _statItem(stat.value, stat.key);
+                            }).toList(),
+                          ),
                         ),
-                      ),
 
-                      const SizedBox(height: 20),
+                      // ── Action buttons (Follow / Message / Chess) ──
+                      if (!widget.isOwnProfile && widget.userId != null)
+                        Consumer(
+                          builder: (ctx, ref, __) {
+                            final statusAsync = ref.watch(
+                              followStatusProvider(widget.userId!),
+                            );
+                            final token = ref.watch(authProvider).token ?? '';
+                            return statusAsync.when(
+                              loading: () => const SizedBox(
+                                height: 52,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.secondary,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                              error: (_, __) => const SizedBox.shrink(),
+                              data: (status) => Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      // Follow / Unfollow
+                                      Expanded(
+                                        child: _actionButton(
+                                          icon: status.isFollowing
+                                              ? Icons.person_remove
+                                              : Icons.person_add,
+                                          label: status.isFollowing
+                                              ? 'Unfollow'
+                                              : 'Follow',
+                                          color: status.isFollowing
+                                              ? Colors.white.withValues(
+                                                  alpha: 0.15,
+                                                )
+                                              : AppColors.secondary,
+                                          textColor: Colors.white,
+                                          bordered: status.isFollowing,
+                                          loading: _followLoading,
+                                          onTap: () => _toggleFollow(
+                                            ctx,
+                                            ref,
+                                            token,
+                                            status,
+                                          ),
+                                        ),
+                                      ),
+                                      if (status.isMutual) ...[
+                                        const SizedBox(width: 10),
+                                        // Message button (mutual followers only)
+                                        Expanded(
+                                          child: _actionButton(
+                                            icon: Icons.chat_bubble_outline,
+                                            label: 'Message',
+                                            color: const Color(0xFF1A2A40),
+                                            textColor: Colors.white,
+                                            bordered: true,
+                                            loading: false,
+                                            onTap: () =>
+                                                _openChat(ctx, ref, token),
+                                          ),
+                                        ),
+                                      ],
+                                      if (status.isFollowing) ...[
+                                        const SizedBox(width: 10),
+                                        // Chess button
+                                        Expanded(
+                                          child: _actionButton(
+                                            icon: Icons.sports_esports_outlined,
+                                            label: '♟ Chess',
+                                            color: const Color(0xFF1A2A40),
+                                            textColor: Colors.white,
+                                            bordered: true,
+                                            loading: false,
+                                            onTap: () => _challengeChess(
+                                              ctx,
+                                              ref,
+                                              token,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 20),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+
+                      const SizedBox(height: 0),
 
                       // Recent Activity
                       _buildSectionTitle('Recent Activity'),
@@ -771,6 +898,162 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
         return 'Private';
       default:
         return 'Public';
+    }
+  }
+
+  // ── Stat item helper ─────────────────────────────────────────────────────────
+
+  Widget _statItem(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            color: AppColors.secondary,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.6),
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Action button helper ──────────────────────────────────────────────────────
+
+  Widget _actionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color textColor,
+    required bool bordered,
+    required bool loading,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: loading ? null : onTap,
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+          border: bordered
+              ? Border.all(color: Colors.white.withValues(alpha: 0.2))
+              : null,
+        ),
+        child: Center(
+          child: loading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, color: textColor, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+
+  // ── Follow / Unfollow ─────────────────────────────────────────────────────────
+
+  Future<void> _toggleFollow(
+    BuildContext context,
+    WidgetRef ref,
+    String token,
+    fsvc.FollowStatus status,
+  ) async {
+    if (widget.userId == null || token.isEmpty) return;
+    setState(() => _followLoading = true);
+    try {
+      if (status.isFollowing) {
+        await fsvc.unfollowUser(token, widget.userId!);
+        if (context.mounted) {
+          AppSnackbar.showSuccess(context, 'Unfollowed ${widget.userName}');
+        }
+      } else {
+        await fsvc.followUser(token, widget.userId!);
+        if (context.mounted) {
+          AppSnackbar.showSuccess(context, 'Now following ${widget.userName}');
+        }
+      }
+      ref.invalidate(followStatusProvider(widget.userId!));
+      ref.invalidate(publicProfileProvider(widget.userId!));
+    } catch (e) {
+      if (context.mounted) AppSnackbar.showError(context, e.toString());
+    } finally {
+      if (mounted) setState(() => _followLoading = false);
+    }
+  }
+
+  // ── Open Chat (mutual followers) ─────────────────────────────────────────────
+
+  Future<void> _openChat(
+    BuildContext context,
+    WidgetRef ref,
+    String token,
+  ) async {
+    if (widget.userId == null || token.isEmpty) return;
+    try {
+      final conv = await csvc.getOrCreateConversation(token, widget.userId!);
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(
+              conversationId: conv.conversationId,
+              otherUser: conv.otherUser,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) AppSnackbar.showError(context, e.toString());
+    }
+  }
+
+  // ── Challenge to Chess ────────────────────────────────────────────────────────
+
+  Future<void> _challengeChess(
+    BuildContext context,
+    WidgetRef ref,
+    String token,
+  ) async {
+    if (widget.userId == null || token.isEmpty) return;
+    try {
+      final game = await chess.challengeUser(token, widget.userId!);
+      if (context.mounted) {
+        AppSnackbar.showSuccess(context, 'Chess challenge sent!');
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ChessScreen(gameId: game.id)),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) AppSnackbar.showError(context, e.toString());
     }
   }
 }
