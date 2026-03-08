@@ -6,5 +6,5 @@
 ///
 /// Then hot-restart the app.
 /// ─────────────────────────────────────────────────────────────────────────────
-const String kBaseUrl = 'http://10.16.152.223:8000/api';
-const String kMlServiceUrl = 'http://10.16.152.223:5001';
+const String kBaseUrl = 'http://10.19.24.38:8000/api';
+const String kMlServiceUrl = 'http://10.19.24.38:5001';
