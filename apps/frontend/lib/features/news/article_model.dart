@@ -2,6 +2,7 @@ class Article {
   final int id;
   final String title;
   final String summary;
+  final String? fullText;
   final String source;
 
   /// 'REAL' or 'FAKE' — from ML model. Defaults to 'REAL'.
@@ -23,6 +24,7 @@ class Article {
     required this.id,
     required this.title,
     required this.summary,
+    this.fullText,
     required this.source,
     this.label = 'REAL',
     this.confidence = 1.0,
@@ -35,6 +37,7 @@ class Article {
     'id': id,
     'title': title,
     'summary': summary,
+    'full_text': fullText,
     'source': source,
     'label': label,
     'confidence': confidence,
@@ -47,6 +50,7 @@ class Article {
     id: (j['id'] as num?)?.toInt() ?? 0,
     title: j['title'] as String? ?? '',
     summary: j['summary'] as String? ?? '',
+    fullText: j['full_text'] as String?,
     source: j['source'] as String? ?? '',
     label: j['label'] as String? ?? 'REAL',
     confidence: (j['confidence'] as num?)?.toDouble() ?? 1.0,

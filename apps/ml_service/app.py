@@ -248,6 +248,7 @@ def row_to_article(pipe: Pipeline, idx: int, row: pd.Series) -> dict:
         "id":         int(idx),
         "title":      title,
         "summary":    summary,
+        "full_text":  raw_text,
         "source":     source,
         "label":      label,
         "confidence": round(real_prob if label == "REAL" else fake_prob, 4),
@@ -474,6 +475,7 @@ def get_live_news():
             "id":         90000 + i,   # offset to avoid collisions with dataset IDs
             "title":      title,
             "summary":    summary,
+            "full_text":  body,
             "source":     f"The Guardian – {section_name}",
             "label":      label,
             "confidence": round(real_prob if label == "REAL" else fake_prob, 4),

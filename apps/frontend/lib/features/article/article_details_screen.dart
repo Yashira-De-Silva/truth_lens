@@ -19,7 +19,6 @@ class ArticleDetailsScreen extends ConsumerStatefulWidget {
 
 class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
   bool showSummary = true;
-  double fakeProbability = 0.18; // mock
 
   final TextEditingController _commentController = TextEditingController();
   final FocusNode _commentFocusNode = FocusNode();
@@ -51,11 +50,15 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
   }
 
   Future<void> _toggleLike(Comment comment) async {
-    await ref.read(commentsProvider(_articleId).notifier).toggleLike(comment.id);
+    await ref
+        .read(commentsProvider(_articleId).notifier)
+        .toggleLike(comment.id);
   }
 
   Future<void> _deleteComment(int commentId) async {
-    await ref.read(commentsProvider(_articleId).notifier).deleteComment(commentId);
+    await ref
+        .read(commentsProvider(_articleId).notifier)
+        .deleteComment(commentId);
   }
 
   String _getTimeAgo(DateTime timestamp) {
@@ -78,6 +81,16 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider);
+
+    final double fakeProbability;
+    if (widget.article == null) {
+      fakeProbability = 0.18;
+    } else {
+      fakeProbability = widget.article!.label == 'FAKE'
+          ? widget.article!.confidence
+          : (1.0 - widget.article!.confidence);
+    }
+
     final isVerified = fakeProbability < 0.3;
     final isBiased = fakeProbability >= 0.3 && fakeProbability < 0.7;
     final statusColor = isVerified
@@ -322,8 +335,18 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                             child: Text(
                               showSummary
                                   ? (widget.article?.summary ??
-                                        'AI generated 3-4 line summary...')
-                                  : 'Full article content would be displayed here. This is a detailed view of the article with all the information from the original source. The content would include all paragraphs, quotes, and supporting information that provides comprehensive coverage of the news story.',
+                                        'No summary available.')
+                                  : (widget.article?.fullText != null &&
+                                                widget
+                                                    .article!
+                                                    .fullText!
+                                                    .isNotEmpty
+                                            ? widget.article!.fullText!
+                                            : (widget.article?.summary ??
+                                                  'No content available.')) +
+                                        (widget.article?.url != null
+                                            ? '\n\nOriginal article is available at:\n${widget.article!.url}'
+                                            : ''),
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: 15,
@@ -335,29 +358,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                       ),
 
                       const SizedBox(height: 24),
-
-                      // Related trusted sources
-                      Text(
-                        'Related trusted sources',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _buildSourceChip('Trusted Source A'),
-                          _buildSourceChip('Trusted Source B'),
-                          _buildSourceChip('Trusted Source C'),
-                        ],
-                      ),
-
-                      const SizedBox(height: 32),
 
                       // Comments Section
                       Text(
@@ -607,31 +607,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSourceChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Color(0xFF0A2540),
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
       ),
     );
   }
