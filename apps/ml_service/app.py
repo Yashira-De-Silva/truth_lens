@@ -28,6 +28,7 @@ from typing import Optional, Tuple
 
 import kagglehub
 import pandas as pd
+import re
 import requests as http_requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -234,9 +235,14 @@ def row_to_article(pipe: Pipeline, idx: int, row: pd.Series) -> dict:
 
     label = "REAL" if real_prob >= 0.5 else "FAKE"
 
-    # Trim text for summary (first 250 chars)
+    # Trim text for summary (first ~3 sentences)
     raw_text = str(row.get("text", "")).strip()
-    summary  = raw_text[:250].rstrip() + ("…" if len(raw_text) > 250 else "")
+    sentences = [s for s in re.split(r'(?<=[.!?])\s+', raw_text) if s.strip()]
+    if len(sentences) > 3:
+        summary = " ".join(sentences[:3]).strip()
+        if len(summary) > 300: summary = summary[:295] + "…"
+    else:
+        summary = raw_text[:300].rstrip() + ("…" if len(raw_text) > 300 else "")
 
     title = str(row.get("title", "No title")).strip()
     if not title or title.lower() in ("nan", ""):
@@ -469,7 +475,12 @@ def get_live_news():
         fake_prob = float(proba[0])
         label     = "REAL" if real_prob >= 0.5 else "FAKE"
 
-        summary = trail[:250].rstrip() + ("…" if len(trail) > 250 else "")
+        sentences = [s for s in re.split(r'(?<=[.!?])\s+', trail) if s.strip()]
+        if len(sentences) > 3:
+            summary = " ".join(sentences[:3]).strip()
+            if len(summary) > 300: summary = summary[:295] + "…"
+        else:
+            summary = trail[:300].rstrip() + ("…" if len(trail) > 300 else "")
 
         articles.append({
             "id":         90000 + i,   # offset to avoid collisions with dataset IDs
