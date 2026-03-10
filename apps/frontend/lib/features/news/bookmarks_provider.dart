@@ -24,6 +24,14 @@ class BookmarksNotifier extends StateNotifier<List<Article>> {
 
   Future<void> add(Article a) async {
     if (state.any((x) => x.id == a.id)) return;
+    
+    // Check subscription plan limit
+    final prefs = await SharedPreferences.getInstance();
+    final plan = prefs.getString('subscription_plan') ?? 'basic';
+    if (plan == 'basic' && state.length >= 10) {
+      throw Exception('Upgrade to Premium to save more than 10 articles.');
+    }
+    
     state = [...state, a];
     await _save();
   }

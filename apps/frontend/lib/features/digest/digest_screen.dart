@@ -544,14 +544,22 @@ class _DigestCard extends ConsumerWidget {
                                   l10n.removedFromBookmarks,
                                 );
                             } else {
-                              await ref
-                                  .read(bookmarksProvider.notifier)
-                                  .add(article);
-                              if (context.mounted)
-                                AppSnackbar.showSuccess(
-                                  context,
-                                  l10n.savedToBookmarks,
-                                );
+                              try {
+                                await ref
+                                    .read(bookmarksProvider.notifier)
+                                    .add(article);
+                                if (context.mounted)
+                                  AppSnackbar.showSuccess(
+                                    context,
+                                    l10n.savedToBookmarks,
+                                  );
+                              } catch (e) {
+                                if (context.mounted)
+                                  AppSnackbar.showError(
+                                    context,
+                                    e.toString().replaceAll('Exception: ', ''),
+                                  );
+                              }
                             }
                           },
                           child: Padding(

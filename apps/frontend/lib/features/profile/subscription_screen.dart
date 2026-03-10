@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
+import 'payment_screen.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
@@ -29,7 +30,19 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   }
 
   Future<void> _upgradeToPremium() async {
-    // In a real app, this would integrate with payment gateway
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentScreen(
+          amount: '\$9.99',
+          planName: 'Premium',
+          onPaymentSuccess: _handlePaymentSuccess,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handlePaymentSuccess() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('subscription_plan', 'premium');
     setState(() {
@@ -37,9 +50,11 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     });
     if (mounted) {
       AppSnackbar.showSuccess(context, 'Successfully upgraded to Premium!');
-      Navigator.pop(context);
+      Navigator.pop(context); // Pop PaymentScreen
+      Navigator.pop(context); // Pop SubscriptionScreen
     }
   }
+
 
   Future<void> _cancelPremium() async {
     final confirmed = await _showCancelDialog();
