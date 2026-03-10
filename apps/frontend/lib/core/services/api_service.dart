@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../features/news/article_model.dart';
-import 'api_constants.dart';
+import 'api_config.dart';
 
-/// REST API wrapper for the Python ML service (port 5000).
+/// REST API wrapper for the Python ML service (port 5001).
 class NewsApiService {
-  final String baseUrl;
-  NewsApiService({String? url}) : baseUrl = url ?? kMlServiceUrl;
+  NewsApiService();
 
   /// Fetch N articles from the ML service.
   Future<List<Article>> fetchNews({int limit = 20, int offset = 0}) async {
+    final baseUrl = await ApiConfig.mlServiceUrl;
     final uri = Uri.parse('$baseUrl/news?limit=$limit&offset=$offset');
     final res = await http.get(uri).timeout(const Duration(seconds: 15));
     if (res.statusCode != 200)
@@ -23,6 +23,7 @@ class NewsApiService {
 
   /// Fetch top verified (REAL) articles for the Digest screen.
   Future<List<Article>> fetchDigest({int limit = 3}) async {
+    final baseUrl = await ApiConfig.mlServiceUrl;
     final uri = Uri.parse('$baseUrl/news/digest?limit=$limit');
     final res = await http.get(uri).timeout(const Duration(seconds: 15));
     if (res.statusCode != 200)
@@ -40,6 +41,7 @@ class NewsApiService {
     String category = 'All',
     int limit = 20,
   }) async {
+    final baseUrl = await ApiConfig.mlServiceUrl;
     final uri = Uri.parse(
       '$baseUrl/news/search?q=${Uri.encodeQueryComponent(query)}'
       '&category=${Uri.encodeQueryComponent(category)}&limit=$limit',
@@ -60,6 +62,7 @@ class NewsApiService {
     String section = 'All',
     int limit = 20,
   }) async {
+    final baseUrl = await ApiConfig.mlServiceUrl;
     final uri = Uri.parse(
       '$baseUrl/news/live?limit=$limit'
       '&section=${Uri.encodeQueryComponent(section)}',
