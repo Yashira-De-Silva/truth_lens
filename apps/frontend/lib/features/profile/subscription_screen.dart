@@ -5,6 +5,7 @@ import 'dart:ui';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
 import 'payment_screen.dart';
+import 'profile_provider.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
@@ -43,15 +44,21 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   }
 
   Future<void> _handlePaymentSuccess() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('subscription_plan', 'premium');
-    setState(() {
-      _currentPlan = 'premium';
-    });
-    if (mounted) {
-      AppSnackbar.showSuccess(context, 'Successfully upgraded to Premium!');
-      Navigator.pop(context); // Pop PaymentScreen
-      Navigator.pop(context); // Pop SubscriptionScreen
+    try {
+      await ref.read(profileProvider.notifier).upgradeToPremium();
+      setState(() {
+        _currentPlan = 'premium';
+      });
+      if (mounted) {
+        AppSnackbar.showSuccess(context, 'Successfully upgraded to Premium!');
+        Navigator.pop(context); // Pop PaymentScreen
+        Navigator.pop(context); // Pop SubscriptionScreen
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.showError(context, 'Payment succeeded, but failed to sync with server. Please try again later.');
+        Navigator.pop(context); // Pop PaymentScreen
+      }
     }
   }
 

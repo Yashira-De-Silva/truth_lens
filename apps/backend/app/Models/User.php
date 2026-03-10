@@ -25,6 +25,7 @@ class User extends Authenticatable implements JWTSubject
         'profile_image',
         'api_key',
         'bio',
+        'is_premium',
     ];
 
     /**
@@ -47,6 +48,7 @@ class User extends Authenticatable implements JWTSubject
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_premium' => 'boolean',
         ];
     }
 

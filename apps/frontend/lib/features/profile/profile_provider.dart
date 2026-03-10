@@ -41,6 +41,11 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
         avatarPath: data['profile_image'] as String? ?? state.avatarPath,
         id: data['id'] as int?,
       );
+      
+      final isPremium = data['is_premium'] == 1 || data['is_premium'] == true;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('subscription_plan', isPremium ? 'premium' : 'basic');
+
       await _save();
     } catch (_) {
       // Silently fail — cached data stays
@@ -87,6 +92,14 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
       } catch (_) {
         // Local update already applied — backend sync failed silently
       }
+    }
+  }
+
+  Future<void> upgradeToPremium() async {
+    final token = await svc.loadToken();
+    if (token != null) {
+      await svc.upgradeToPremium(token);
+      await refreshFromBackend();
     }
   }
 }

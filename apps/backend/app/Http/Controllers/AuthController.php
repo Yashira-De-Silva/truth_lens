@@ -230,4 +230,27 @@ class AuthController extends Controller
             'data'    => $user->fresh(),
         ]);
     }
+
+    // ── Upgrade Premium ───────────────────────────────────────────────────────
+
+    /**
+     * Upgrade the authenticated user to a premium account.
+     *
+     * POST /api/upgrade-premium
+     * Header: Authorization: Bearer <token>
+     */
+    public function upgradeToPremium(Request $request): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
+        $user->is_premium = true;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Successfully upgraded to premium',
+            'data'    => $user->fresh(),
+        ]);
+    }
 }

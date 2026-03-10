@@ -163,6 +163,22 @@ Future<Map<String, dynamic>> updateProfile({
   throw AuthException(body['message'] as String? ?? 'Failed to update profile');
 }
 
+Future<void> upgradeToPremium(String token) async {
+  final base = await ApiConfig.baseUrl;
+  final response = await http
+      .post(
+        Uri.parse('$base/upgrade-premium'),
+        headers: _authHeaders(token),
+      )
+      .timeout(const Duration(seconds: 15));
+  final body = jsonDecode(response.body) as Map<String, dynamic>;
+  if (response.statusCode != 200 || body['success'] != true) {
+    throw AuthException(
+      body['message'] as String? ?? 'Failed to upgrade to premium',
+    );
+  }
+}
+
 // ── Internal helpers ─────────────────────────────────────────────────────────
 
 AuthResult _parseAuthResponse(http.Response response) {

@@ -67,6 +67,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/refresh',       [AuthController::class, 'refresh']);
     Route::get('/me',             [AuthController::class, 'me']);
     Route::put('/profile',        [AuthController::class, 'updateProfile']);
+    Route::post('/upgrade-premium', [AuthController::class, 'upgradeToPremium']);
 
     // ── Follow / Social ───────────────────────────────────────────────────
     Route::post('/follow/{userId}',        [FollowController::class, 'follow']);
