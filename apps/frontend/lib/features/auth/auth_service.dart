@@ -169,6 +169,7 @@ Future<void> upgradeToPremium(String token) async {
       .post(
         Uri.parse('$base/upgrade-premium'),
         headers: _authHeaders(token),
+        body: jsonEncode({}),
       )
       .timeout(const Duration(seconds: 15));
   final body = jsonDecode(response.body) as Map<String, dynamic>;

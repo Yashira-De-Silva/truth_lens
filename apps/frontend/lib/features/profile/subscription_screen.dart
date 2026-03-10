@@ -56,7 +56,10 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       }
     } catch (e) {
       if (mounted) {
-        AppSnackbar.showError(context, 'Payment succeeded, but failed to sync with server. Please try again later.');
+        AppSnackbar.showError(
+          context, 
+          e.toString().replaceAll('Exception: ', ''),
+        );
         Navigator.pop(context); // Pop PaymentScreen
       }
     }
