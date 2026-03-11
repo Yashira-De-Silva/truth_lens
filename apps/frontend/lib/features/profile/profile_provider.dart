@@ -102,6 +102,14 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
       await refreshFromBackend();
     }
   }
+
+  Future<void> cancelPremium() async {
+    final token = await svc.loadToken();
+    if (token != null) {
+      await svc.cancelPremium(token);
+      await refreshFromBackend();
+    }
+  }
 }
 
 final profileProvider = StateNotifierProvider<ProfileNotifier, UserProfile>(

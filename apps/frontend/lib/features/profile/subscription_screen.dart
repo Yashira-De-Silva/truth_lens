@@ -69,13 +69,21 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   Future<void> _cancelPremium() async {
     final confirmed = await _showCancelDialog();
     if (confirmed == true) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('subscription_plan', 'basic');
-      setState(() {
-        _currentPlan = 'basic';
-      });
-      if (mounted) {
-        AppSnackbar.showSuccess(context, 'Downgraded to Basic plan');
+      try {
+        await ref.read(profileProvider.notifier).cancelPremium();
+        setState(() {
+          _currentPlan = 'basic';
+        });
+        if (mounted) {
+          AppSnackbar.showSuccess(context, 'Downgraded to Basic plan');
+        }
+      } catch (e) {
+        if (mounted) {
+          AppSnackbar.showError(
+            context,
+            e.toString().replaceAll('Exception: ', ''),
+          );
+        }
       }
     }
   }

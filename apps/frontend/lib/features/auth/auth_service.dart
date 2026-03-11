@@ -180,6 +180,23 @@ Future<void> upgradeToPremium(String token) async {
   }
 }
 
+Future<void> cancelPremium(String token) async {
+  final base = await ApiConfig.baseUrl;
+  final response = await http
+      .post(
+        Uri.parse('$base/cancel-premium'),
+        headers: _authHeaders(token),
+        body: jsonEncode({}),
+      )
+      .timeout(const Duration(seconds: 15));
+  final body = jsonDecode(response.body) as Map<String, dynamic>;
+  if (response.statusCode != 200 || body['success'] != true) {
+    throw AuthException(
+      body['message'] as String? ?? 'Failed to cancel premium subscription',
+    );
+  }
+}
+
 // ── Internal helpers ─────────────────────────────────────────────────────────
 
 AuthResult _parseAuthResponse(http.Response response) {
