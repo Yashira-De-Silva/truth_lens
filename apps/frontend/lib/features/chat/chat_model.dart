@@ -101,8 +101,8 @@ class ChatMessage {
 }
 
 class ChatConversation {
-  final String id;           // local/display id
-  final String conversationId; // backend UUID
+  final String id;          
+  final String conversationId; 
   final ChatUser user;
   final ChatMessage? lastMessage;
   final int unreadCount;

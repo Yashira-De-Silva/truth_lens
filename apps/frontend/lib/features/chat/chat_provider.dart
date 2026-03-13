@@ -67,7 +67,6 @@ class ConversationsNotifier extends StateNotifier<ConversationsState> {
     _pollTimer = Timer.periodic(_pollInterval, (_) => _silentRefresh());
   }
 
-  /// Silently refresh in background (no loading spinner).
   Future<void> _silentRefresh() async {
     if (token.isEmpty) return;
     try {
@@ -76,7 +75,6 @@ class ConversationsNotifier extends StateNotifier<ConversationsState> {
         state = state.copyWith(conversations: convs, clearError: true);
       }
     } catch (_) {
-      // Silent — don't overwrite existing data with an error
     }
   }
 
