@@ -89,16 +89,12 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   void _toggleCategory(String categoryId) {
     setState(() {
       if (categoryId == 'all') {
-        // If selecting "All", clear other selections
         _selectedCategories = {'all'};
       } else {
-        // Remove "All" if selecting specific category
         _selectedCategories.remove('all');
         
-        // Toggle the category
         if (_selectedCategories.contains(categoryId)) {
           _selectedCategories.remove(categoryId);
-          // If no categories selected, select "All"
           if (_selectedCategories.isEmpty) {
             _selectedCategories.add('all');
           }
@@ -110,7 +106,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   }
 
   void _savePreferences() {
-    // Save to settings provider
     ref.read(settingsProvider.notifier).setPreferredCategories(_selectedCategories);
     
     final l10n = AppLocalizations.of(context)!;
@@ -120,7 +115,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     
     AppSnackbar.showSuccess(context, message);
     
-    // Navigate back after a short delay
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         Navigator.pop(context);
@@ -191,7 +185,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                 ),
               ),
 
-              // Description
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
@@ -204,7 +197,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
 
               const SizedBox(height: 24),
 
-              // Categories Grid
               Expanded(
                 child: GridView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
@@ -234,7 +226,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                 ),
               ),
 
-              // Save Button
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: GestureDetector(
@@ -313,7 +304,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Stack(
               children: [
-                // Content
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -343,7 +333,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                     ],
                   ),
                 ),
-                // Checkmark
                 if (isSelected)
                   Positioned(
                     top: 8,
