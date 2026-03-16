@@ -87,7 +87,6 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   }
 
   void _changePassword() {
-    // Check if current password is entered first
     if (_currentPasswordController.text.isEmpty) {
       AppSnackbar.showSuccess(context, 'Please enter your current password');
       return;
@@ -117,7 +116,6 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       return;
     }
 
-    // Simulate password change
     AppSnackbar.showSuccess(context, 'Password changed successfully');
     Navigator.pop(context);
   }
@@ -138,7 +136,6 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
