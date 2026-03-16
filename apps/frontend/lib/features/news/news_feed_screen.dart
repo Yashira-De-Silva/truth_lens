@@ -389,7 +389,6 @@ class _NewsFeedScreenState extends ConsumerState<NewsFeedScreen> {
           feed.articles.length + (feed.hasMore && !feed.isLoading ? 1 : 0),
       itemBuilder: (context, index) {
         if (index == feed.articles.length) {
-          // Footer: loading more indicator
           return feed.isLoadingMore
               ? Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
@@ -429,12 +428,12 @@ class _ModeToggle extends StatelessWidget {
       child: Row(
         children: [
           _Tab(
-            label: '📰  Dataset',
+            label: 'Dataset',
             selected: !isLive,
             onTap: () => onTap(false),
           ),
           _Tab(
-            label: '🔴  Live News',
+            label: 'Live News',
             selected: isLive,
             onTap: () => onTap(true),
           ),
@@ -568,7 +567,6 @@ class _ArticleCard extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Live badge
                           if (article.isLive) ...[
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -639,7 +637,6 @@ class _ArticleCard extends ConsumerWidget {
                               ),
                             ],
                           ),
-                          // Date / time
                           if (article.published != null &&
                               article.published!.isNotEmpty) ...[
                             const SizedBox(height: 4),
@@ -837,10 +834,6 @@ class _ArticleCard extends ConsumerWidget {
     );
   }
 }
-
-/// Format a date string for display.
-/// Handles Guardian ISO-8601 (e.g. "2026-03-08T00:00:00Z") and
-/// Kaggle plain date strings (e.g. "Jan 8, 2017").
 String _formatDate(String raw) {
   final trimmed = raw.trim();
   if (trimmed.isEmpty) return '';
