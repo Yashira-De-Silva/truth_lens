@@ -147,7 +147,6 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Adaptive sizing for different screen sizes
     final iconSize = screenWidth > 600 ? 26.0 : 24.0;
     final fontSize = screenWidth > 600 ? 12.0 : 11.0;
     final horizontalPadding = screenWidth > 600
