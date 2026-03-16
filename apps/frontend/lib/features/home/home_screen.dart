@@ -46,12 +46,10 @@ class _ModernNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get safe area insets to handle gesture navigation and button navigation
     final mediaQuery = MediaQuery.of(context);
     final bottomPadding = mediaQuery.padding.bottom;
     final screenWidth = mediaQuery.size.width;
 
-    // Adaptive margins based on screen width
     final horizontalMargin = screenWidth > 600 ? 24.0 : 16.0;
 
     // Adaptive bottom margin:
