@@ -194,8 +194,6 @@ class AboutScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 24),
-
-                      // Legal Links
                       _buildGlassContainer(
                         child: Column(
                           children: [
@@ -220,8 +218,6 @@ class AboutScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 24),
-
-                      // Developer Info
                       _buildGlassContainer(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
@@ -273,8 +269,6 @@ class AboutScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 32),
-
-                      // Copyright
                       Text(
                         '© 2026 TruthLens. All rights reserved.',
                         style: TextStyle(
