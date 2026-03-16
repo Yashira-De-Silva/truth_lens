@@ -5,10 +5,8 @@ class Article {
   final String? fullText;
   final String source;
 
-  /// 'REAL' or 'FAKE' — from ML model. Defaults to 'REAL'.
   final String label;
 
-  /// Confidence score 0.0–1.0 (how confident the model is in the label).
   final double confidence;
 
   /// URL to the original article (live Guardian news only).
