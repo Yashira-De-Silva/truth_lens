@@ -52,12 +52,8 @@ class _ModernNavBar extends StatelessWidget {
 
     final horizontalMargin = screenWidth > 600 ? 24.0 : 16.0;
 
-    // Adaptive bottom margin:
-    // - For gesture navigation: bottomPadding is usually small (0-10px), so add more margin
-    // - For button navigation: bottomPadding is larger (20-34px), so add less margin
     final bottomMargin = bottomPadding > 15 ? 8.0 : 16.0;
 
-    // Adaptive padding within the nav bar
     final verticalPadding = screenWidth > 600 ? 14.0 : 12.0;
 
     return Container(
