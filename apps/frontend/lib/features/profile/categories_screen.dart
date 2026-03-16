@@ -14,7 +14,6 @@ class CategoriesScreen extends ConsumerStatefulWidget {
 }
 
 class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
-  // Available categories
   final List<CategoryItem> _categories = [
     CategoryItem(
       id: 'all',
@@ -79,7 +78,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   @override
   void initState() {
     super.initState();
-    // Load saved categories from settings
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final savedCategories = ref.read(settingsProvider).preferredCategories;
       setState(() {
