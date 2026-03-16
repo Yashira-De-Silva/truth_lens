@@ -9,13 +9,10 @@ class Article {
 
   final double confidence;
 
-  /// URL to the original article (live Guardian news only).
   final String? url;
 
-  /// Publication date string (live news only).
   final String? published;
 
-  /// True when article comes from live Guardian API (not Kaggle dataset).
   final bool isLive;
 
   Article({
