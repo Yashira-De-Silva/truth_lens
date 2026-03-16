@@ -32,7 +32,6 @@ class AboutScreen extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -88,13 +87,11 @@ class AboutScreen extends StatelessWidget {
                 ),
               ),
 
-              // Content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      // App Logo and Name
                       Container(
                         width: 120,
                         height: 120,
@@ -140,7 +137,6 @@ class AboutScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 32),
 
-                      // Version Info
                       _buildGlassContainer(
                         child: Column(
                           children: [
@@ -154,7 +150,6 @@ class AboutScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
 
-                      // About Section
                       _buildGlassContainer(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
