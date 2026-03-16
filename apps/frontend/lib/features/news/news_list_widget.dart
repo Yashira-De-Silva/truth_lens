@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'news_providers.dart';
-// uses theme via surrounding app
 
 class NewsListWidget extends ConsumerWidget {
   const NewsListWidget({super.key});
