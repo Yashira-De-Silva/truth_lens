@@ -58,7 +58,6 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       return;
     }
 
-    // Calculate strength based on criteria
     if (password.length >= 6) strength += 0.2;
     if (password.length >= 10) strength += 0.1;
     if (password.contains(RegExp(r'[a-z]'))) strength += 0.2;
@@ -66,7 +65,6 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     if (password.contains(RegExp(r'[0-9]'))) strength += 0.15;
     if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) strength += 0.15;
 
-    // Determine strength label and color
     if (strength <= 0.3) {
       strengthText = 'Weak';
       strengthColor = AppColors.error;
