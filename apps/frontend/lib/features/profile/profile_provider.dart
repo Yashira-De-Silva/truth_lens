@@ -41,7 +41,6 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
 
       await _save();
     } catch (_) {
-      // Silently fail — cached data stays
     }
   }
 
@@ -49,8 +48,6 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, jsonEncode(state.toJson()));
   }
-
-  // ── Update locally (edit profile form) ──────────────────────────────────
 
   Future<void> updateProfile({
     String? name,
@@ -66,7 +63,6 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
     );
     await _save();
 
-    // Sync name & bio to backend
     final token = await svc.loadToken();
     if (token != null) {
       try {
