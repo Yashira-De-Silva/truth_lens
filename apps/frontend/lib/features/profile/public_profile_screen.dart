@@ -16,7 +16,7 @@ import 'edit_profile_screen.dart';
 import 'profile_provider.dart';
 
 class PublicProfileScreen extends ConsumerStatefulWidget {
-  final int? userId; // null = own profile
+  final int? userId;
   final String userName;
   final String userEmail;
   final String? userBio;
@@ -195,10 +195,8 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Mock data for demonstration
     final stats = {'Articles Read': '127', 'Comments': '45', 'Bookmarks': '23'};
 
-    // If viewing own profile, use live data from profile provider
     final profile = widget.isOwnProfile ? ref.watch(profileProvider) : null;
     final displayName = widget.isOwnProfile ? profile!.name : widget.userName;
     final displayEmail = widget.isOwnProfile
@@ -222,7 +220,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -350,13 +347,11 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 
               const SizedBox(height: 24),
 
-              // Profile Content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     children: [
-                      // Profile Picture and Info
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
@@ -372,7 +367,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                             child: Column(
                               children: [
-                                // Avatar (shows saved image for own profile)
                                 Consumer(
                                   builder: (context, ref, _) {
                                     final profile = ref.watch(profileProvider);
@@ -399,7 +393,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                       );
                                     }
 
-                                    // Fallback to initial if no avatar image
                                     return Container(
                                       width: 100,
                                       height: 100,
@@ -465,11 +458,9 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                   ),
                                 ],
                                 const SizedBox(height: 16),
-                                // Badges Row
                                 Wrap(
                                   spacing: 8,
                                   children: [
-                                    // Premium Badge
                                     if (widget.isPremium)
                                       Container(
                                         padding: const EdgeInsets.symmetric(
@@ -507,7 +498,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                           ],
                                         ),
                                       ),
-                                    // Visibility Badge - Make it clickable if own profile
                                     GestureDetector(
                                       onTap: widget.isOwnProfile
                                           ? _showVisibilityDialog
@@ -579,7 +569,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 
                       const SizedBox(height: 20),
 
-                      // ── Follower stats (live if userId known) ──────
                       if (!widget.isOwnProfile && widget.userId != null)
                         Consumer(
                           builder: (_, ref, __) {
@@ -624,7 +613,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                           },
                         )
                       else
-                        // Stats for own profile
                         Container(
                           padding: const EdgeInsets.all(20),
                           margin: const EdgeInsets.only(bottom: 20),
@@ -645,7 +633,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                           ),
                         ),
 
-                      // ── Action buttons (Follow / Message / Chess) ──
                       if (!widget.isOwnProfile && widget.userId != null)
                         Consumer(
                           builder: (ctx, ref, __) {
@@ -668,7 +655,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      // Follow / Unfollow
                                       Expanded(
                                         child: _actionButton(
                                           icon: status.isFollowing
@@ -695,7 +681,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                       ),
                                       if (status.isMutual) ...[
                                         const SizedBox(width: 10),
-                                        // Message button (mutual followers only)
                                         Expanded(
                                           child: _actionButton(
                                             icon: Icons.chat_bubble_outline,
