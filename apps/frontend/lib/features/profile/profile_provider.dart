@@ -12,27 +12,20 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
 
   static const _key = 'user_profile_v1';
 
-  // ── Load: local cache first, then refresh from backend ──────────────────
-
   Future<void> _load() async {
-    // 1. Load locally persisted profile immediately for fast UI
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_key);
     if (raw != null) {
       state = UserProfile.fromJson(jsonDecode(raw));
     }
-
-    // 2. Refresh from backend if we have a token
     await refreshFromBackend();
   }
 
-  /// Fetch the latest user data from GET /api/me and update state + cache.
   Future<void> refreshFromBackend() async {
     final token = await svc.loadToken();
     if (token == null) return;
     try {
       final data = await svc.me(token);
-      // Merge backend data but preserve local-only fields (phone, avatarPath)
       state = state.copyWith(
         name: data['name'] as String?,
         email: data['email'] as String?,
