@@ -27,7 +27,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize controllers with current profile data
     final profile = ref.read(profileProvider);
     _nameController = TextEditingController(text: profile.name);
     _emailController = TextEditingController(text: profile.email);
@@ -46,7 +45,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
       final l10n = AppLocalizations.of(context)!;
-      // Update profile using the provider
       ref
           .read(profileProvider.notifier)
           .updateProfile(
@@ -63,14 +61,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _pickImage() async {
     try {
-      // Simply try to pick image - the plugin handles permissions automatically
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 85,
       );
 
       if (image != null && mounted) {
-        // Verify the file exists
         final file = File(image.path);
         if (await file.exists()) {
           setState(() {
@@ -86,7 +82,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     } on Exception catch (e) {
       print('Image picker error: $e');
       if (mounted) {
-        // Show a helpful dialog instead of just an error
         _showPermissionHelpDialog();
       }
     }
