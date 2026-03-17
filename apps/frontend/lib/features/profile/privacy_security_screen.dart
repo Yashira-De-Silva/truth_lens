@@ -67,7 +67,6 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -114,7 +113,6 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                 ),
               ),
 
-              // Description
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
@@ -127,7 +125,6 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
 
               const SizedBox(height: 24),
 
-              // Privacy Options
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
