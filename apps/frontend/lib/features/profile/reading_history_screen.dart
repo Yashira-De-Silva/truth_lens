@@ -15,7 +15,6 @@ class ReadingHistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _ReadingHistoryScreenState extends ConsumerState<ReadingHistoryScreen> {
-  // Mock reading history data - now as instance variable
   List<_HistoryItem> historyItems = [
     _HistoryItem(
       title: 'AI Revolutionizes News Verification',
@@ -59,7 +58,6 @@ class _ReadingHistoryScreenState extends ConsumerState<ReadingHistoryScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -125,7 +123,6 @@ class _ReadingHistoryScreenState extends ConsumerState<ReadingHistoryScreen> {
                 ),
               ),
 
-              // Description
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
@@ -138,7 +135,6 @@ class _ReadingHistoryScreenState extends ConsumerState<ReadingHistoryScreen> {
 
               const SizedBox(height: 24),
 
-              // History List
               Expanded(
                 child: historyItems.isEmpty
                     ? Center(
@@ -227,7 +223,6 @@ class _ReadingHistoryScreenState extends ConsumerState<ReadingHistoryScreen> {
       await prefs.remove('cached_articles');
       await prefs.remove('reading_history');
 
-      // Clear the history items from the UI
       setState(() {
         historyItems.clear();
       });
