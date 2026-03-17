@@ -61,7 +61,6 @@ class UserProfile {
     );
   }
 
-  /// Build from the raw backend user map (snake_case keys).
   factory UserProfile.fromBackend(Map<String, dynamic> json) {
     return UserProfile(
       name: json['name'] ?? '',
