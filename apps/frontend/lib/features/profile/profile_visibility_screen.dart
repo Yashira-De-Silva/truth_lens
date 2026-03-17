@@ -60,7 +60,6 @@ class _ProfileVisibilityScreenState
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -105,7 +104,6 @@ class _ProfileVisibilityScreenState
                 ),
               ),
 
-              // Description
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
@@ -118,7 +116,6 @@ class _ProfileVisibilityScreenState
 
               const SizedBox(height: 24),
 
-              // Options
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
