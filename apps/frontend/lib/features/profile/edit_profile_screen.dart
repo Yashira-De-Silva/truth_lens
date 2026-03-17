@@ -387,7 +387,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
                         const SizedBox(height: 32),
 
-                        // Name Field
                         _buildInputField(
                           controller: _nameController,
                           label: 'Full Name',
@@ -402,7 +401,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
                         const SizedBox(height: 16),
 
-                        // Email Field
                         _buildInputField(
                           controller: _emailController,
                           label: 'Email',
@@ -421,7 +419,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
                         const SizedBox(height: 16),
 
-                        // Bio Field
                         _buildInputField(
                           controller: _bioController,
                           label: 'Bio',
