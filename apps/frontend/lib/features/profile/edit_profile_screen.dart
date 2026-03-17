@@ -168,7 +168,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _takePhoto() async {
     try {
-      // Simply try to take photo - the plugin handles permissions automatically
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.camera,
         imageQuality: 85,
@@ -236,7 +235,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ElevatedButton.icon(
               onPressed: () async {
                 Navigator.pop(context);
-                // Open app settings
                 await openAppSettings();
               },
               icon: const Icon(Icons.settings, size: 18),
