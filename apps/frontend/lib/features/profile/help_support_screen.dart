@@ -93,7 +93,6 @@ class HelpSupportScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Contact Us Section
                       _buildSectionHeader(context, 'Contact Us'),
                       const SizedBox(height: 12),
                       _buildGlassContainer(
@@ -125,7 +124,6 @@ class HelpSupportScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
 
-                      // FAQ Section
                       _buildSectionHeader(context, 'Frequently Asked Questions'),
                       const SizedBox(height: 12),
                       _buildGlassContainer(
@@ -165,7 +163,6 @@ class HelpSupportScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
 
-                      // Resources Section
                       _buildSectionHeader(context, 'Resources'),
                       const SizedBox(height: 12),
                       _buildGlassContainer(
