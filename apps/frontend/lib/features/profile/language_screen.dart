@@ -26,7 +26,6 @@ class LanguageScreen extends ConsumerWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -68,7 +67,6 @@ class LanguageScreen extends ConsumerWidget {
                 ),
               ),
 
-              // Description
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
@@ -81,7 +79,6 @@ class LanguageScreen extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              // Language Options
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -158,7 +155,6 @@ class LanguageScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(20.0),
               child: Row(
                 children: [
-                  // Language Icon
                   Container(
                     width: 48,
                     height: 48,
@@ -187,7 +183,6 @@ class LanguageScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  // Language Name
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
