@@ -37,14 +37,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Future<void> _processPayment() async {
     if (!_formKey.currentState!.validate()) return;
     
-    // Unfocus keyboard
     FocusScope.of(context).unfocus();
 
     setState(() {
       _isProcessing = true;
     });
 
-    // Simulate payment processing delay (communicating with payment gateway)
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
@@ -53,7 +51,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       _isProcessing = false;
     });
 
-    // Simulate successful payment
     await widget.onPaymentSuccess();
   }
 
