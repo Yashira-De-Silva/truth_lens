@@ -207,7 +207,6 @@ class LanguageScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  // Selection Indicator
                   if (isSelected)
                     Container(
                       width: 24,

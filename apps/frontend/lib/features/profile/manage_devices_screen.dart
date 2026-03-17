@@ -14,7 +14,6 @@ class ManageDevicesScreen extends ConsumerStatefulWidget {
 }
 
 class _ManageDevicesScreenState extends ConsumerState<ManageDevicesScreen> {
-  // Mock device data - now as instance variable
   List<_Device> devices = [
     _Device(
       name: 'iPhone 15 Pro',
@@ -55,7 +54,6 @@ class _ManageDevicesScreenState extends ConsumerState<ManageDevicesScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
