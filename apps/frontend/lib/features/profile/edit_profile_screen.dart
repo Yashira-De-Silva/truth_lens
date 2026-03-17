@@ -429,7 +429,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
                         const SizedBox(height: 32),
 
-                        // Save Button
                         GestureDetector(
                           onTap: _saveProfile,
                           child: Container(
