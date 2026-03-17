@@ -32,7 +32,6 @@ class HelpSupportScreen extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -88,7 +87,6 @@ class HelpSupportScreen extends StatelessWidget {
                 ),
               ),
 
-              // Content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
