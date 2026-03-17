@@ -51,8 +51,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       });
       if (mounted) {
         AppSnackbar.showSuccess(context, 'Successfully upgraded to Premium!');
-        Navigator.pop(context); // Pop PaymentScreen
-        Navigator.pop(context); // Pop SubscriptionScreen
+        Navigator.pop(context); 
+        Navigator.pop(context); 
       }
     } catch (e) {
       if (mounted) {
@@ -60,7 +60,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
           context, 
           e.toString().replaceAll('Exception: ', ''),
         );
-        Navigator.pop(context); // Pop PaymentScreen
+        Navigator.pop(context); 
       }
     }
   }
