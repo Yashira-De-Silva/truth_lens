@@ -268,7 +268,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -311,7 +310,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
               ),
 
-              // Form Content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -321,7 +319,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       children: [
                         const SizedBox(height: 8),
 
-                        // Profile Picture
                         Stack(
                           children: [
                             Container(
