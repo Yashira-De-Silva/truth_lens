@@ -71,7 +71,6 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
           name: name ?? state.name,
           bio: bio ?? state.bio,
         );
-        // Update state with confirmed backend data
         state = state.copyWith(
           name: updated['name'] as String?,
           bio: updated['bio'] as String? ?? '',
@@ -79,7 +78,6 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
         );
         await _save();
       } catch (_) {
-        // Local update already applied — backend sync failed silently
       }
     }
   }
