@@ -696,7 +696,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                       ],
                                       if (status.isFollowing) ...[
                                         const SizedBox(width: 10),
-                                        // Chess button
                                         Expanded(
                                           child: _actionButton(
                                             icon: Icons.sports_esports_outlined,
@@ -724,7 +723,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 
                       const SizedBox(height: 0),
 
-                      // Recent Activity
+                      // Recent Activity  
                       _buildSectionTitle('Recent Activity'),
                       const SizedBox(height: 12),
                       _buildActivityItem(
