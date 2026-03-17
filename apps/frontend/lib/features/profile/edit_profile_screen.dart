@@ -88,7 +88,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _showImageSourceDialog() async {
-    // Show a dialog with options: Gallery, Camera, or choose from default avatars
     final result = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -156,7 +155,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       ),
     );
 
-    // Handle the result
     if (result == 'gallery') {
       await _pickImage();
     } else if (result == 'camera') {
