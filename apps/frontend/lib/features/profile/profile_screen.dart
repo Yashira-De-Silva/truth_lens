@@ -65,7 +65,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header with Search Button
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -128,7 +127,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // User Card
                 _buildGlassContainer(
                   child: Row(
                     children: [
@@ -255,7 +253,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Preview Profile Button
                 GestureDetector(
                   onTap: () async {
                     final profile = ref.read(profileProvider);
@@ -348,7 +345,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Preferences Section
                 _buildSectionHeader(l10n.preferences),
                 const SizedBox(height: 12),
                 _buildGlassContainer(
@@ -381,7 +377,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Account Section
                 _buildSectionHeader(l10n.account),
                 const SizedBox(height: 12),
                 _buildGlassContainer(
@@ -417,7 +412,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               builder: (context) => const SubscriptionScreen(),
                             ),
                           );
-                          // Reload subscription plan when returning
                           _loadSubscriptionPlan();
                         },
                       ),
@@ -457,7 +451,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Fun & Games Section
                 _buildSectionHeader('Fun & Games'),
                 const SizedBox(height: 12),
                 _buildGlassContainer(
@@ -513,7 +506,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // About Section
                 _buildSectionHeader(l10n.about),
                 const SizedBox(height: 12),
                 _buildGlassContainer(
