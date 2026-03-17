@@ -193,7 +193,6 @@ class HelpSupportScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
 
-                      // App Info
                       Center(
                         child: Column(
                           children: [
