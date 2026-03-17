@@ -98,7 +98,6 @@ class _ManageDevicesScreenState extends ConsumerState<ManageDevicesScreen> {
                 ),
               ),
 
-              // Description
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
@@ -111,7 +110,6 @@ class _ManageDevicesScreenState extends ConsumerState<ManageDevicesScreen> {
 
               const SizedBox(height: 24),
 
-              // Devices List
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -168,7 +166,6 @@ class _ManageDevicesScreenState extends ConsumerState<ManageDevicesScreen> {
     );
 
     if (confirmed == true && context.mounted) {
-      // Remove the device from the list
       setState(() {
         devices.removeWhere((d) => d.name == device.name);
       });
