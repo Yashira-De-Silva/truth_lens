@@ -885,8 +885,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     }
   }
 
-  // ── Stat item helper ─────────────────────────────────────────────────────────
-
   Widget _statItem(String value, String label) {
     return Column(
       children: [
@@ -909,8 +907,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
       ],
     );
   }
-
-  // ── Action button helper ──────────────────────────────────────────────────────
 
   Widget _actionButton({
     required IconData icon,
@@ -962,8 +958,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     );
   }
 
-  // ── Follow / Unfollow ─────────────────────────────────────────────────────────
-
   Future<void> _toggleFollow(
     BuildContext context,
     WidgetRef ref,
@@ -993,8 +987,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     }
   }
 
-  // ── Open Chat (mutual followers) ─────────────────────────────────────────────
-
   Future<void> _openChat(
     BuildContext context,
     WidgetRef ref,
@@ -1018,8 +1010,6 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
       if (context.mounted) AppSnackbar.showError(context, e.toString());
     }
   }
-
-  // ── Challenge to Chess ────────────────────────────────────────────────────────
 
   Future<void> _challengeChess(
     BuildContext context,
