@@ -589,7 +589,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Icon
                   Container(
                     width: 64,
                     height: 64,
@@ -607,7 +606,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Title
                   const Text(
                     'Log Out',
                     style: TextStyle(
@@ -618,7 +616,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Body
                   Text(
                     'Are you sure you want to log out of your account?',
                     textAlign: TextAlign.center,
@@ -629,10 +626,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 28),
-                  // Buttons
                   Row(
                     children: [
-                      // Cancel
                       Expanded(
                         child: GestureDetector(
                           onTap: () => Navigator.of(ctx).pop(false),
@@ -658,7 +653,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Log Out
                       Expanded(
                         child: GestureDetector(
                           onTap: () => Navigator.of(ctx).pop(true),
