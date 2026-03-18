@@ -152,8 +152,6 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(_pollInterval, (_) => _silentRefresh());
   }
-
-  /// Poll for new messages without showing a loading state.
   Future<void> _silentRefresh() async {
     if (token.isEmpty) return;
     try {
@@ -212,8 +210,6 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     super.dispose();
   }
 }
-
-/// Family provider — one MessagesNotifier per conversationId.
 final messagesProvider = StateNotifierProvider.autoDispose
     .family<MessagesNotifier, MessagesState, String>((ref, conversationId) {
       final token = ref.watch(authProvider).token ?? '';
