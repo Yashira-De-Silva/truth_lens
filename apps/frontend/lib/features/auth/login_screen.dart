@@ -124,9 +124,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       ),
     );
   }
-
-  // ── Sub-widgets ─────────────────────────────────────────────────────────────
-
   Widget _buildLogo(BuildContext context) {
     return Column(
       children: [
