@@ -388,8 +388,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final msgsState = ref.watch(messagesProvider(widget.conversationId));
     final myId = _myId;
-
-    // Auto-scroll when new messages arrive
     if (!msgsState.isLoading && msgsState.messages.isNotEmpty) {
       _scrollToBottom();
     }
@@ -618,7 +616,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Reply preview
                   if (message.replyTo != null) ...[
                     Container(
                       padding: const EdgeInsets.all(8),
