@@ -43,9 +43,6 @@ class CommentsNotifier extends StateNotifier<CommentsState> {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
-
-  // ── Add ────────────────────────────────────────────────────────────────────
-
   Future<void> addComment(String text) async {
     if (text.trim().isEmpty) return;
     state = state.copyWith(isSubmitting: true, clearError: true);
@@ -59,9 +56,6 @@ class CommentsNotifier extends StateNotifier<CommentsState> {
       state = state.copyWith(isSubmitting: false, error: e.toString());
     }
   }
-
-  // ── Delete ─────────────────────────────────────────────────────────────────
-
   Future<void> deleteComment(int commentId) async {
     try {
       await _service.deleteComment(commentId);
