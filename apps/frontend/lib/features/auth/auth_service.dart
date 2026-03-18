@@ -63,9 +63,6 @@ Future<bool> isSessionExpired() async {
   final loginTime = DateTime.fromMillisecondsSinceEpoch(ts, isUtc: true);
   return DateTime.now().toUtc().difference(loginTime).inDays >= _sessionDays;
 }
-
-// ── API calls ────────────────────────────────────────────────────────────────
-
 Future<AuthResult> register({
   required String name,
   required String email,
@@ -193,9 +190,6 @@ Future<void> cancelPremium(String token) async {
     );
   }
 }
-
-// ── Internal helpers ─────────────────────────────────────────────────────────
-
 AuthResult _parseAuthResponse(http.Response response) {
   final body = jsonDecode(response.body) as Map<String, dynamic>;
   if ((response.statusCode == 200 || response.statusCode == 201) &&
@@ -213,8 +207,6 @@ AuthResult _parseAuthResponse(http.Response response) {
   }
   throw AuthException(body['message'] as String? ?? 'An error occurred');
 }
-
-// ── Value objects ─────────────────────────────────────────────────────────────
 
 class AuthResult {
   final String token;
