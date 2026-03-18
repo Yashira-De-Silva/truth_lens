@@ -34,9 +34,6 @@ class CommentsNotifier extends StateNotifier<CommentsState> {
 
   final int _articleId;
   final _service = CommentService();
-
-  // ── Load ───────────────────────────────────────────────────────────────────
-
   Future<void> load() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
