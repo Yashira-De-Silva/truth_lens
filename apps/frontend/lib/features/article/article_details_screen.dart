@@ -310,8 +310,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                       ),
 
                       const SizedBox(height: 20),
-
-                      // Summary/Article Content
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -351,8 +349,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                       ),
 
                       const SizedBox(height: 24),
-
-                      // Comments Section
                       Text(
                         'Comments',
                         style: TextStyle(
@@ -362,8 +358,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Comment input
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
