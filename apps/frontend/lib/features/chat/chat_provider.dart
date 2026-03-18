@@ -47,8 +47,6 @@ class ConversationsNotifier extends StateNotifier<ConversationsState> {
   ConversationsNotifier(this.token, this.authStatus)
     : super(const ConversationsState(isLoading: true)) {
     if (authStatus == AuthStatus.initial) {
-      // Token is still being restored from SharedPreferences — show a
-      // loading spinner instead of flashing the "Log in" screen.
       state = const ConversationsState(isLoading: true, isAuthenticated: true);
     } else if (token.isEmpty) {
       state = const ConversationsState(isAuthenticated: false);
