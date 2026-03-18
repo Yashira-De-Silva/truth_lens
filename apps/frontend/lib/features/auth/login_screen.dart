@@ -40,9 +40,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     _fadeCtrl.dispose();
     super.dispose();
   }
-
-  // ── Submit ──────────────────────────────────────────────────────────────────
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
@@ -52,9 +49,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           password: _passwordCtrl.text,
         );
   }
-
-  // ── Listen for state changes ───────────────────────────────────────────────
-
   void _handleStateChange(AuthState? prev, AuthState next) {
     if (next.status == AuthStatus.authenticated) {
       Navigator.of(context).pushAndRemoveUntil(
@@ -68,9 +62,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       ref.read(authProvider.notifier).clearError();
     }
   }
-
-  // ── Build ───────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     ref.listen(authProvider, _handleStateChange);
