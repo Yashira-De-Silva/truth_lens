@@ -119,10 +119,6 @@ class BackendReplyTo {
         body: j['body'] as String,
       );
 }
-
-// ── API calls ─────────────────────────────────────────────────────────────────
-
-/// Fetch all users except the logged-in user.
 Future<List<BackendUser>> getUsers(String token) async {
   final base = await ApiConfig.baseUrl;
   final res = await http
@@ -136,8 +132,6 @@ Future<List<BackendUser>> getUsers(String token) async {
   }
   throw Exception(body['message'] ?? 'Failed to load users');
 }
-
-/// Get or create a conversation with another user. Returns conversationId + other user.
 Future<BackendConversation> getOrCreateConversation(
     String token, int otherUserId) async {
   final base = await ApiConfig.baseUrl;
