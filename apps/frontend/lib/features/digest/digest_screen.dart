@@ -155,8 +155,6 @@ class DigestScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-
-              // ── Article List ─────────────────────────────────────
               Expanded(
                 child: asyncDigest.when(
                   loading: () => Center(
@@ -316,9 +314,6 @@ class DigestScreen extends ConsumerWidget {
     );
   }
 }
-
-// ── Digest Card ───────────────────────────────────────────────────────────────
-
 class _DigestCard extends ConsumerWidget {
   final Article article;
   final int rank;
@@ -367,7 +362,6 @@ class _DigestCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Top row: rank + badge + bookmark ────────────
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
