@@ -112,8 +112,6 @@ class _SelectUserScreenState extends ConsumerState<SelectUserScreen> {
                   ],
                 ),
               ),
-
-              // Search Bar
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Container(
@@ -156,8 +154,6 @@ class _SelectUserScreenState extends ConsumerState<SelectUserScreen> {
               ),
 
               const SizedBox(height: 16),
-
-              // Users list
               Expanded(
                 child: usersAsync.when(
                   loading: () => const Center(
