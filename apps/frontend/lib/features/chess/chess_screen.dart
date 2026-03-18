@@ -449,7 +449,6 @@ class _ChessScreenState extends ConsumerState<ChessScreen> {
   }
 
   Widget _buildPlayerInfo(svc.ChessGameModel game, {required bool isTop}) {
-    // Top = opponent, bottom = me
     final player = isTop
         ? (game.myColor == 'white' ? game.blackPlayer : game.whitePlayer)
         : (game.myColor == 'white' ? game.whitePlayer : game.blackPlayer);
@@ -514,7 +513,7 @@ class _ChessScreenState extends ConsumerState<ChessScreen> {
 
   Widget _buildBoard(BuildContext context, svc.ChessGameModel game) {
     final board = _parseFen(game.fen);
-    final flip = game.myColor == 'black'; // Flip board for black player
+    final flip = game.myColor == 'black';
 
     return Center(
       child: AspectRatio(
