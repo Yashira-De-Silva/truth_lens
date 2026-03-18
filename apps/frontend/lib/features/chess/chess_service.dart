@@ -7,9 +7,6 @@ Map<String, String> _headers(String token) => {
   'Accept': 'application/json',
   'Authorization': 'Bearer $token',
 };
-
-// ── Models ────────────────────────────────────────────────────────────────────
-
 class ChessPlayer {
   final int id;
   final String name;
@@ -26,12 +23,12 @@ class ChessGameModel {
   final int id;
   final ChessPlayer whitePlayer;
   final ChessPlayer blackPlayer;
-  final String? myColor; // 'white' | 'black'
+  final String? myColor; 
   final String fen;
   final List<String> moves;
-  final String status; // 'waiting' | 'active' | 'finished' | 'declined'
+  final String status;
   final int? winnerId;
-  final String? result; // 'white' | 'black' | 'draw'
+  final String? result; 
   final String? updatedAt;
 
   const ChessGameModel({
