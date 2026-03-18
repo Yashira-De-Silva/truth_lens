@@ -6,9 +6,6 @@ import '../../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../news/bookmarks_provider.dart';
 import '../article/article_details_screen.dart';
-
-// ...existing code...
-
 class BookmarksScreen extends StatelessWidget {
   const BookmarksScreen({super.key});
 
@@ -28,7 +25,6 @@ class BookmarksScreen extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Consumer(builder: (context, ref, _) {
