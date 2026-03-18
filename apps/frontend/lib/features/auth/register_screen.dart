@@ -45,9 +45,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     _fadeCtrl.dispose();
     super.dispose();
   }
-
-  // ── Submit ──────────────────────────────────────────────────────────────────
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
@@ -58,9 +55,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
           password: _passwordCtrl.text,
         );
   }
-
-  // ── Listen for state changes ───────────────────────────────────────────────
-
   void _handleStateChange(AuthState? prev, AuthState next) {
     if (next.status == AuthStatus.authenticated) {
       Navigator.of(context).pushAndRemoveUntil(
@@ -74,9 +68,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       ref.read(authProvider.notifier).clearError();
     }
   }
-
-  // ── Build ───────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     ref.listen(authProvider, _handleStateChange);
@@ -143,9 +134,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       ),
     );
   }
-
-  // ── Sub-widgets ─────────────────────────────────────────────────────────────
-
   Widget _buildLogo() {
     return Column(
       children: [
