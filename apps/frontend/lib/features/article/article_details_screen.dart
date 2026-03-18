@@ -111,7 +111,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header with back button and title
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -182,7 +181,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                 ),
               ),
 
-              // Tab buttons
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
