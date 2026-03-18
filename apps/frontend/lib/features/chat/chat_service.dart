@@ -2,15 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../core/services/api_config.dart';
 
-// ── Headers ───────────────────────────────────────────────────────────────────
-
 Map<String, String> _authHeaders(String token) => {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'Authorization': 'Bearer $token',
     };
-
-// ── Models ────────────────────────────────────────────────────────────────────
 
 class BackendUser {
   final int id;
