@@ -154,8 +154,6 @@ Future<BackendConversation> getOrCreateConversation(
   }
   throw Exception(body['message'] ?? 'Failed to get conversation');
 }
-
-/// Fetch all conversations for the logged-in user.
 Future<List<BackendConversation>> getConversations(String token) async {
   final base = await ApiConfig.baseUrl;
   final res = await http
@@ -169,8 +167,6 @@ Future<List<BackendConversation>> getConversations(String token) async {
   }
   throw Exception(body['message'] ?? 'Failed to load conversations');
 }
-
-/// Fetch all messages in a conversation.
 Future<List<BackendMessage>> getMessages(
     String token, String conversationId) async {
   final base = await ApiConfig.baseUrl;
@@ -188,8 +184,6 @@ Future<List<BackendMessage>> getMessages(
   }
   throw Exception(body['message'] ?? 'Failed to load messages');
 }
-
-/// Send a message in a conversation.
 Future<BackendMessage> sendMessage(
   String token,
   String conversationId,
