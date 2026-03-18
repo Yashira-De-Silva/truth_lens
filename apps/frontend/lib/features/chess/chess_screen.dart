@@ -143,9 +143,6 @@ class _ChessScreenState extends ConsumerState<ChessScreen> {
     if (color == 'black') return piece == piece.toLowerCase();
     return false;
   }
-
-  /// Returns a list of possible target squares (very basic: includes moves that
-  /// may still land on friendly pieces; the server will reject illegal moves).
   List<String> _getBasicMoves(
     List<List<String?>> board,
     int r,
