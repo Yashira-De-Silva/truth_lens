@@ -62,9 +62,6 @@ class CommentService {
       throw Exception('Failed to delete comment: ${res.statusCode}');
     }
   }
-
-  // ── POST /api/comments/{commentId}/like ──────────────────────────────────
-
   /// Toggle like on [commentId]. Returns `{likes, is_liked}`.
   Future<({int likes, bool isLiked})> toggleLike(int commentId) async {
     final base = await ApiConfig.baseUrl;
