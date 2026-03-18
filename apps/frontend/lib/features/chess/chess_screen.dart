@@ -6,8 +6,6 @@ import '../../core/widgets/app_snackbar.dart';
 import 'chess_provider.dart';
 import 'chess_service.dart' as svc;
 
-// ── Piece definitions ─────────────────────────────────────────────────────────
-
 const _pieces = {
   'K': '♔',
   'Q': '♕',
@@ -23,7 +21,6 @@ const _pieces = {
   'p': '♟',
 };
 
-/// Very lightweight FEN parser – returns an 8×8 list of piece chars (or null).
 List<List<String?>> _parseFen(String fen) {
   final parts = fen.split(' ');
   final rows = parts[0].split('/');
