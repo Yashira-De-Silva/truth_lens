@@ -439,7 +439,6 @@ class _DigestCard extends ConsumerWidget {
                                     ],
                                   ),
                                 ),
-                              // Verified badge
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
@@ -472,7 +471,6 @@ class _DigestCard extends ConsumerWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              // Source + date
                               Text(
                                 article.source,
                                 style: TextStyle(
@@ -509,7 +507,6 @@ class _DigestCard extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        // Bookmark icon
                         GestureDetector(
                           onTap: () async {
                             if (isSaved) {
