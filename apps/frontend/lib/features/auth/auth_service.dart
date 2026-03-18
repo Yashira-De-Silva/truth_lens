@@ -19,9 +19,6 @@ Map<String, String> _authHeaders(String token) => {
       ..._jsonHeaders,
       'Authorization': 'Bearer $token',
     };
-
-// ── Token persistence ────────────────────────────────────────────────────────
-
 Future<void> saveToken(String token) async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString(_tokenKey, token);
