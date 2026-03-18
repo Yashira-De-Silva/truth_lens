@@ -365,7 +365,6 @@ class _DigestCard extends ConsumerWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Rank circle
                         Container(
                           width: 40,
                           height: 40,
@@ -401,7 +400,6 @@ class _DigestCard extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Live pill
                               if (article.isLive)
                                 Container(
                                   margin: const EdgeInsets.only(bottom: 4),
