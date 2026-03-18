@@ -363,9 +363,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     );
   }
 }
-
-// ── Reusable auth text field ──────────────────────────────────────────────────
-
 class _AuthField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
