@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_provider.dart';
 import 'chess_service.dart' as svc;
 
-// ── Games list provider ───────────────────────────────────────────────────────
-
 class ChessGamesState {
   final List<svc.ChessGameModel> games;
   final bool isLoading;
@@ -82,9 +80,6 @@ final chessGamesProvider =
     StateNotifierProvider.autoDispose<ChessGamesNotifier, ChessGamesState>(
       (ref) => ChessGamesNotifier(ref.watch(authProvider).token ?? ''),
     );
-
-// ── Single game provider (with polling) ───────────────────────────────────────
-
 class ChessGameState {
   final svc.ChessGameModel? game;
   final bool isLoading;
@@ -118,7 +113,6 @@ class ChessGameNotifier extends StateNotifier<ChessGameState> {
   ChessGameNotifier(this.token, this.gameId)
     : super(const ChessGameState(isLoading: true)) {
     load();
-    // Poll every 3 seconds for opponent moves
     _pollTimer = Timer.periodic(
       const Duration(seconds: 3),
       (_) => _silentRefresh(),
