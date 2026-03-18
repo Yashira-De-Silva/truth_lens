@@ -671,7 +671,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       ),
                     ),
                   ],
-                  // Message content
                   Text(
                     message.deletedForEveryone
                         ? 'This message was deleted'
@@ -742,7 +741,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Column(
             children: [
-              // Reply Preview
               if (_replyingTo != null)
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -808,7 +806,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     ],
                   ),
                 ),
-              // Input field
               Padding(
                 padding:
                     const EdgeInsets.fromLTRB(16, 12, 16, 12),
