@@ -260,8 +260,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                   ],
                 ),
               ),
-
-              // Content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
@@ -269,8 +267,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 20),
-
-                      // Misinformation Confidence
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
