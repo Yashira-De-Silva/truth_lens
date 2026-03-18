@@ -446,8 +446,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                       ),
 
                       const SizedBox(height: 16),
-
-                      // Comments list — from backend
                       Consumer(
                         builder: (context, ref, _) {
                           final state = ref.watch(commentsProvider(_articleId));
@@ -547,7 +545,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                   ],
                 ),
               ),
-              // Like button
               GestureDetector(
                 onTap: () => _toggleLike(comment),
                 child: Row(
