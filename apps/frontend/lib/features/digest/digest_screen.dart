@@ -9,19 +9,11 @@ import '../article/article_details_screen.dart';
 import '../news/bookmarks_provider.dart';
 import '../../core/widgets/app_snackbar.dart';
 
-// ── Provider ──────────────────────────────────────────────────────────────────
-
 final _digestSvcProvider = Provider<NewsApiService>((ref) => NewsApiService());
-
-/// Fetches live Guardian news, picks the top 5 most-confidently REAL articles.
-/// Falls back to the Kaggle /news/digest endpoint if Guardian key not set.
 final digestProvider = FutureProvider.autoDispose<List<Article>>((ref) async {
   final svc = ref.watch(_digestSvcProvider);
-
-  // Try live first (Guardian endpoint returns [] if no API key configured)
   final live = await svc.fetchLiveNews(limit: 30);
   if (live.isNotEmpty) {
-    // Keep only REAL articles, sorted by confidence desc, top 5
     final real = live.where((a) => a.label == 'REAL').toList()
       ..sort((a, b) => b.confidence.compareTo(a.confidence));
     if (real.isNotEmpty) return real.take(5).toList();
