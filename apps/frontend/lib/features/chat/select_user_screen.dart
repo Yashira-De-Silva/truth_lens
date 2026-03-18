@@ -245,7 +245,6 @@ class _SelectUserScreenState extends ConsumerState<SelectUserScreen> {
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Row(
               children: [
-                // Avatar
                 Container(
                   width: 56,
                   height: 56,
@@ -270,7 +269,6 @@ class _SelectUserScreenState extends ConsumerState<SelectUserScreen> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
