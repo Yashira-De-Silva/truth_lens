@@ -18,13 +18,8 @@ final digestProvider = FutureProvider.autoDispose<List<Article>>((ref) async {
       ..sort((a, b) => b.confidence.compareTo(a.confidence));
     if (real.isNotEmpty) return real.take(5).toList();
   }
-
-  // Fallback: Kaggle dataset top verified articles
   return svc.fetchDigest(limit: 5);
 });
-
-// ── Screen ────────────────────────────────────────────────────────────────────
-
 class DigestScreen extends ConsumerWidget {
   const DigestScreen({super.key});
 
@@ -46,7 +41,6 @@ class DigestScreen extends ConsumerWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // ── Header ──────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                 child: Column(
