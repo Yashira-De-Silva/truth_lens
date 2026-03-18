@@ -50,9 +50,6 @@ class CommentService {
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     return Comment.fromJson(body['data'] as Map<String, dynamic>);
   }
-
-  // ── DELETE /api/comments/{commentId} ─────────────────────────────────────
-
   /// Delete a comment by [commentId].
   Future<void> deleteComment(int commentId) async {
     final base = await ApiConfig.baseUrl;
