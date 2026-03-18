@@ -66,11 +66,7 @@ class CommentsNotifier extends StateNotifier<CommentsState> {
       state = state.copyWith(error: e.toString());
     }
   }
-
-  // ── Toggle like ────────────────────────────────────────────────────────────
-
   Future<void> toggleLike(int commentId) async {
-    // Optimistic update
     state = state.copyWith(
       comments: state.comments.map((c) {
         if (c.id != commentId) return c;
