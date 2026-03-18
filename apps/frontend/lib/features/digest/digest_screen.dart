@@ -561,10 +561,7 @@ class _DigestCard extends ConsumerWidget {
                         height: 1.3,
                       ),
                     ),
-
                     const SizedBox(height: 12),
-
-                    // ── Summary ────────────────────────────────────
                     Text(
                       article.summary,
                       style: TextStyle(
@@ -575,10 +572,7 @@ class _DigestCard extends ConsumerWidget {
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
-
                     const SizedBox(height: 16),
-
-                    // ── Footer row ─────────────────────────────────
                     Row(
                       children: [
                         Container(
@@ -636,8 +630,6 @@ class _DigestCard extends ConsumerWidget {
       ),
     );
   }
-
-  /// Format date for the digest card.
   static String _formatDigestDate(String raw) {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return '';
