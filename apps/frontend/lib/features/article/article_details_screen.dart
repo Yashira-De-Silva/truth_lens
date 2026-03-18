@@ -28,7 +28,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    // Load comments from backend after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(commentsProvider(_articleId).notifier).load();
     });
