@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_provider.dart';
 import 'chat_service.dart' as svc;
 
-// ── Users list provider ───────────────────────────────────────────────────────
-
 final chatUsersProvider = FutureProvider.autoDispose<List<svc.BackendUser>>((
   ref,
 ) async {
@@ -12,8 +10,6 @@ final chatUsersProvider = FutureProvider.autoDispose<List<svc.BackendUser>>((
   if (token == null || token.isEmpty) return [];
   return svc.getUsers(token);
 });
-
-// ── Conversations list state ──────────────────────────────────────────────────
 
 class ConversationsState {
   final List<svc.BackendConversation> conversations;

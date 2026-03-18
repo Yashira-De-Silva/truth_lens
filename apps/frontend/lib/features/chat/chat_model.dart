@@ -79,8 +79,6 @@ class ChatMessage {
       'replyToMessage': replyToMessage?.toJson(),
     };
   }
-
-  // Create from JSON
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     return ChatMessage(
       id: json['id'] as String,
