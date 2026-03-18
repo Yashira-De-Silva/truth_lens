@@ -79,7 +79,6 @@ class _SelectUserScreenState extends ConsumerState<SelectUserScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
