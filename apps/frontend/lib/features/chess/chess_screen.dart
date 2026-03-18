@@ -282,7 +282,6 @@ class _ChessScreenState extends ConsumerState<ChessScreen> {
 
     final piece = board[int.parse(from[1]) * -1 + 8][from.codeUnitAt(0) - 97];
     String? promotion;
-    // Pawn promotion
     if (piece?.toLowerCase() == 'p') {
       final destRow = int.parse(to[1]);
       if (destRow == 8 || destRow == 1) {
