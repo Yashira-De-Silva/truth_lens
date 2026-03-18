@@ -39,7 +39,6 @@ List<List<String?>> _parseFen(String fen) {
 }
 
 /// Produce a new FEN string after moving a piece from [from] to [to].
-/// This is a simplified move-maker; the server is the authority.
 String _applyMove(String fen, String from, String to, {String? promotion}) {
   final parts = fen.split(' ');
   final board = _parseFen(fen);
@@ -51,7 +50,6 @@ String _applyMove(String fen, String from, String to, {String? promotion}) {
   board[row(from)][col(from)] = null;
   board[row(to)][col(to)] = promotion ?? piece;
 
-  // Rebuild FEN rank string
   final ranks = board
       .map((rank) {
         var s = '';
@@ -81,9 +79,6 @@ String _applyMove(String fen, String from, String to, {String? promotion}) {
       : '1';
   return '$ranks $active $castling $ep $half $full';
 }
-
-// ── Chess Board Screen ────────────────────────────────────────────────────────
-
 class ChessScreen extends ConsumerStatefulWidget {
   final int gameId;
   const ChessScreen({super.key, required this.gameId});
