@@ -1,8 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_service.dart' as svc;
 
-// ── State ─────────────────────────────────────────────────────────────────────
-
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
 class AuthState {
@@ -36,15 +34,10 @@ class AuthState {
   String get displayEmail => user?['email'] as String? ?? '';
 }
 
-// ── Notifier ──────────────────────────────────────────────────────────────────
-
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier() : super(const AuthState()) {
     _restore();
   }
-
-  /// On startup, reload persisted token & user.
-  /// If the session is older than 30 days, treat as unauthenticated.
   Future<void> _restore() async {
     final token = await svc.loadToken();
     final user = await svc.loadUser();
