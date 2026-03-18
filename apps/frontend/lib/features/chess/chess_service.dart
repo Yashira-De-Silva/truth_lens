@@ -65,7 +65,6 @@ class ChessGameModel {
 
   bool get isMyTurn {
     if (myColor == null) return false;
-    // In FEN the active color is at position after first space: 'w' or 'b'
     final parts = fen.split(' ');
     if (parts.length < 2) return false;
     final active = parts[1];
@@ -73,9 +72,6 @@ class ChessGameModel {
         (active == 'b' && myColor == 'black');
   }
 }
-
-// ── API calls ─────────────────────────────────────────────────────────────────
-
 Future<ChessGameModel> challengeUser(String token, int userId) async {
   final base = await ApiConfig.baseUrl;
   final res = await http
