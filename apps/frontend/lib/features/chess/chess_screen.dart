@@ -88,7 +88,7 @@ class ChessScreen extends ConsumerStatefulWidget {
 }
 
 class _ChessScreenState extends ConsumerState<ChessScreen> {
-  String? _selected; // e.g. "e2"
+  String? _selected;
   List<String> _validTargets = [];
 
   String _toCoord(int row, int col) =>
@@ -108,7 +108,6 @@ class _ChessScreenState extends ConsumerState<ChessScreen> {
     final piece = board[row][col];
 
     if (_selected == null) {
-      // Select own piece
       if (piece != null && _isMyPiece(piece, game.myColor)) {
         setState(() {
           _selected = coord;
