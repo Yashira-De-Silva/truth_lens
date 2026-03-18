@@ -79,7 +79,6 @@ class CommentsNotifier extends StateNotifier<CommentsState> {
 
     try {
       final result = await _service.toggleLike(commentId);
-      // Sync with server truth
       state = state.copyWith(
         comments: state.comments.map((c) {
           if (c.id != commentId) return c;
@@ -87,7 +86,6 @@ class CommentsNotifier extends StateNotifier<CommentsState> {
         }).toList(),
       );
     } catch (e) {
-      // Rollback optimistic update
       state = state.copyWith(
         comments: state.comments.map((c) {
           if (c.id != commentId) return c;
