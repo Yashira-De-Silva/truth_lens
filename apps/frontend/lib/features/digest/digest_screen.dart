@@ -552,8 +552,6 @@ class _DigestCard extends ConsumerWidget {
                     ),
 
                     const SizedBox(height: 16),
-
-                    // ── Title ──────────────────────────────────────
                     Text(
                       article.title,
                       style: const TextStyle(
