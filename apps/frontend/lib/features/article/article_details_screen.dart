@@ -567,7 +567,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                   ],
                 ),
               ),
-              // Delete button (own comments only)
               if (isOwn) ...[
                 const SizedBox(width: 12),
                 GestureDetector(
