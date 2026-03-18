@@ -3,11 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../core/services/api_config.dart';
 import '../auth/auth_service.dart';
 import 'comment_model.dart';
-
-/// Service for Article Comments API (Laravel backend).
 class CommentService {
-  // ── Helpers ─────────────────────────────────────────────────────────────────
-
   Future<Map<String, String>> _headers() async {
     final token = await loadToken();
     return {
