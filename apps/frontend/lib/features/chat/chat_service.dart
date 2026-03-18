@@ -220,8 +220,6 @@ Future<void> deleteMessage(
       )
       .timeout(const Duration(seconds: 10));
 }
-
-/// Mark all messages in a conversation as read.
 Future<void> markConversationRead(
     String token, String conversationId) async {
   final base = await ApiConfig.baseUrl;
