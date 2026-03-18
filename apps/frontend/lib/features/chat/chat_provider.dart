@@ -104,16 +104,11 @@ class ConversationsNotifier extends StateNotifier<ConversationsState> {
   }
 }
 
-// NOT autoDispose — keeps the provider alive while switching tabs so the
-// user never sees the "Log in" screen mid-session.
 final conversationsProvider =
     StateNotifierProvider<ConversationsNotifier, ConversationsState>((ref) {
       final authState = ref.watch(authProvider);
       return ConversationsNotifier(authState.token ?? '', authState.status);
     });
-
-// ── Messages state ────────────────────────────────────────────────────────────
-
 class MessagesState {
   final List<svc.BackendMessage> messages;
   final bool isLoading;
