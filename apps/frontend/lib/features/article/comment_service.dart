@@ -12,9 +12,6 @@ class CommentService {
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
-
-  // ── GET /api/articles/{articleId}/comments ───────────────────────────────
-
   /// Fetch all comments for [articleId], newest first.
   Future<List<Comment>> fetchComments(int articleId) async {
     final base = await ApiConfig.baseUrl;
@@ -33,9 +30,6 @@ class CommentService {
         .map((e) => Comment.fromJson(e as Map<String, dynamic>))
         .toList();
   }
-
-  // ── POST /api/articles/{articleId}/comments ──────────────────────────────
-
   /// Post a new comment on [articleId].
   Future<Comment> addComment(int articleId, String text) async {
     final base = await ApiConfig.baseUrl;
