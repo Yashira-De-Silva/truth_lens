@@ -29,7 +29,6 @@ class ChessLobbyScreen extends ConsumerWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // ── Header ────────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
