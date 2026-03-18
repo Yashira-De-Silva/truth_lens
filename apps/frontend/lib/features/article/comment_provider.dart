@@ -99,10 +99,6 @@ class CommentsNotifier extends StateNotifier<CommentsState> {
     }
   }
 }
-
-// ── Provider ──────────────────────────────────────────────────────────────────
-
-/// Family provider — one notifier per article id.
 final commentsProvider = StateNotifierProvider.family<
     CommentsNotifier, CommentsState, int>((ref, articleId) {
   return CommentsNotifier(articleId);
