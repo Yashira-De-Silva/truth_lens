@@ -1,9 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'comment_model.dart';
 import 'comment_service.dart';
-
-// ── State ─────────────────────────────────────────────────────────────────────
-
 class CommentsState {
   final List<Comment> comments;
   final bool isLoading;
@@ -32,9 +29,6 @@ class CommentsState {
     );
   }
 }
-
-// ── Notifier ──────────────────────────────────────────────────────────────────
-
 class CommentsNotifier extends StateNotifier<CommentsState> {
   CommentsNotifier(this._articleId) : super(const CommentsState());
 
