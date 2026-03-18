@@ -88,8 +88,6 @@ class BookmarksScreen extends StatelessWidget {
                   );
                 }),
               ),
-
-              // Bookmarks List
               Expanded(
                 child: Consumer(builder: (context, ref, _) {
                   final list = ref.watch(bookmarksProvider);
