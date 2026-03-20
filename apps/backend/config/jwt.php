@@ -18,27 +18,8 @@ return [
 
     'refresh_ttl' => env('JWT_REFRESH_TTL', 20160),
 
-    /*
-    |--------------------------------------------------------------------------
-    | JWT hashing algorithm
-    |--------------------------------------------------------------------------
-    |
-    | Specify the hashing algorithm that will be used to sign the token.
-    |
-    */
 
     'algo' => env('JWT_ALGO', Tymon\JWTAuth\Providers\JWT\Provider::ALGO_HS256),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Required Claims
-    |--------------------------------------------------------------------------
-    |
-    | Specify the required claims that must exist in any token.
-    | A TokenInvalidException will be thrown if any of these claims are not
-    | present in the payload.
-    |
-    */
 
     'required_claims' => [
         'iss',
