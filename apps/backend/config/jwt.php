@@ -47,15 +47,6 @@ return [
 
     'decrypt_cookies' => false,
 
-    /*
-    |--------------------------------------------------------------------------
-    | Providers
-    |--------------------------------------------------------------------------
-    |
-    | Specify the various providers used throughout the package.
-    |
-    */
-
     'providers' => [
 
         /*
