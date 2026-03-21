@@ -19,45 +19,13 @@ return [
 
     'store' => env('SESSION_STORE'),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Session Sweeping Lottery
-    |--------------------------------------------------------------------------
-    |
-    | Some session drivers must manually sweep their storage location to get
-    | rid of old sessions from storage. Here are the chances that it will
-    | happen on a given request. By default, the odds are 2 out of 100.
-    |
-    */
-
     'lottery' => [2, 100],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Session Cookie Name
-    |--------------------------------------------------------------------------
-    |
-    | Here you may change the name of the session cookie that is created by
-    | the framework. Typically, you should not need to change this value
-    | since doing so does not grant a meaningful security improvement.
-    |
-    */
 
     'cookie' => env(
         'SESSION_COOKIE',
         Str::slug((string) env('APP_NAME', 'laravel')).'-session'
     ),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Session Cookie Path
-    |--------------------------------------------------------------------------
-    |
-    | The session cookie path determines the path for which the cookie will
-    | be regarded as available. Typically, this will be the root path of
-    | your application, but you're free to change this when necessary.
-    |
-    */
 
     'path' => env('SESSION_PATH', '/'),
 
