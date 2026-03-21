@@ -51,16 +51,6 @@ return [
         'jwt' => Tymon\JWTAuth\Providers\JWT\Lcobucci::class,
 
         'auth' => Tymon\JWTAuth\Providers\Auth\Illuminate::class,
-
-        /*
-        |--------------------------------------------------------------------------
-        | Storage Provider
-        |--------------------------------------------------------------------------
-        |
-        | Specify the provider that is used to store tokens in the blacklist.
-        |
-        */
-
         'storage' => Tymon\JWTAuth\Providers\Storage\Illuminate::class,
 
     ],
