@@ -35,32 +35,8 @@ return [
 
     'lock_subject' => true,
 
-    /*
-    |--------------------------------------------------------------------------
-    | Leeway
-    |--------------------------------------------------------------------------
-    |
-    | This property gives the jwt timestamp claims some "leeway".
-    | Meaning that if you have any unavoidable slight clock skew on
-    | any of your servers then this will afford you some level of cushioning.
-    |
-    | This applies to the claims `iat`, `nbf` and `exp`.
-    |
-    | Specify in seconds - only if you know you need it.
-    |
-    */
 
     'leeway' => env('JWT_LEEWAY', 0),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Blacklist Enabled
-    |--------------------------------------------------------------------------
-    |
-    | In order to invalidate tokens, you must have the blacklist enabled.
-    | If you do not want or need this functionality, then set this to false.
-    |
-    */
 
     'blacklist_enabled' => env('JWT_BLACKLIST_ENABLED', true),
 
