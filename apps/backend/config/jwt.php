@@ -50,15 +50,6 @@ return [
     'providers' => [
         'jwt' => Tymon\JWTAuth\Providers\JWT\Lcobucci::class,
 
-        /*
-        |--------------------------------------------------------------------------
-        | Authentication Provider
-        |--------------------------------------------------------------------------
-        |
-        | Specify the provider that is used to authenticate users.
-        |
-        */
-
         'auth' => Tymon\JWTAuth\Providers\Auth\Illuminate::class,
 
         /*
