@@ -11,29 +11,7 @@ return [
 
     'encrypt' => env('SESSION_ENCRYPT', false),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Session File Location
-    |--------------------------------------------------------------------------
-    |
-    | When utilizing the "file" session driver, the session files are placed
-    | on disk. The default storage location is defined here; however, you
-    | are free to provide another location where they should be stored.
-    |
-    */
-
     'files' => storage_path('framework/sessions'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Session Database Connection
-    |--------------------------------------------------------------------------
-    |
-    | When using the "database" or "redis" session drivers, you may specify a
-    | connection that should be used to manage these sessions. This should
-    | correspond to a connection in your database configuration options.
-    |
-    */
 
     'connection' => env('SESSION_CONNECTION'),
 
