@@ -16,7 +16,6 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
   List<_UserSearchResult> _searchResults = [];
   bool _isSearching = false;
 
-  // Mock user data - replace with actual API call
   final List<_UserSearchResult> _allUsers = [
     _UserSearchResult(
       name: 'John Doe',
