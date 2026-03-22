@@ -54,7 +54,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       final results = await _svc.fetchNews(limit: 20);
       setState(() => _articles = results);
     } catch (_) {
-      // silently ignore — empty list shown
     } finally {
       setState(() => _isLoading = false);
     }
