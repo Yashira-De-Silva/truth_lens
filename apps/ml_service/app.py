@@ -466,6 +466,11 @@ def get_live_news():
         trail    = fields.get("trailText", body[:250])
         section_name = item.get("sectionName", "The Guardian")
 
+        if title.lower().strip() == "corrections and clarifications":
+            title = trail
+            trail = "Corrections and clarifications."
+            body = "Corrections and clarifications."
+
         combined = f"{title} {body}".strip()
         if not combined:
             continue
