@@ -77,6 +77,23 @@ class NewsApiService {
         .map((e) => Article.fromJson(e as Map<String, dynamic>))
         .toList();
   }
+
+  /// Verify custom news article user input
+  Future<Map<String, dynamic>> verifyNews({
+    required String title,
+    required String text,
+  }) async {
+    final baseUrl = await ApiConfig.mlServiceUrl;
+    final uri = Uri.parse('$baseUrl/predict');
+    final res = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'title': title, 'text': text}),
+    ).timeout(const Duration(seconds: 15));
+    if (res.statusCode != 200)
+      throw Exception('ML service error: ${res.statusCode}');
+    return jsonDecode(res.body) as Map<String, dynamic>;
+  }
 }
 
 // ── Legacy stub kept for compatibility with news_providers.dart ───────────────

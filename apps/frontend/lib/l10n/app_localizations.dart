@@ -1287,6 +1287,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Source'**
   String get sourceLabel;
+
+  /// No description provided for @verifyNews.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify News'**
+  String get verifyNews;
+
+  /// No description provided for @newsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'News Title (Optional)'**
+  String get newsTitle;
+
+  /// No description provided for @newsContent.
+  ///
+  /// In en, this message translates to:
+  /// **'News Content'**
+  String get newsContent;
+
+  /// No description provided for @checkAuthenticity.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Authenticity'**
+  String get checkAuthenticity;
+
+  /// No description provided for @enterNewsContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the news content to verify'**
+  String get enterNewsContent;
+
+  /// No description provided for @verificationResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Result'**
+  String get verificationResult;
+
+  /// No description provided for @confidenceScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence Score'**
+  String get confidenceScore;
 }
 
 class _AppLocalizationsDelegate

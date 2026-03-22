@@ -101,6 +101,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => const _VerifyNewsSheet(),
+          );
+        },
+        backgroundColor: AppColors.secondary,
+        icon: const Icon(Icons.fact_check, color: Colors.white),
+        label: Text(
+          l10n.verifyNews,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -581,3 +597,210 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 }
+
+class _VerifyNewsSheet extends ConsumerStatefulWidget {
+  const _VerifyNewsSheet();
+
+  @override
+  ConsumerState<_VerifyNewsSheet> createState() => _VerifyNewsSheetState();
+}
+
+class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _contentController = TextEditingController();
+  final NewsApiService _svc = NewsApiService();
+  
+  bool _isLoading = false;
+  Map<String, dynamic>? _result;
+  String? _error;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _contentController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _verify() async {
+    final text = _contentController.text.trim();
+    if (text.isEmpty) {
+      final l10n = AppLocalizations.of(context)!;
+      AppSnackbar.showError(context, l10n.enterNewsContent);
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _result = null;
+    });
+
+    try {
+      final res = await _svc.verifyNews(
+        title: _titleController.text.trim(),
+        text: text,
+      );
+      if (mounted) {
+        setState(() {
+          _result = res;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Verification failed. Make sure the ML service is running.';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.fact_check, color: AppColors.secondary, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  l10n.verifyNews,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: Icon(Icons.close, color: Colors.white.withValues(alpha: 0.6)),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _titleController,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: l10n.newsTitle,
+                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
+                filled: true,
+                fillColor: Colors.white.withValues(alpha: 0.05),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _contentController,
+              style: const TextStyle(color: Colors.white),
+              maxLines: 5,
+              decoration: InputDecoration(
+                hintText: l10n.newsContent,
+                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
+                filled: true,
+                fillColor: Colors.white.withValues(alpha: 0.05),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            if (_isLoading)
+              Center(child: CircularProgressIndicator(color: AppColors.secondary))
+            else if (_result != null)
+              _buildResultIndicator(l10n)
+            else if (_error != null)
+              Text(_error!, style: TextStyle(color: AppColors.error)),
+
+            if (!_isLoading && _result == null) ...[
+              ElevatedButton(
+                onPressed: _verify,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  l10n.checkAuthenticity,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResultIndicator(AppLocalizations l10n) {
+    final label = _result!['label'] as String;
+    final confidence = (_result!['confidence'] as num).toDouble();
+    
+    final isReal = label == 'REAL';
+    final color = isReal ? AppColors.success : AppColors.error;
+    final text = isReal ? 'Likely True' : 'Likely Fake';
+    final icon = isReal ? Icons.check_circle : Icons.warning_rounded;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 28),
+              const SizedBox(width: 12),
+              Text(
+                text,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${l10n.confidenceScore}: ${(confidence * 100).toStringAsFixed(1)}%',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

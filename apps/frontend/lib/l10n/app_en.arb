@@ -229,5 +229,13 @@
   "biased": "Biased",
   "possiblyFake": "Possibly Fake",
   "readMore": "Read More",
-  "sourceLabel": "Source"
+  "sourceLabel": "Source",
+  
+  "verifyNews": "Verify News",
+  "newsTitle": "News Title (Optional)",
+  "newsContent": "News Content",
+  "checkAuthenticity": "Check Authenticity",
+  "enterNewsContent": "Please enter the news content to verify",
+  "verificationResult": "Verification Result",
+  "confidenceScore": "Confidence Score"
 }

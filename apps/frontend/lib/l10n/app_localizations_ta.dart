@@ -609,4 +609,25 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get sourceLabel => 'ஆதாரம்';
+
+  @override
+  String get verifyNews => 'Verify News';
+
+  @override
+  String get newsTitle => 'News Title (Optional)';
+
+  @override
+  String get newsContent => 'News Content';
+
+  @override
+  String get checkAuthenticity => 'Check Authenticity';
+
+  @override
+  String get enterNewsContent => 'Please enter the news content to verify';
+
+  @override
+  String get verificationResult => 'Verification Result';
+
+  @override
+  String get confidenceScore => 'Confidence Score';
 }
