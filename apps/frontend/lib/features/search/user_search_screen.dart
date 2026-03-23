@@ -294,7 +294,6 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Row(
                 children: [
-                  // Avatar
                   Container(
                     width: 56,
                     height: 56,
