@@ -36,11 +36,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     });
   }
 
-  ///   2. _restore() has resolved (status is no longer AuthStatus.initial).
   void _tryNavigate() {
     if (!_animationDone) return;
     final authState = ref.read(authProvider);
-    if (authState.status == AuthStatus.initial) return; // still loading
+    if (authState.status == AuthStatus.initial) return;
     final destination = authState.isAuthenticated
         ? const HomeScreen()
         : const LoginScreen();
