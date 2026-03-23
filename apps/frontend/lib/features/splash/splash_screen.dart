@@ -36,7 +36,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     });
   }
 
-  /// Called both when the animation finishes AND whenever the auth state
   /// changes. Navigation only happens once both conditions are true:
   ///   1. The splash animation has completed.
   ///   2. _restore() has resolved (status is no longer AuthStatus.initial).
