@@ -199,8 +199,6 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
               ),
 
               const SizedBox(height: 16),
-
-              // Search Results
               Expanded(
                 child: _isSearching
                     ? _searchResults.isEmpty
