@@ -56,7 +56,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Re-attempt navigation whenever auth state settles from 'initial'.
     ref.listen<AuthState>(authProvider, (_, next) {
       if (next.status != AuthStatus.initial) {
         _tryNavigate();
