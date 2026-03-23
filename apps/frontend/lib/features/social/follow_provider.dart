@@ -2,8 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_provider.dart';
 import '../../core/services/follow_service.dart' as svc;
 
-// ── Follow status for a specific user ─────────────────────────────────────────
-
 final followStatusProvider = FutureProvider.autoDispose
     .family<svc.FollowStatus, int>((ref, userId) async {
       final token = ref.watch(authProvider).token ?? '';
