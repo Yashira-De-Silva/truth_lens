@@ -36,7 +36,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     });
   }
 
-  ///   1. The splash animation has completed.
   ///   2. _restore() has resolved (status is no longer AuthStatus.initial).
   void _tryNavigate() {
     if (!_animationDone) return;
