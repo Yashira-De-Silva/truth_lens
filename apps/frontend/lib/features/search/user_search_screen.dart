@@ -258,7 +258,6 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
   }
 
   Widget _buildUserCard(_UserSearchResult user) {
-    // Check if user profile is viewable based on visibility settings
     bool canViewProfile =
         user.visibility == 'public' ||
         (user.visibility == 'friends' && user.isFriend);
