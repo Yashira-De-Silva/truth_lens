@@ -186,7 +186,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               const SizedBox(height: 16),
 
-              // ── Categories ──────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: _buildCategoryFilter(),
