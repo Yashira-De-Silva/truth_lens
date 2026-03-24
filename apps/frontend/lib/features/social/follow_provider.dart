@@ -19,7 +19,7 @@ final followersProvider = FutureProvider.autoDispose<List<svc.FollowUser>>((
   return svc.getFollowers(token);
 });
 
-// ── Who I follow ──────────────────────────────────────────────────────────────
+
 
 final followingProvider = FutureProvider.autoDispose<List<svc.FollowUser>>((
   ref,
