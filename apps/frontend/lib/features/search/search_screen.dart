@@ -127,7 +127,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // ── Header ──────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
