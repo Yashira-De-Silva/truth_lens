@@ -29,7 +29,6 @@ final followingProvider = FutureProvider.autoDispose<List<svc.FollowUser>>((
   return svc.getFollowing(token);
 });
 
-// ── Public user profile ───────────────────────────────────────────────────────
 
 final publicProfileProvider = FutureProvider.autoDispose
     .family<svc.PublicUserProfile?, int>((ref, userId) async {
