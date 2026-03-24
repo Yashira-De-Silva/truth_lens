@@ -180,7 +180,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               ),
 
-              // ── Search Bar ──────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: _buildSearchBar(),
