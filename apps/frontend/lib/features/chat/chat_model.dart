@@ -62,8 +62,6 @@ class ChatMessage {
       replyToMessage: replyToMessage,
     );
   }
-
-  // Convert to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
