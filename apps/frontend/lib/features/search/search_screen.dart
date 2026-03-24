@@ -192,7 +192,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               const SizedBox(height: 16),
 
-              // ── Results ─────────────────────────────────────────
               Expanded(child: _buildResults()),
             ],
           ),
