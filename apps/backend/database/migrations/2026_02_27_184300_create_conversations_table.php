@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('conversations', function (Blueprint $table) {
@@ -18,14 +15,9 @@ return new class extends Migration
             $table->foreignId('user2_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
 
-            // Guarantee only one conversation between any pair of users
             $table->unique(['user1_id', 'user2_id']);
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('conversations');
