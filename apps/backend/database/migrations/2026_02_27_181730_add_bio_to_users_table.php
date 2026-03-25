@@ -12,10 +12,6 @@ return new class extends Migration
             $table->text('bio')->nullable()->after('api_key');
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
