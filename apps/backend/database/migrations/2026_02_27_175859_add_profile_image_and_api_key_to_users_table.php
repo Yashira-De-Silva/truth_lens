@@ -6,16 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Stores the path/URL of the user's profile image (nullable)
             $table->string('profile_image')->nullable()->after('email');
-
-            // 6-character uppercase alphanumeric API key, unique per user
             $table->string('api_key', 6)->nullable()->unique()->after('profile_image');
         });
     }
