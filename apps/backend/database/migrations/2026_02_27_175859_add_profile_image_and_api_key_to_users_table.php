@@ -13,10 +13,6 @@ return new class extends Migration
             $table->string('api_key', 6)->nullable()->unique()->after('profile_image');
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
