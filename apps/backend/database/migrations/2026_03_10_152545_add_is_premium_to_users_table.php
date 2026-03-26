@@ -12,10 +12,6 @@ return new class extends Migration
             $table->boolean('is_premium')->default(false)->after('password');
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
