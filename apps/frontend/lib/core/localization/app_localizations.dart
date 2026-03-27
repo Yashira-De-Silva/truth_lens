@@ -69,7 +69,6 @@ class AppLocalizations {
   String get save => _translate('Save', 'සුරකින්න', 'சேமிக்கவும்');
   String get unsave => _translate('Unsave', 'සුරැකීම ඉවත් කරන්න', 'நீக்கவும்');
 
-  // Search
   String get searchNews => _translate('Search news articles...', 'ප්‍රවෘත්ති ලිපි සොයන්න...', 'செய்திக் கட்டுரைகளைத் தேடு...');
   String get allCategories => _translate('All', 'සියල්ල', 'அனைத்தும்');
   String get politics => _translate('Politics', 'දේශපාලනය', 'அரசியல்');
