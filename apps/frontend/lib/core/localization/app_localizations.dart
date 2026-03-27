@@ -92,7 +92,6 @@ class AppLocalizations {
   String get delete => _translate('Delete', 'මකන්න', 'அழி');
   String get edit => _translate('Edit', 'සංස්කරණය', 'திருத்து');
 
-  // Helper method to translate
   String _translate(String en, String si, String ta) {
     switch (languageCode) {
       case 'si':
