@@ -62,7 +62,6 @@ class AppLocalizations {
   String get manageDevices => _translate('Manage Devices', 'උපාංග කළමනාකරණය කරන්න', 'சாதனங்களை நிர்வகிக்கவும்');
   String get seeDevices => _translate('See devices where you\'re logged in', 'ඔබ පුරනය වී සිටින උපාංග බලන්න', 'நீங்கள் உள்நுழைந்துள்ள சாதனங்களைக் காண்க');
 
-  // News Feed
   String get verified => _translate('Verified', 'සත්‍යාපිත', 'சரிபார்க்கப்பட்டது');
   String get unverified => _translate('Unverified', 'අසත්‍යාපිත', 'சரிபார்க்கப்படவில்லை');
   String get suspicious => _translate('Suspicious', 'සැක සහිත', 'சந்தேகத்திற்குரிய');
