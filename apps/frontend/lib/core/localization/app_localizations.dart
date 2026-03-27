@@ -13,7 +13,6 @@ class AppLocalizations {
   String get bookmarks => _translate('Bookmarks', 'පොත් සලකුණු', 'புக்மார்க்குகள்');
   String get profile => _translate('Profile', 'පැතිකඩ', 'சுயவிவரம்');
 
-  // Profile Screen
   String get manageAccount => _translate('Manage your account settings', 'ඔබගේ ගිණුම් සැකසීම් කළමනාකරණය කරන්න', 'உங்கள் கணக்கு அமைப்புகளை நிர்வகிக்கவும்');
   String get premiumUser => _translate('Premium User', 'වාසි සහිත පරිශීලක', 'சிறப்பு பயனர்');
   String get preferences => _translate('Preferences', 'මනාපයන්', 'விருப்பங்கள்');
