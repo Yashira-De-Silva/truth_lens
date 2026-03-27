@@ -86,7 +86,6 @@ class AppLocalizations {
   String get noBookmarks => _translate('No bookmarks yet', 'තවමත් පොත් සලකුණු නැත', 'இன்னும் புக்மார்க்குகள் இல்லை');
   String get startSaving => _translate('Start saving articles to read later', 'පසුව කියවීමට ලිපි සුරැකීම ආරම්භ කරන්න', 'பின்னர் படிக்க கட்டுரைகளை சேமிக்கத் தொடங்குங்கள்');
 
-  // Common
   String get back => _translate('Back', 'ආපසු', 'பின்னால்');
   String get cancel => _translate('Cancel', 'අවලංගු කරන්න', 'ரத்துசெய்');
   String get confirm => _translate('Confirm', 'තහවුරු කරන්න', 'உறுதிப்படுத்து');
