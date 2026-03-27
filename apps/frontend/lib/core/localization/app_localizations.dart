@@ -79,11 +79,9 @@ class AppLocalizations {
   String get entertainment => _translate('Entertainment', 'විනෝදාස්වාදය', 'பொழுதுபோக்கு');
   String get science => _translate('Science', 'විද්‍යාව', 'அறிவியல்');
 
-  // Digest
   String get topVerified => _translate('Top 3 Verified News', 'ඉහළ සත්‍යාපිත ප්‍රවෘත්ති 3', 'சிறந்த 3 சரிபார்க்கப்பட்ட செய்திகள்');
   String get todayDigest => _translate('Today\'s most trusted stories', 'අද විශ්වාසදායකම කතන්දර', 'இன்றைய மிகவும் நம்பகமான செய்திகள்');
 
-  // Bookmarks
   String get savedArticles => _translate('Saved Articles', 'සුරකින ලද ලිපි', 'சேமிக்கப்பட்ட கட்டுரைகள்');
   String get noBookmarks => _translate('No bookmarks yet', 'තවමත් පොත් සලකුණු නැත', 'இன்னும் புக்மார்க்குகள் இல்லை');
   String get startSaving => _translate('Start saving articles to read later', 'පසුව කියවීමට ලිපි සුරැකීම ආරම්භ කරන්න', 'பின்னர் படிக்க கட்டுரைகளை சேமிக்கத் தொடங்குங்கள்');
