@@ -43,11 +43,9 @@ class AppLocalizations {
   String get saveChanges => _translate('Save Changes', 'වෙනස්කම් සුරකින්න', 'மாற்றங்களை சேமி');
   String get profileUpdated => _translate('Profile updated successfully!', 'පැතිකඩ සාර්ථකව යාවත්කාලීන කරන ලදී!', 'சுயவிவரம் வெற்றிகரமாக புதுப்பிக்கப்பட்டது!');
 
-  // Language Screen
   String get selectLanguage => _translate('Select your preferred language', 'ඔබගේ කැමති භාෂාව තෝරන්න', 'உங்கள் விருப்பமான மொழியை தேர்ந்தெடுக்கவும்');
   String get languageChanged => _translate('Language changed to', 'භාෂාව වෙනස් කරන ලදී', 'மொழி மாற்றப்பட்டது');
 
-  // Privacy & Security Screen
   String get managePrivacy => _translate('Manage your privacy and security settings', 'ඔබගේ පෞද්ගලිකත්වය සහ ආරක්ෂණ සැකසීම් කළමනාකරණය කරන්න', 'உங்கள் தனியுரிமை மற்றும் பாதுகாப்பு அமைப்புகளை நிர்வகிக்கவும்');
   String get privacy => _translate('Privacy', 'පෞද්ගලිකත්වය', 'தனியுரிமை');
   String get security => _translate('Security', 'ආරක්ෂාව', 'பாதுகாப்பு');
