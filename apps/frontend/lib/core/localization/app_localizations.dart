@@ -7,7 +7,6 @@ class AppLocalizations {
     return AppLocalizations(languageCode);
   }
 
-  // Navigation
   String get newsFeed => _translate('News Feed', 'ප්‍රවෘත්ති සංග්‍රහය', 'செய்தி ஊட்டம்');
   String get explore => _translate('Explore', 'ගවේෂණය', 'ஆராய்');
   String get digest => _translate('Digest', 'සාරාංශය', 'சுருக்கம்');
