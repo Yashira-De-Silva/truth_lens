@@ -34,7 +34,6 @@ class AppLocalizations {
   String get logout => _translate('Log Out', 'ඉවත් වන්න', 'வெளியேறு');
   String get logoutAccount => _translate('Sign out of your account', 'ඔබගේ ගිණුමෙන් ඉවත් වන්න', 'உங்கள் கணக்கிலிருந்து வெளியேறு');
 
-  // Edit Profile
   String get editProfile => _translate('Edit Profile', 'පැතිකඩ සංස්කරණය කරන්න', 'சுயவிவரத்தைத் திருத்து');
   String get updateInfo => _translate('Update your information', 'ඔබගේ තොරතුරු යාවත්කාලීන කරන්න', 'உங்கள் தகவலை புதுப்பிக்கவும்');
   String get fullName => _translate('Full Name', 'සම්පූර්ණ නම', 'முழு பெயர்');
