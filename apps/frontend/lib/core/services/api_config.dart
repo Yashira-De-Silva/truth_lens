@@ -2,11 +2,6 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_constants.dart';
 
-
-/// Usage:
-///   final url = await ApiConfig.baseUrl;     // full base URL
-///   final ml  = await ApiConfig.mlServiceUrl; // ML service URL
-///   ApiConfig.invalidate();                  // force re-discovery next call
 class ApiConfig {
   ApiConfig._();
 
