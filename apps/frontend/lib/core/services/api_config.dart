@@ -29,12 +29,9 @@ class ApiConfig {
       return _cached!;
     }
 
-    // 3. Fall back to the compile-time constant
     _cached = kBaseUrl;
     return _cached!;
   }
-
-  /// Returns the resolved ML service URL (e.g. `http://192.168.1.110:5001`).
   static Future<String> get mlServiceUrl async {
     if (_mlCached != null) return _mlCached!;
 
