@@ -1,6 +1,5 @@
 import 'dart:async';
 
-// Mock AI services: summarization, fake news scoring, sentiment/bias detection
 class AiService {
   Future<String> summarize(String article) async {
     await Future.delayed(const Duration(milliseconds: 400));
