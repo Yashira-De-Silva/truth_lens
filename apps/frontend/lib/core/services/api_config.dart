@@ -23,7 +23,6 @@ class ApiConfig {
       return _cached!;
     }
 
-    // 2. Try to auto-discover the backend on the local network
     final discovered = await _discoverHost(port: _port);
     if (discovered != null) {
       _cached = 'http://$discovered:$_port/api';
