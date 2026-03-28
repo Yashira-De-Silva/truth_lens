@@ -2,8 +2,6 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_constants.dart';
 
-/// Dynamically resolves the backend base URL at runtime.
-///
 /// Priority order:
 ///   1. User-saved override in SharedPreferences (set via debug settings)
 ///   2. Auto-discovered URL (scans the local subnet for the backend)
