@@ -13,12 +13,9 @@ class ApiConfig {
   static String? _cached;
   static String? _mlCached;
 
-  /// Returns the resolved backend base URL (e.g. `http://192.168.1.110:8000/api`).
-  /// Caches the result for the lifetime of the app process.
   static Future<String> get baseUrl async {
     if (_cached != null) return _cached!;
 
-    // 1. Check for a saved override (set manually or via settings screen)
     final prefs = await SharedPreferences.getInstance();
     final override = prefs.getString(_prefKey);
     if (override != null && override.isNotEmpty) {
