@@ -34,8 +34,6 @@ class ApiConfig {
   }
   static Future<String> get mlServiceUrl async {
     if (_mlCached != null) return _mlCached!;
-
-    // Try the known IP from the compile-time constant first (fastest path)
     final knownIp = _extractIp(kMlServiceUrl);
     if (knownIp != null && await _isReachable(knownIp, _mlPort)) {
       _mlCached = 'http://$knownIp:$_mlPort';
