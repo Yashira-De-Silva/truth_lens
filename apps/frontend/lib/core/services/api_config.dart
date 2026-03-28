@@ -2,11 +2,7 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_constants.dart';
 
-/// Priority order:
-///   1. User-saved override in SharedPreferences (set via debug settings)
-///   2. Auto-discovered URL (scans the local subnet for the backend)
-///   3. Compile-time constant [kBaseUrl] from api_constants.dart
-///
+
 /// Usage:
 ///   final url = await ApiConfig.baseUrl;     // full base URL
 ///   final ml  = await ApiConfig.mlServiceUrl; // ML service URL
