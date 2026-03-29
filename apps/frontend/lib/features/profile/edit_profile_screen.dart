@@ -406,6 +406,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           label: 'Email',
                           icon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
+                          readOnly: true,
                           validator: (value) {
                             if (value?.isEmpty ?? true) {
                               return 'Please enter your email';
@@ -483,6 +484,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     String? hint,
     int maxLines = 1,
     TextInputType? keyboardType,
+    bool readOnly = false,
     String? Function(String?)? validator,
   }) {
     return Container(
@@ -500,7 +502,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             maxLines: maxLines,
             keyboardType: keyboardType,
             validator: validator,
-            style: const TextStyle(color: Colors.white),
+            readOnly: readOnly,
+            style: TextStyle(
+              color: readOnly ? Colors.white.withValues(alpha: 0.5) : Colors.white,
+            ),
             decoration: InputDecoration(
               labelText: label,
               hintText: hint,
