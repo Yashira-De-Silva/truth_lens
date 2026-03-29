@@ -1,10 +1,4 @@
-/// ─────────────────────────────────────────────────────────────────────────────
-/// Backend base URLs — updated automatically by start_backend.sh
-///
-/// To find your current IP, run this in Terminal:
-///   ipconfig getifaddr en0
-///
-/// Then hot-restart the app.
-/// ─────────────────────────────────────────────────────────────────────────────
-const String kBaseUrl = 'http://192.168.1.220:8000/api';
-const String kMlServiceUrl = 'http://192.168.1.220:5001';
+import 'dart:io';
+
+String get kBaseUrl => Platform.isAndroid ? 'http://10.0.2.2:8000/api' : 'http://127.0.0.1:8000/api';
+String get kMlServiceUrl => Platform.isAndroid ? 'http://10.0.2.2:5001' : 'http://127.0.0.1:5001';
