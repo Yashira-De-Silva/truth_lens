@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
@@ -38,8 +39,26 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(builder: (_) => const AiChatScreen()),
           );
         },
-        backgroundColor: AppColors.secondary,
-        child: const Icon(Icons.auto_awesome, color: Colors.black),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        child: ClipOval(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.secondary.withValues(alpha: 0.35),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  width: 1.5,
+                ),
+              ),
+              child: const Icon(Icons.auto_awesome, color: Colors.white),
+            ),
+          ),
+        ),
       ),
       bottomNavigationBar: _ModernNavBar(
         currentIndex: _index,
