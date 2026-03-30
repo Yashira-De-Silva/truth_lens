@@ -6,6 +6,7 @@ import '../search/search_screen.dart';
 import '../digest/digest_screen.dart';
 import '../chat/chats_list_screen.dart';
 import '../profile/profile_screen.dart';
+import '../ai_assistant/screens/ai_chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,6 +31,16 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: _pages[_index],
       extendBody: true,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AiChatScreen()),
+          );
+        },
+        backgroundColor: AppColors.secondary,
+        child: const Icon(Icons.auto_awesome, color: Colors.black),
+      ),
       bottomNavigationBar: _ModernNavBar(
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),

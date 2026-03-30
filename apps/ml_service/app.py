@@ -36,6 +36,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
+import google.generativeai as genai
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -52,6 +53,11 @@ MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
 # Then set it here OR export GUARDIAN_API_KEY=your_key before running.
 GUARDIAN_API_KEY = os.environ.get("GUARDIAN_API_KEY", "c6d32650-a403-4157-8569-4e39624a022d")
 GUARDIAN_BASE    = "https://content.guardianapis.com"
+
+# ── Gemini API config ─────────────────────────────────────────────────────────
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 # ── Guardian section → category mapping ──────────────────────────────────────
 GUARDIAN_SECTIONS = {
@@ -383,6 +389,58 @@ def search_news():
             break
 
     return jsonify({"success": True, "data": articles})
+
+
+@app.route("/api/bot/ask", methods=["POST"])
+def bot_ask():
+    """Handles chatbot requests using Gemini API and the ML Model."""
+    pipe, _ = get_pipeline_and_data()
+    body = request.get_json(force=True, silent=True) or {}
+    message = str(body.get("message", "")).strip()
+
+    if not message:
+        return jsonify({"success": False, "message": "Message cannot be empty"}), 400
+
+    if not GEMINI_API_KEY:
+        return jsonify({
+            "success": False, 
+            "reply": "I'm sorry, my AI backend is currently offline due to a missing Gemini API key. Please configure GEMINI_API_KEY in the ml_service to chat with me!"
+        }), 200
+
+    try:
+        # Step 1: Check if the message contains potential news/gossips using our local ML model
+        # We process the user's message just to give context to Gemini
+        combined = message
+        proba = pipe.predict_proba([combined])[0]
+        real_prob = float(proba[1])
+        fake_prob = float(proba[0])
+        label = "REAL" if real_prob >= 0.5 else "FAKE"
+        confidence = round(real_prob if label == "REAL" else fake_prob, 4)
+
+        # Step 2: Formulate the prompt for Gemini
+        system_prompt = (
+            "You are TruthBot, a helpful, intelligent assistant for the TruthLens application.\n"
+            "Your main duties are:\n"
+            "1. If the user shares news, rumors, or gossip, evaluate its truthfulness.\n"
+            "2. If the user asks for real-life solutions, personal advice, or general answers, provide clear, empathetic, and actionable advice.\n"
+            "3. Be concise and friendly.\n"
+            f"Note: Our internal ML model scanned the user's latest input and classified it with {confidence*100:.1f}% confidence as {label} news. "
+            "Use this ML context if the user is asking you to verify a news snippet, but ultimately use your own broader knowledge to give a detailed answer."
+        )
+
+        model = genai.GenerativeModel(
+            model_name="gemini-2.5-flash",
+            system_instruction=system_prompt,
+        )
+        
+        response = model.generate_content(message)
+        reply = response.text
+
+        return jsonify({"success": True, "reply": reply})
+
+    except Exception as e:
+        log.error(f"Chatbot error: {e}")
+        return jsonify({"success": False, "message": f"Chatbot error: {str(e)}"}), 500
 
 
 @app.route("/predict", methods=["POST"])

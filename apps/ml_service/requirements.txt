@@ -3,3 +3,4 @@ flask-cors
 kagglehub
 pandas
 scikit-learn
+google-generativeai
