@@ -417,26 +417,42 @@ def bot_ask():
         label = "REAL" if real_prob >= 0.5 else "FAKE"
         confidence = round(real_prob if label == "REAL" else fake_prob, 4)
 
+        import datetime
+        current_time = datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p")
+
         # Step 2: Formulate the prompt for Gemini
         system_prompt = (
             "You are TruthBot, a helpful, intelligent assistant for the TruthLens application.\n"
+            f"The current date and time is: {current_time}.\n"
             "Your main duties are:\n"
-            "1. If the user shares news, rumors, or gossip, evaluate its truthfulness.\n"
+            "1. If the user shares news, rumors, or gossip, evaluate its truthfulness using your pre-trained knowledge and live search.\n"
             "2. If the user asks for real-life solutions, personal advice, or general answers, provide clear, empathetic, and actionable advice.\n"
             "3. Be concise and friendly.\n"
             f"Note: Our internal ML model scanned the user's latest input and classified it with {confidence*100:.1f}% confidence as {label} news. "
             "Use this ML context if the user is asking you to verify a news snippet, but ultimately use your own broader knowledge to give a detailed answer."
         )
 
-        model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
-            system_instruction=system_prompt,
-        )
+        import requests
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+        payload = {
+            "systemInstruction": {"parts": [{"text": system_prompt}]},
+            "contents": [{"parts": [{"text": message}]}],
+            "tools": [{"googleSearch": {}}]
+        }
         
-        response = model.generate_content(message)
-        reply = response.text
-
-        return jsonify({"success": True, "reply": reply})
+        resp = requests.post(url, json=payload, timeout=20)
+        
+        if resp.status_code == 200:
+            data = resp.json()
+            try:
+                reply = data["candidates"][0]["content"]["parts"][0]["text"]
+            except (KeyError, IndexError):
+                reply = "I'm sorry, I couldn't understand the AI response."
+            return jsonify({"success": True, "reply": reply})
+        elif resp.status_code == 429:
+            return jsonify({"success": True, "reply": "I am receiving too many questions right now! Please wait about 60 seconds and ask me again. ⌛"})
+        else:
+            return jsonify({"success": False, "message": f"API error {resp.status_code}"}), 500
 
     except Exception as e:
         log.error(f"Chatbot error: {e}")
