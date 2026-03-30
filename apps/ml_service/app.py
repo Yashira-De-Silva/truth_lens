@@ -55,7 +55,7 @@ GUARDIAN_API_KEY = os.environ.get("GUARDIAN_API_KEY", "c6d32650-a403-4157-8569-4
 GUARDIAN_BASE    = "https://content.guardianapis.com"
 
 # ── Gemini API config ─────────────────────────────────────────────────────────
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyAYZMNNVcB6BLIgVIQYTOhJ-xqT5qXVimc")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
