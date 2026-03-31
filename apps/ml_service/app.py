@@ -287,6 +287,37 @@ except Exception as exc:
     _pipe, _df = None, None
 
 
+# ── Translation Helper ────────────────────────────────────────────────────────
+
+def translate_articles(articles: list, target_lang: str) -> list:
+    """Translate a list of articles to the target language (e.g. 'si', 'ta') using GoogleTranslator."""
+    if target_lang == "en" or not target_lang:
+        return articles
+
+    try:
+        from deep_translator import GoogleTranslator
+        translator = GoogleTranslator(source='auto', target=target_lang)
+        
+        for art in articles:
+            try:
+                if art.get("title"):
+                    art["title"] = translator.translate(art["title"])
+                if art.get("summary"):
+                    art["summary"] = translator.translate(art["summary"])
+                if art.get("full_text"):
+                    text = art["full_text"]
+                    if len(text) > 4900:
+                        text = text[:4900]
+                    art["full_text"] = translator.translate(text)
+            except Exception as e:
+                log.warning(f"Failed to translate article {art.get('id')}: {e}")
+                
+        return articles
+    except Exception as e:
+        log.error(f"Translation pipeline failed: {e}")
+        return articles
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route("/health")
@@ -300,6 +331,7 @@ def get_news():
 
     limit  = min(int(request.args.get("limit",  20)), 100)
     offset = int(request.args.get("offset", 0))
+    lang   = request.args.get("lang", "en").strip().lower()
 
     # Shuffle a reproducible sample based on offset so pages are stable
     rng = random.Random(offset // limit)
@@ -314,6 +346,7 @@ def get_news():
         except Exception:
             continue
 
+    articles = translate_articles(articles, lang)
     return jsonify({"success": True, "data": articles, "total": len(df)})
 
 
@@ -322,6 +355,7 @@ def get_digest():
     """Return top N verified (REAL, high-confidence) articles."""
     pipe, df = get_pipeline_and_data()
     limit = min(int(request.args.get("limit", 3)), 10)
+    lang = request.args.get("lang", "en").strip().lower()
 
     # Evaluate a sample of articles and pick the most confidently REAL ones
     sample_size = min(500, len(df))
@@ -338,7 +372,8 @@ def get_digest():
 
     # Sort by confidence descending, take top N
     scored.sort(key=lambda a: a["confidence"], reverse=True)
-    return jsonify({"success": True, "data": scored[:limit]})
+    articles = translate_articles(scored[:limit], lang)
+    return jsonify({"success": True, "data": articles})
 
 
 @app.route("/news/search")
@@ -348,6 +383,7 @@ def search_news():
     query    = request.args.get("q", "").strip().lower()
     category = request.args.get("category", "All").strip()
     limit    = min(int(request.args.get("limit", 20)), 100)
+    lang     = request.args.get("lang", "en").strip().lower()
 
     # Category → keyword mapping for simple filtering
     category_keywords = {
@@ -388,6 +424,7 @@ def search_news():
         if len(articles) >= limit:
             break
 
+    articles = translate_articles(articles, lang)
     return jsonify({"success": True, "data": articles})
 
 
@@ -498,6 +535,7 @@ def get_live_news():
 
     limit   = min(int(request.args.get("limit", 10)), 50)
     section = request.args.get("section", "All")
+    lang    = request.args.get("lang", "en").strip().lower()
 
     if not GUARDIAN_API_KEY:
         return jsonify({
@@ -574,6 +612,7 @@ def get_live_news():
             "is_live":    True,
         })
 
+    articles = translate_articles(articles, lang)
     return jsonify({"success": True, "data": articles, "source": "guardian"})
 
 

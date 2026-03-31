@@ -5,12 +5,13 @@ import 'api_config.dart';
 
 /// REST API wrapper for the Python ML service (port 5001).
 class NewsApiService {
-  NewsApiService();
+  final String lang;
+  NewsApiService({this.lang = 'en'});
 
   /// Fetch N articles from the ML service.
   Future<List<Article>> fetchNews({int limit = 20, int offset = 0}) async {
     final baseUrl = await ApiConfig.mlServiceUrl;
-    final uri = Uri.parse('$baseUrl/news?limit=$limit&offset=$offset');
+    final uri = Uri.parse('$baseUrl/news?limit=$limit&offset=$offset&lang=$lang');
     final res = await http.get(uri).timeout(const Duration(seconds: 15));
     if (res.statusCode != 200)
       throw Exception('ML service error: ${res.statusCode}');
@@ -24,7 +25,7 @@ class NewsApiService {
   /// Fetch top verified (REAL) articles for the Digest screen.
   Future<List<Article>> fetchDigest({int limit = 3}) async {
     final baseUrl = await ApiConfig.mlServiceUrl;
-    final uri = Uri.parse('$baseUrl/news/digest?limit=$limit');
+    final uri = Uri.parse('$baseUrl/news/digest?limit=$limit&lang=$lang');
     final res = await http.get(uri).timeout(const Duration(seconds: 15));
     if (res.statusCode != 200)
       throw Exception('ML service error: ${res.statusCode}');
@@ -44,7 +45,7 @@ class NewsApiService {
     final baseUrl = await ApiConfig.mlServiceUrl;
     final uri = Uri.parse(
       '$baseUrl/news/search?q=${Uri.encodeQueryComponent(query)}'
-      '&category=${Uri.encodeQueryComponent(category)}&limit=$limit',
+      '&category=${Uri.encodeQueryComponent(category)}&limit=$limit&lang=$lang',
     );
     final res = await http.get(uri).timeout(const Duration(seconds: 15));
     if (res.statusCode != 200)
@@ -65,7 +66,7 @@ class NewsApiService {
     final baseUrl = await ApiConfig.mlServiceUrl;
     final uri = Uri.parse(
       '$baseUrl/news/live?limit=$limit'
-      '&section=${Uri.encodeQueryComponent(section)}',
+      '&section=${Uri.encodeQueryComponent(section)}&lang=$lang',
     );
     final res = await http.get(uri).timeout(const Duration(seconds: 20));
     if (res.statusCode == 503) return []; // Guardian key not set yet
