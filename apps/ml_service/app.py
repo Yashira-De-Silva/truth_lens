@@ -1,65 +1,55 @@
 """
-TruthLens — Python ML Service
-==============================
-Downloads the Kaggle fake-news dataset, trains a TF-IDF + LR classifier,
-and exposes a REST API for the Flutter app.
+TruthLens — Python ML Service (Streaming Mode)
+==============================================
+Optimized for high-memory datasets (45k+ rows) on limited RAM (512MB).
+Reads from disk on-demand instead of loading full DataFrame into RAM.
 
 Endpoints:
-  GET  /health                              — health check
-  GET  /news?limit=20&offset=0             — paginated dataset articles
-  GET  /news/live?limit=10&section=...     — live Guardian API news + ML label
-  GET  /news/digest?limit=3                — top REAL-confidence articles
-  GET  /news/search?q=...&category=...     — keyword + category filter
-  POST /predict  {title, text}             — classify a custom article
-
-Run:
-  cd apps/ml_service
-  pip3 install -r requirements.txt
-  python3 app.py
+  GET  /health              — Health check + basic stats
+  GET  /news                — Streaming paginated dataset articles
+  GET  /news/live           — Guardian API live news + ML labeling
+  GET  /news/digest         — Top articles from the dataset
+  GET  /news/search         — Keyword search within dataset samples
+  POST /predict             — Classify custom title/text
+  POST /api/bot/ask         — AI Chatbot with ML context
 """
 
 import os
+import re
 import signal
 import pickle
 import random
 import logging
 import subprocess
-from typing import Optional, Tuple
+from typing import Optional, List, Dict, Any, Tuple
 
 import kagglehub
 import pandas as pd
-import re
 import requests as http_requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 import google.generativeai as genai
 
+# Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)  # Allow Flutter app to call from any origin
+CORS(app)
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
 
-# ── Guardian API config ───────────────────────────────────────────────────────
-# Get a free key at: https://open-platform.theguardian.com/access
-# Then set it here OR export GUARDIAN_API_KEY=your_key before running.
+# ── Config ────────────────────────────────────────────────────────────────────
 GUARDIAN_API_KEY = os.environ.get("GUARDIAN_API_KEY", "c6d32650-a403-4157-8569-4e39624a022d")
 GUARDIAN_BASE    = "https://content.guardianapis.com"
+GEMINI_API_KEY   = os.environ.get("GEMINI_API_KEY", "AIzaSyAYZMNNVcB6BLIgVIQYTOhJ-xqT5qXVimc")
 
-# ── Gemini API config ─────────────────────────────────────────────────────────
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyAYZMNNVcB6BLIgVIQYTOhJ-xqT5qXVimc")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-# ── Guardian section → category mapping ──────────────────────────────────────
 GUARDIAN_SECTIONS = {
     "All":           "news",
     "Politics":      "politics",
@@ -71,601 +61,218 @@ GUARDIAN_SECTIONS = {
     "Entertainment": "film",
 }
 
-# ── Global state ──────────────────────────────────────────────────────────────
+# ── Global State ──────────────────────────────────────────────────────────────
 pipeline: Optional[Pipeline] = None
-articles_df: Optional[pd.DataFrame] = None  # full dataset kept in memory
+dataset_meta = {
+    "fake_csv": None,
+    "true_csv": None,
+    "fake_count": 0,
+    "true_count": 0,
+    "total_count": 0,
+    "loaded": False
+}
 
+# ── Database/Streaming Logic ──────────────────────────────────────────────────
 
-# ── Dataset loading ───────────────────────────────────────────────────────────
+def ensure_dataset_indexed():
+    """Locate dataset and count rows once without loading into RAM."""
+    global dataset_meta
+    if dataset_meta["loaded"]:
+        return
 
-def load_dataset() -> pd.DataFrame:
-    """
-    Download (or use cached) the Kaggle dataset and return a clean DataFrame.
-    Handles two dataset formats:
-      1. Two-file format: Fake.csv + True.csv (no label column, add 0 and 1)
-      2. Single-file format: with a 'label' column already present
-    """
-    log.info("Downloading / loading dataset via kagglehub …")
-    dataset_path = kagglehub.dataset_download(
-        "emineyetm/fake-news-detection-datasets"
-    )
-    log.info(f"Dataset path: {dataset_path}")
+    log.info("Indexing dataset via kagglehub …")
+    try:
+        path = kagglehub.dataset_download("emineyetm/fake-news-detection-datasets")
+        csv_files = []
+        for root, _, files in os.walk(path):
+            for f in files:
+                if f.lower().endswith(".csv"):
+                    csv_files.append(os.path.join(root, f))
 
-    # Collect all CSV files in the download directory
-    csv_files = []
-    for root, _dirs, files in os.walk(dataset_path):
-        for fname in files:
-            if fname.lower().endswith(".csv"):
-                csv_files.append(os.path.join(root, fname))
+        fake = next((f for f in csv_files if "fake" in os.path.basename(f).lower()), None)
+        true = next((f for f in csv_files if "true" in os.path.basename(f).lower()), None)
 
-    if not csv_files:
-        raise FileNotFoundError(f"No CSV files found in {dataset_path}")
-
-    log.info(f"CSV files found: {csv_files}")
-
-    # ── Detect Two-file Format (Fake.csv + True.csv) ──────────────────────────
-    fake_csv = next((f for f in csv_files if "fake" in os.path.basename(f).lower()), None)
-    true_csv = next((f for f in csv_files if "true" in os.path.basename(f).lower()), None)
-
-    if fake_csv and true_csv:
-        log.info(f"Using two-file format: Fake={fake_csv} | True={true_csv}")
-
-        df_fake = pd.read_csv(fake_csv)
-        df_fake.columns = [c.strip().lower() for c in df_fake.columns]
-        df_fake["label"] = 0  # 0 = FAKE
-
-        df_true = pd.read_csv(true_csv)
-        df_true.columns = [c.strip().lower() for c in df_true.columns]
-        df_true["label"] = 1  # 1 = REAL
-
-        df = pd.concat([df_fake, df_true], ignore_index=True)
-    else:
-        # ── Single-file Format ─────────────────────────────────────────────────
-        csv_path = max(csv_files, key=os.path.getsize)
-        log.info(f"Using single-file format: {csv_path}")
-        df = pd.read_csv(csv_path)
-        df.columns = [c.strip().lower() for c in df.columns]
-
-        if "label" not in df.columns:
-            raise ValueError(f"Expected a 'label' column; found: {list(df.columns)}")
-
-        # Coerce label to int (0 = FAKE, 1 = REAL)
-        if df["label"].dtype == object:
-            df["label"] = df["label"].str.strip().str.upper().map(
-                {"FAKE": 0, "REAL": 1, "0": 0, "1": 1}
-            )
-        df["label"] = pd.to_numeric(df["label"], errors="coerce")
-
-    df = df.dropna(subset=["label"])
-    df["label"] = df["label"].astype(int)
-
-    # ── Handle title/text columns ────────────────────────────────────────────
-    if "title" not in df.columns:
-        df["title"] = ""
-    if "text" not in df.columns:
-        if "body" in df.columns:
-            df["text"] = df["body"]
+        if fake and true:
+            f_count = sum(1 for _ in open(fake, encoding="utf-8", errors="ignore")) - 1
+            t_count = sum(1 for _ in open(true, encoding="utf-8", errors="ignore")) - 1
+            dataset_meta.update({
+                "fake_csv": fake, "true_csv": true,
+                "fake_count": f_count, "true_count": t_count,
+                "total_count": f_count + t_count, "loaded": True
+            })
+            log.info(f"Dataset indexed: {f_count} FAKE, {t_count} TRUE. Total: {f_count + t_count}")
         else:
-            df["text"] = ""
+            log.error("Could not find dataset files.")
+    except Exception as e:
+        log.error(f"Dataset indexing failed: {e}")
 
-    # ── Combine text for classification ──────────────────────────────────────
-    df["combined"] = (
-        df["title"].fillna("").astype(str)
-        + " "
-        + df["text"].fillna("").astype(str)
-    ).str.strip()
+def get_news_slice(offset: int, limit: int) -> List[Dict]:
+    """Fetch a slice of news from disk."""
+    ensure_dataset_indexed()
+    articles = []
+    
+    curr_offset = offset
+    curr_limit = limit
+    f_count = dataset_meta["fake_count"]
+    t_count = dataset_meta["true_count"]
 
-    # Keep only rows with meaningful text
-    df = df[df["combined"].str.len() > 20].copy()
-    df = df.reset_index(drop=True)
-
-    # Add a 'source' column if not present
-    if "source" not in df.columns:
-        sources = [
-            "Reuters", "BBC", "CNN", "AP News", "The Guardian",
-            "NPR", "Al Jazeera", "Bloomberg", "Associated Press", "Fox News",
-        ]
-        df["source"] = [sources[i % len(sources)] for i in range(len(df))]
-
-    log.info(
-        f"Dataset ready: {len(df)} rows | "
-        f"FAKE={(df['label']==0).sum()} | REAL={(df['label']==1).sum()}"
-    )
-    return df
-
-
-# ── Model training ────────────────────────────────────────────────────────────
-
-def train_model(df: pd.DataFrame) -> Pipeline:
-    log.info("Training TF-IDF + Logistic Regression model …")
-    X = df["combined"]
-    y = df["label"]
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
-
-    pipe = Pipeline([
-        ("tfidf", TfidfVectorizer(
-            max_features=50_000,
-            ngram_range=(1, 2),
-            min_df=2,
-            sublinear_tf=True,
-        )),
-        ("clf", LogisticRegression(
-            C=5.0,
-            max_iter=1000,
-            solver="lbfgs",
-            n_jobs=-1,
-        )),
-    ])
-
-    pipe.fit(X_train, y_train)
-    accuracy = pipe.score(X_test, y_test)
-    log.info(f"Test accuracy: {accuracy:.4f}")
-    return pipe
-
-
-def get_pipeline_and_data() -> Tuple[Optional[Pipeline], Optional[pd.DataFrame]]:
-    """Load from disk if available; lazily load dataset if needed."""
-    global pipeline, articles_df
-
-    # 1. Load the model Pipeline if not already loaded
-    if pipeline is None:
-        if os.path.exists(MODEL_PATH):
-            log.info(f"Loading saved model from {MODEL_PATH}")
-            try:
-                with open(MODEL_PATH, "rb") as f:
-                    pipeline = pickle.load(f)
-            except Exception as e:
-                log.error(f"Failed to load model.pkl: {e}")
-
-    # 2. Return what we have (even if articles_df is None)
-    # The individual routes will handle missing data
-    return pipeline, articles_df
-
-def ensure_data_loaded():
-    """Ensure the dataset is loaded (called by routes that need it)."""
-    global articles_df
-    if articles_df is None:
-        try:
-            articles_df = load_dataset()
-        except Exception as e:
-            log.error(f"Lazy dataset loading failed: {e}")
-            raise e
-    return articles_df
-
-
-# ── Article serialisation ─────────────────────────────────────────────────────
-
-def row_to_article(pipe: Pipeline, idx: int, row: pd.Series) -> dict:
-    """Convert a DataFrame row to the API article format."""
-    combined = str(row.get("combined", ""))
-    proba = pipe.predict_proba([combined])[0]  # [P(FAKE), P(REAL)]
-    real_prob = float(proba[1])
-    fake_prob = float(proba[0])
-
-    label = "REAL" if real_prob >= 0.5 else "FAKE"
-
-    # Trim text for summary (first ~3 sentences)
-    raw_text = str(row.get("text", "")).strip()
-    sentences = [s for s in re.split(r'(?<=[.!?])\s+', raw_text) if s.strip()]
-    if len(sentences) > 3:
-        summary = " ".join(sentences[:3]).strip()
-        if len(summary) > 300: summary = summary[:295] + "…"
+    # Read from Fake.csv
+    if curr_offset < f_count:
+        fetch_f = min(curr_limit, f_count - curr_offset)
+        df_f = pd.read_csv(dataset_meta["fake_csv"], skiprows=range(1, curr_offset + 1), nrows=fetch_f)
+        df_f["label"] = 0
+        articles.extend(_df_to_articles(df_f, curr_offset))
+        curr_limit -= fetch_f
+        curr_offset = 0
     else:
-        summary = raw_text[:300].rstrip() + ("…" if len(raw_text) > 300 else "")
+        curr_offset -= f_count
 
-    title = str(row.get("title", "No title")).strip()
-    if not title or title.lower() in ("nan", ""):
-        title = summary[:80].rstrip() + "…"
+    # Read from True.csv
+    if curr_limit > 0 and curr_offset < t_count:
+        fetch_t = min(curr_limit, t_count - curr_offset)
+        df_t = pd.read_csv(dataset_meta["true_csv"], skiprows=range(1, curr_offset + 1), nrows=fetch_t)
+        df_t["label"] = 1
+        articles.extend(_df_to_articles(df_t, f_count + curr_offset))
 
-    source = str(row.get("source", "Unknown")).strip()
+    return articles
 
-    return {
-        "id":         int(idx),
-        "title":      title,
-        "summary":    summary,
-        "full_text":  raw_text,
-        "source":     source,
-        "label":      label,
-        "confidence": round(real_prob if label == "REAL" else fake_prob, 4),
-        "published":  _safe_date(row.get("date")),
-    }
+def _df_to_articles(df: pd.DataFrame, start_id: int) -> List[Dict]:
+    df.columns = [c.strip().lower() for c in df.columns]
+    res = []
+    for i, row in df.iterrows():
+        text = str(row.get("text", "")).strip()
+        label = "REAL" if int(row.get("label", 0)) == 1 else "FAKE"
+        res.append({
+            "id": start_id + i,
+            "title": str(row.get("title", "No Title"))[:200],
+            "summary": text[:300] + ("…" if len(text) > 300 else ""),
+            "full_text": text,
+            "label": label,
+            "confidence": 1.0,
+            "source": str(row.get("source", "Dataset")),
+            "published": str(row.get("date", ""))
+        })
+    return res
 
+def get_pipeline():
+    global pipeline
+    if pipeline is None and os.path.exists(MODEL_PATH):
+        try:
+            with open(MODEL_PATH, "rb") as f:
+                pipeline = pickle.load(f)
+            log.info("ML Pipeline loaded ✅")
+        except Exception as e:
+            log.error(f"Pipeline load failed: {e}")
+    return pipeline
 
-def _safe_date(val) -> "str | None":
-    """Convert a pandas date cell to a clean string or None."""
-    if val is None:
-        return None
-    s = str(val).strip()
-    return None if s.lower() in ("nan", "nat", "", "none") else s
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
-
-# ── API Startup ───────────────────────────────────────────────────────────────
-
-# Pre-load on startup (lazy)
-log.info("ML service initialized in lazy mode ✅")
-
-
-# ── Translation Helper ────────────────────────────────────────────────────────
-
-def translate_articles(articles: list, target_lang: str) -> list:
-    """Translate a list of articles to the target language (e.g. 'si', 'ta') using GoogleTranslator."""
-    if target_lang == "en" or not target_lang:
+def translate_articles(articles: List[Dict], target_lang: str) -> List[Dict]:
+    if not target_lang or target_lang == "en":
         return articles
-
     try:
         from deep_translator import GoogleTranslator
         translator = GoogleTranslator(source='auto', target=target_lang)
-        
         for art in articles:
-            try:
-                if art.get("title"):
-                    art["title"] = translator.translate(art["title"])
-                if art.get("summary"):
-                    art["summary"] = translator.translate(art["summary"])
-                if art.get("full_text"):
-                    text = art["full_text"]
-                    if len(text) > 4900:
-                        text = text[:4900]
-                    art["full_text"] = translator.translate(text)
-            except Exception as e:
-                log.warning(f"Failed to translate article {art.get('id')}: {e}")
-                
-        return articles
+            art["title"] = translator.translate(art["title"][:4999])
+            art["summary"] = translator.translate(art["summary"][:4999])
     except Exception as e:
-        log.error(f"Translation pipeline failed: {e}")
-        return articles
-
+        log.warning(f"Translation failed: {e}")
+    return articles
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route("/")
 def home():
-    """Root route for production landing/health visualization"""
-    return jsonify({
-        "status": "online",
-        "service": "TruthLens ML Service",
-        "version": "1.0.0",
-        "endpoints": ["/news", "/news/live", "/predict", "/health"]
-    })
-
+    return jsonify({"status": "online", "service": "TruthLens ML Service", "dataset_rows": dataset_meta["total_count"]})
 
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "model_loaded": pipeline is not None})
-
+    return jsonify({"status": "ok", "indexed": dataset_meta["loaded"], "model": get_pipeline() is not None})
 
 @app.route("/news")
 def get_news():
-    pipe, _ = get_pipeline_and_data()
-    df = ensure_data_loaded()
-    if not pipe or df is None:
-        return jsonify({"success": False, "message": "ML Model or Data not ready"}), 503
-
-    limit  = min(int(request.args.get("limit",  20)), 100)
     offset = int(request.args.get("offset", 0))
-    lang   = request.args.get("lang", "en").strip().lower()
-
-    # Shuffle a reproducible sample based on offset so pages are stable
-    rng = random.Random(offset // limit)
-    indices = list(df.index)
-    rng.shuffle(indices)
-    page_indices = indices[offset: offset + limit]
-
-    articles = []
-    for idx in page_indices:
-        try:
-            articles.append(row_to_article(pipe, idx, df.loc[idx]))
-        except Exception:
-            continue
-
-    articles = translate_articles(articles, lang)
-    return jsonify({"success": True, "data": articles, "total": len(df)})
-
+    limit = min(int(request.args.get("limit", 20)), 100)
+    lang = request.args.get("lang", "en").lower()
+    articles = translate_articles(get_news_slice(offset, limit), lang)
+    return jsonify({"success": True, "data": articles, "total": dataset_meta["total_count"]})
 
 @app.route("/news/digest")
 def get_digest():
-    """Return top N verified (REAL, high-confidence) articles."""
-    pipe, _ = get_pipeline_and_data()
-    df = ensure_data_loaded()
-    if not pipe or df is None:
-        return jsonify({"success": False, "message": "ML Model or Data not ready"}), 503
     limit = min(int(request.args.get("limit", 3)), 10)
-    lang = request.args.get("lang", "en").strip().lower()
-
-    # Evaluate a sample of articles and pick the most confidently REAL ones
-    sample_size = min(500, len(df))
-    sample_df   = df.sample(n=sample_size, random_state=7)
-
-    scored = []
-    for idx, row in sample_df.iterrows():
-        try:
-            art = row_to_article(pipe, idx, row)
-            if art["label"] == "REAL":
-                scored.append(art)
-        except Exception:
-            continue
-
-    # Sort by confidence descending, take top N
-    scored.sort(key=lambda a: a["confidence"], reverse=True)
-    articles = translate_articles(scored[:limit], lang)
+    # Return a few articles from the REAL section (starts at fake_count)
+    ensure_dataset_indexed()
+    articles = get_news_slice(dataset_meta["fake_count"], limit)
     return jsonify({"success": True, "data": articles})
-
 
 @app.route("/news/search")
 def search_news():
-    pipe, _ = get_pipeline_and_data()
-    df = ensure_data_loaded()
-    if not pipe or df is None:
-        return jsonify({"success": False, "message": "ML Model or Data not ready"}), 503
-
-    query    = request.args.get("q", "").strip().lower()
-    category = request.args.get("category", "All").strip()
-    limit    = min(int(request.args.get("limit", 20)), 100)
-    lang     = request.args.get("lang", "en").strip().lower()
-
-    # Category → keyword mapping for simple filtering
-    category_keywords = {
-        "Politics":      ["politic", "government", "senate", "congress", "president", "election"],
-        "Business":      ["business", "economy", "market", "stock", "finance", "trade"],
-        "Technology":    ["tech", "ai", "software", "internet", "digital", "cyber"],
-        "Science":       ["science", "research", "study", "climate", "space", "nasa"],
-        "Health":        ["health", "medical", "vaccine", "hospital", "disease", "virus"],
-        "Sports":        ["sport", "game", "football", "basketball", "olympic", "athlete"],
-        "Entertainment": ["entertain", "movie", "music", "celebrity", "film", "actor"],
-    }
-
-    mask = pd.Series([True] * len(df), index=df.index)
-
-    if query:
-        mask &= (
-            df["title"].str.lower().str.contains(query, na=False)
-            | df["text"].str.lower().str.contains(query, na=False)
-        )
-
-    cat_kws = category_keywords.get(category)
-    if cat_kws:
-        cat_mask = df["title"].str.lower().apply(
-            lambda t: any(k in t for k in cat_kws)
-        ) | df["text"].str.lower().apply(
-            lambda t: any(k in t for k in cat_kws)
-        )
-        mask &= cat_mask
-
-    filtered = df[mask].head(limit * 5)  # over-fetch, then score
-
-    articles = []
-    for idx, row in filtered.iterrows():
-        try:
-            articles.append(row_to_article(pipe, idx, row))
-        except Exception:
-            continue
-        if len(articles) >= limit:
-            break
-
-    articles = translate_articles(articles, lang)
-    return jsonify({"success": True, "data": articles})
-
-
-@app.route("/api/bot/ask", methods=["POST"])
-def bot_ask():
-    """Handles chatbot requests using Gemini API and the ML Model."""
-    pipe, _ = get_pipeline_and_data()
-    if not pipe:
-        return jsonify({"success": False, "message": "ML Model not ready"}), 503
-    body = request.get_json(force=True, silent=True) or {}
-    message = str(body.get("message", "")).strip()
-
-    if not message:
-        return jsonify({"success": False, "message": "Message cannot be empty"}), 400
-
-    if not GEMINI_API_KEY:
-        return jsonify({
-            "success": False, 
-            "reply": "I'm sorry, my AI backend is currently offline due to a missing Gemini API key. Please configure GEMINI_API_KEY in the ml_service to chat with me!"
-        }), 200
-
-    try:
-        # Step 1: Check if the message contains potential news/gossips using our local ML model
-        # We process the user's message just to give context to Gemini
-        combined = message
-        proba = pipe.predict_proba([combined])[0]
-        real_prob = float(proba[1])
-        fake_prob = float(proba[0])
-        label = "REAL" if real_prob >= 0.5 else "FAKE"
-        confidence = round(real_prob if label == "REAL" else fake_prob, 4)
-
-        import datetime
-        current_time = datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p")
-
-        # Step 2: Formulate the prompt for Gemini
-        system_prompt = (
-            "You are TruthBot, a helpful, intelligent assistant for the TruthLens application.\n"
-            f"The current date and time is: {current_time}.\n"
-            "Your main duties are:\n"
-            "1. If the user shares news, rumors, or gossip, evaluate its truthfulness using your pre-trained knowledge and live search.\n"
-            "2. If the user asks for real-life solutions, personal advice, or general answers, provide clear, empathetic, and actionable advice.\n"
-            "3. Be concise and friendly.\n"
-            f"Note: Our internal ML model scanned the user's latest input and classified it with {confidence*100:.1f}% confidence as {label} news. "
-            "Use this ML context if the user is asking you to verify a news snippet, but ultimately use your own broader knowledge to give a detailed answer."
-        )
-
-        import requests
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
-        payload = {
-            "systemInstruction": {"parts": [{"text": system_prompt}]},
-            "contents": [{"parts": [{"text": message}]}],
-            "tools": [{"googleSearch": {}}]
-        }
-        
-        resp = requests.post(url, json=payload, timeout=20)
-        
-        if resp.status_code == 200:
-            data = resp.json()
-            try:
-                reply = data["candidates"][0]["content"]["parts"][0]["text"]
-            except (KeyError, IndexError):
-                reply = "I'm sorry, I couldn't understand the AI response."
-            return jsonify({"success": True, "reply": reply})
-        elif resp.status_code == 429:
-            return jsonify({"success": True, "reply": "I am receiving too many questions right now! Please wait about 60 seconds and ask me again. ⌛"})
-        else:
-            return jsonify({"success": False, "message": f"API error {resp.status_code}"}), 500
-
-    except Exception as e:
-        log.error(f"Chatbot error: {e}")
-        return jsonify({"success": False, "message": f"Chatbot error: {str(e)}"}), 500
-
+    query = request.args.get("q", "").lower()
+    limit = min(int(request.args.get("limit", 10)), 50)
+    # Partial search in the first 1000 rows
+    pool = get_news_slice(0, 500) + get_news_slice(dataset_meta["fake_count"], 500)
+    results = [a for a in pool if query in a["title"].lower() or query in a["full_text"].lower()]
+    return jsonify({"success": True, "data": results[:limit]})
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    """Classify a custom article title+text submitted by the app."""
-    pipe, _ = get_pipeline_and_data()
-    if not pipe:
-        return jsonify({"success": False, "message": "ML Model not ready"}), 503
-    body     = request.get_json(force=True, silent=True) or {}
-    title    = str(body.get("title", ""))
-    text     = str(body.get("text",  ""))
-    combined = f"{title} {text}".strip()
-
-    if not combined:
-        return jsonify({"success": False, "message": "Provide title or text"}), 400
-
-    proba     = pipe.predict_proba([combined])[0]
-    real_prob = float(proba[1])
-    label     = "REAL" if real_prob >= 0.5 else "FAKE"
-
+    pipe = get_pipeline()
+    if not pipe: return jsonify({"success": False, "message": "Model offline"}), 503
+    data = request.json or {}
+    text = f"{data.get('title','')} {data.get('text','')}".strip()
+    if not text: return jsonify({"success": False, "message": "No input"}), 400
+    proba = pipe.predict_proba([text])[0]
+    is_real = proba[1] >= 0.5
     return jsonify({
-        "success":    True,
-        "label":      label,
-        "confidence": round(real_prob if label == "REAL" else float(proba[0]), 4),
-        "real_prob":  round(real_prob, 4),
-        "fake_prob":  round(float(proba[0]), 4),
+        "label": "REAL" if is_real else "FAKE",
+        "confidence": round(float(proba[1] if is_real else proba[0]), 4)
     })
-
 
 @app.route("/news/live")
 def get_live_news():
-    """
-    Fetch real-time articles from The Guardian API and classify each one
-    using the trained ML model.
-
-    Query params:
-      limit    — number of articles (default 10, max 50)
-      section  — category name matching the Flutter categories (default 'All')
-    """
-    pipe, _ = get_pipeline_and_data()
-    if not pipe:
-        return jsonify({"success": False, "message": "ML Model not ready"}), 503
-
-    limit   = min(int(request.args.get("limit", 10)), 50)
+    pipe = get_pipeline()
     section = request.args.get("section", "All")
-    lang    = request.args.get("lang", "en").strip().lower()
-
-    if not GUARDIAN_API_KEY:
-        return jsonify({
-            "success": False,
-            "message": (
-                "Guardian API key not configured. "
-                "Set GUARDIAN_API_KEY env variable or edit GUARDIAN_API_KEY in app.py. "
-                "Get a free key at https://open-platform.theguardian.com/access"
-            ),
-            "data": []
-        }), 503
-
-    guardian_section = GUARDIAN_SECTIONS.get(section, "news")
-
+    limit = min(int(request.args.get("limit", 10)), 20)
+    g_section = GUARDIAN_SECTIONS.get(section, "news")
+    
     try:
-        resp = http_requests.get(
-            f"{GUARDIAN_BASE}/search",
-            params={
-                "api-key":       GUARDIAN_API_KEY,
-                "section":       guardian_section,
-                "show-fields":   "trailText,bodyText,headline",
-                "page-size":     limit,
-                "order-by":      "newest",
-            },
-            timeout=10,
-        )
-        resp.raise_for_status()
+        r = http_requests.get(f"{GUARDIAN_BASE}/search", params={
+            "api-key": GUARDIAN_API_KEY, "section": g_section,
+            "show-fields": "headline,trailText,bodyText", "page-size": limit
+        }, timeout=10)
+        items = r.json().get("response", {}).get("results", [])
+        articles = []
+        for i, it in enumerate(items):
+            f = it.get("fields", {})
+            title, body = f.get("headline", ""), f.get("bodyText", "")
+            label = "REAL"
+            conf = 1.0
+            if pipe:
+                p = pipe.predict_proba([f"{title} {body}"])[0]
+                label = "REAL" if p[1] >= 0.5 else "FAKE"
+                conf = round(float(p[1] if label=="REAL" else p[0]), 4)
+            
+            articles.append({
+                "id": 90000 + i, "title": title, "summary": f.get("trailText", "")[:300],
+                "full_text": body, "label": label, "confidence": conf, "source": "The Guardian",
+                "published": it.get("webPublicationDate", ""), "is_live": True
+            })
+        return jsonify({"success": True, "data": articles})
     except Exception as e:
-        log.error(f"Guardian API error: {e}")
-        return jsonify({"success": False, "message": str(e), "data": []}), 502
+        return jsonify({"success": False, "message": str(e)}), 500
 
-    raw      = resp.json()
-    results  = raw.get("response", {}).get("results", [])
-    articles = []
-
-    for i, item in enumerate(results):
-        fields   = item.get("fields", {})
-        title    = fields.get("headline") or item.get("webTitle", "")
-        body     = fields.get("bodyText", "") or fields.get("trailText", "")
-        trail    = fields.get("trailText", body[:250])
-        section_name = item.get("sectionName", "The Guardian")
-
-        if title.lower().strip() == "corrections and clarifications":
-            title = trail
-            trail = "Corrections and clarifications."
-            body = "Corrections and clarifications."
-
-        combined = f"{title} {body}".strip()
-        if not combined:
-            continue
-
-        proba     = pipe.predict_proba([combined])[0]
-        real_prob = float(proba[1])
-        fake_prob = float(proba[0])
-        label     = "REAL" if real_prob >= 0.5 else "FAKE"
-
-        sentences = [s for s in re.split(r'(?<=[.!?])\s+', trail) if s.strip()]
-        if len(sentences) > 3:
-            summary = " ".join(sentences[:3]).strip()
-            if len(summary) > 300: summary = summary[:295] + "…"
-        else:
-            summary = trail[:300].rstrip() + ("…" if len(trail) > 300 else "")
-
-        articles.append({
-            "id":         90000 + i,   # offset to avoid collisions with dataset IDs
-            "title":      title,
-            "summary":    summary,
-            "full_text":  body,
-            "source":     f"The Guardian – {section_name}",
-            "label":      label,
-            "confidence": round(real_prob if label == "REAL" else fake_prob, 4),
-            "url":        item.get("webUrl", ""),
-            "published":  item.get("webPublicationDate", ""),
-            "is_live":    True,
-        })
-
-    articles = translate_articles(articles, lang)
-    return jsonify({"success": True, "data": articles, "source": "guardian"})
-
-
-# ── Entry point ───────────────────────────────────────────────────────────────
-
-def _free_port(port: int) -> None:
-    """Kill any process currently listening on *port* so Flask can bind cleanly.
-    This prevents the 'Address already in use' error when restarting the service.
-    """
+@app.route("/api/bot/ask", methods=["POST"])
+def bot_ask():
+    msg = request.json.get("message", "").strip()
+    if not msg: return jsonify({"success": False}), 400
     try:
-        result = subprocess.run(
-            ["lsof", "-ti", f":{port}"],
-            capture_output=True, text=True, timeout=5,
-        )
-        pids = result.stdout.strip().split()
-        for pid in pids:
-            pid = pid.strip()
-            if pid and pid.isdigit():
-                os.kill(int(pid), signal.SIGKILL)
-                log.info(f"Freed port {port} by killing PID {pid}")
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(msg)
+        return jsonify({"success": True, "reply": response.text})
     except Exception as e:
-        log.warning(f"Could not free port {port}: {e}")
-
+        return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == "__main__":
-    # Use the port assigned by the hosting provider (Render, Koyeb, etc.)
-    port = int(os.environ.get("PORT", 5001))
-    log.info(f"Starting ML Service on port {port}...")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
