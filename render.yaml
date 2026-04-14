@@ -6,7 +6,7 @@ services:
     env: docker
     region: ohio # Change as needed
     dockerContext: apps/backend
-    dockerfilePath: Dockerfile
+    dockerfilePath: apps/backend/Dockerfile
     plan: free
     healthCheckPath: /
     envVars:
@@ -37,7 +37,7 @@ services:
     env: docker
     region: ohio
     dockerContext: apps/ml_service
-    dockerfilePath: Dockerfile
+    dockerfilePath: apps/ml_service/Dockerfile
     plan: free
     healthCheckPath: /health
     envVars:
