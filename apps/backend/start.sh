@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 # Run database migrations
 echo "Running migrations..."
