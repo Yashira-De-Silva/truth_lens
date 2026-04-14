@@ -206,28 +206,34 @@ def train_model(df: pd.DataFrame) -> Pipeline:
     return pipe
 
 
-def get_pipeline_and_data() -> Tuple[Pipeline, pd.DataFrame]:
-    """Load from disk if available; otherwise download + train."""
+def get_pipeline_and_data() -> Tuple[Optional[Pipeline], Optional[pd.DataFrame]]:
+    """Load from disk if available; lazily load dataset if needed."""
     global pipeline, articles_df
 
-    if pipeline is not None and articles_df is not None:
-        return pipeline, articles_df
+    # 1. Load the model Pipeline if not already loaded
+    if pipeline is None:
+        if os.path.exists(MODEL_PATH):
+            log.info(f"Loading saved model from {MODEL_PATH}")
+            try:
+                with open(MODEL_PATH, "rb") as f:
+                    pipeline = pickle.load(f)
+            except Exception as e:
+                log.error(f"Failed to load model.pkl: {e}")
 
-    # Always load the dataset (we need articles to serve)
-    df = load_dataset()
-    articles_df = df
-
-    if os.path.exists(MODEL_PATH):
-        log.info(f"Loading saved model from {MODEL_PATH}")
-        with open(MODEL_PATH, "rb") as f:
-            pipeline = pickle.load(f)
-    else:
-        pipeline = train_model(df)
-        with open(MODEL_PATH, "wb") as f:
-            pickle.dump(pipeline, f)
-        log.info(f"Model saved to {MODEL_PATH}")
-
+    # 2. Return what we have (even if articles_df is None)
+    # The individual routes will handle missing data
     return pipeline, articles_df
+
+def ensure_data_loaded():
+    """Ensure the dataset is loaded (called by routes that need it)."""
+    global articles_df
+    if articles_df is None:
+        try:
+            articles_df = load_dataset()
+        except Exception as e:
+            log.error(f"Lazy dataset loading failed: {e}")
+            raise e
+    return articles_df
 
 
 # ── Article serialisation ─────────────────────────────────────────────────────
@@ -278,12 +284,8 @@ def _safe_date(val) -> "str | None":
 
 # ── API Startup ───────────────────────────────────────────────────────────────
 
-# Pre-load on startup (avoids slow first request)
-    _pipe, _df = get_pipeline_and_data()
-    log.info("ML service ready ✅")
-except Exception as exc:
-    log.error(f"Failed to initializing ML service: {exc}")
-    _pipe, _df = None, None
+# Pre-load on startup (lazy)
+log.info("ML service initialized in lazy mode ✅")
 
 
 # ── Translation Helper ────────────────────────────────────────────────────────
@@ -326,7 +328,10 @@ def health():
 
 @app.route("/news")
 def get_news():
-    pipe, df = get_pipeline_and_data()
+    pipe, _ = get_pipeline_and_data()
+    df = ensure_data_loaded()
+    if not pipe or df is None:
+        return jsonify({"success": False, "message": "ML Model or Data not ready"}), 503
 
     limit  = min(int(request.args.get("limit",  20)), 100)
     offset = int(request.args.get("offset", 0))
@@ -352,7 +357,10 @@ def get_news():
 @app.route("/news/digest")
 def get_digest():
     """Return top N verified (REAL, high-confidence) articles."""
-    pipe, df = get_pipeline_and_data()
+    pipe, _ = get_pipeline_and_data()
+    df = ensure_data_loaded()
+    if not pipe or df is None:
+        return jsonify({"success": False, "message": "ML Model or Data not ready"}), 503
     limit = min(int(request.args.get("limit", 3)), 10)
     lang = request.args.get("lang", "en").strip().lower()
 
@@ -377,7 +385,10 @@ def get_digest():
 
 @app.route("/news/search")
 def search_news():
-    pipe, df = get_pipeline_and_data()
+    pipe, _ = get_pipeline_and_data()
+    df = ensure_data_loaded()
+    if not pipe or df is None:
+        return jsonify({"success": False, "message": "ML Model or Data not ready"}), 503
 
     query    = request.args.get("q", "").strip().lower()
     category = request.args.get("category", "All").strip()
@@ -431,6 +442,8 @@ def search_news():
 def bot_ask():
     """Handles chatbot requests using Gemini API and the ML Model."""
     pipe, _ = get_pipeline_and_data()
+    if not pipe:
+        return jsonify({"success": False, "message": "ML Model not ready"}), 503
     body = request.get_json(force=True, silent=True) or {}
     message = str(body.get("message", "")).strip()
 
@@ -499,6 +512,8 @@ def bot_ask():
 def predict():
     """Classify a custom article title+text submitted by the app."""
     pipe, _ = get_pipeline_and_data()
+    if not pipe:
+        return jsonify({"success": False, "message": "ML Model not ready"}), 503
     body     = request.get_json(force=True, silent=True) or {}
     title    = str(body.get("title", ""))
     text     = str(body.get("text",  ""))
@@ -531,6 +546,8 @@ def get_live_news():
       section  — category name matching the Flutter categories (default 'All')
     """
     pipe, _ = get_pipeline_and_data()
+    if not pipe:
+        return jsonify({"success": False, "message": "ML Model not ready"}), 503
 
     limit   = min(int(request.args.get("limit", 10)), 50)
     section = request.args.get("section", "All")

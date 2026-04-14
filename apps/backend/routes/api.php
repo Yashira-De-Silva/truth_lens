@@ -58,6 +58,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 // ── Public routes ─────────────────────────────────────────────────────────
+Route::get('/health-check', function () {
+    return response()->json(['status' => 'ok', 'timestamp' => now()]);
+});
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
 

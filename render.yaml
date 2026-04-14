@@ -8,7 +8,7 @@ services:
     dockerContext: apps/backend
     dockerfilePath: apps/backend/Dockerfile
     plan: free
-    healthCheckPath: /
+    healthCheckPath: /api/health-check
     envVars:
       - key: APP_ENV
         value: production
