@@ -1,35 +1,34 @@
 """
-TruthLens — Python ML Service (Streaming Mode)
-==============================================
-Optimized for high-memory datasets (45k+ rows) on limited RAM (512MB).
-Reads from disk on-demand instead of loading full DataFrame into RAM.
+TruthLens — Python ML Service (Nuclear Mode - No Pandas)
+======================================================
+Hardened for 512MB RAM using native Python CSV streaming.
 
 Endpoints:
-  GET  /health              — Health check + basic stats
-  GET  /news                — Streaming paginated dataset articles
+  GET  /health              — Health check + RAM stats
+  GET  /news                — Native CSV streaming articles
   GET  /news/live           — Guardian API live news + ML labeling
-  GET  /news/digest         — Top articles from the dataset
-  GET  /news/search         — Keyword search within dataset samples
+  GET  /news/digest         — Top articles
+  GET  /news/search         — Keyword search (native)
   POST /predict             — Classify custom title/text
-  POST /api/bot/ask         — AI Chatbot with ML context
+  POST /api/bot/ask         — AI Chatbot
 """
 
-import gc
 import os
 import re
+import csv
+import gc
 import signal
 import joblib
 import random
 import logging
 import subprocess
-from typing import Optional, List, Dict, Any, Tuple
+from itertools import islice
+from typing import Optional, List, Dict, Any
 
 import kagglehub
-import pandas as pd
 import requests as http_requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from sklearn.pipeline import Pipeline
 import google.generativeai as genai
 
 # Setup logging
@@ -51,167 +50,156 @@ GEMINI_API_KEY   = os.environ.get("GEMINI_API_KEY", "AIzaSyAYZMNNVcB6BLIgVIQYTOh
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-# Memory Guard: Limit the dataset size to keep RAM under 400MB
+# Memory Guard: Cap dataset at 10k real / 10k fake
 MAX_ROWS_PER_TYPE = 10000 
 
 GUARDIAN_SECTIONS = {
-    "All":           "news",
-    "Politics":      "politics",
-    "Business":      "business",
-    "Technology":    "technology",
-    "Science":       "science",
-    "Health":        "society",
-    "Sports":        "sport",
-    "Entertainment": "film",
+    "All": "news", "Politics": "politics", "Business": "business", "Technology": "technology",
+    "Science": "science", "Health": "society", "Sports": "sport", "Entertainment": "film",
 }
 
 # ── Global State ──────────────────────────────────────────────────────────────
-pipeline: Optional[Pipeline] = None
+pipeline: Optional[Any] = None
 dataset_meta = {
-    "fake_csv": None,
-    "true_csv": None,
-    "fake_count": 0,
-    "true_count": 0,
-    "total_count": 0,
-    "loaded": False
+    "fake_csv": None, "true_csv": None,
+    "fake_count": 0, "true_count": 0,
+    "total_count": 0, "loaded": False
 }
 
-# ── Database/Streaming Logic ──────────────────────────────────────────────────
+# ── Native CSV Streaming Logic ───────────────────────────────────────────────
 
 def ensure_dataset_indexed():
-    """Locate dataset and count rows once without loading into RAM."""
+    """Locate dataset without scanning. Fast and Memory-Efficient."""
     global dataset_meta
-    if dataset_meta["loaded"]:
-        return
+    if dataset_meta["loaded"]: return
 
-    log.info("Indexing dataset via kagglehub …")
+    log.info("Indexing dataset natively (Skip scan) …")
     try:
         path = kagglehub.dataset_download("emineyetm/fake-news-detection-datasets")
-        csv_files = []
         for root, _, files in os.walk(path):
             for f in files:
-                if f.lower().endswith(".csv"):
-                    csv_files.append(os.path.join(root, f))
+                if "fake" in f.lower() and f.endswith(".csv"):
+                    dataset_meta["fake_csv"] = os.path.join(root, f)
+                if "true" in f.lower() and f.endswith(".csv"):
+                    dataset_meta["true_csv"] = os.path.join(root, f)
 
-        fake = next((f for f in csv_files if "fake" in os.path.basename(f).lower()), None)
-        true = next((f for f in csv_files if "true" in os.path.basename(f).lower()), None)
-
-        if fake and true:
-            # Emergency Speed Fix: Skip line counting (which spikes RAM)
-            # Just assume we take MAX_ROWS_PER_TYPE for each
-            f_count = MAX_ROWS_PER_TYPE
-            t_count = MAX_ROWS_PER_TYPE
-            
+        if dataset_meta["fake_csv"] and dataset_meta["true_csv"]:
             dataset_meta.update({
-                "fake_csv": fake, "true_csv": true,
-                "fake_count": f_count, "true_count": t_count,
-                "total_count": f_count + t_count, "loaded": True
+                "fake_count": MAX_ROWS_PER_TYPE,
+                "true_count": MAX_ROWS_PER_TYPE,
+                "total_count": MAX_ROWS_PER_TYPE * 2,
+                "loaded": True
             })
-            log.info(f"Speed Fix Active: Assume {f_count} FAKE, {t_count} TRUE")
-            gc.collect() # Immediate cleanup
-        else:
-            log.error("Could not find dataset files.")
+            log.info("Dataset indexed with Memory Guard ✅")
+        gc.collect()
     except Exception as e:
         log.error(f"Dataset indexing failed: {e}")
 
 def get_news_slice(offset: int, limit: int) -> List[Dict]:
-    """Fetch a slice of news from disk."""
+    """Fetch rows using native Python CSV DictReader (Zero Pandas)."""
     ensure_dataset_indexed()
     articles = []
     
-    curr_offset = offset
-    curr_limit = limit
-    f_count = dataset_meta["fake_count"]
-    t_count = dataset_meta["true_count"]
+    f_total = dataset_meta["fake_count"]
+    t_total = dataset_meta["true_count"]
 
-    # Read from Fake.csv with optimization
-    if curr_offset < f_count:
-        fetch_f = min(curr_limit, f_count - curr_offset)
-        # Usecols and engine='c' for speed and memory efficiency
-        df_f = pd.read_csv(dataset_meta["fake_csv"], skiprows=range(1, curr_offset + 1), nrows=fetch_f, usecols=["title", "text", "date"])
-        df_f["label"] = 0
-        articles.extend(_df_to_articles(df_f, curr_offset))
-        curr_limit -= fetch_f
-        curr_offset = 0
+    curr_off = offset
+    curr_lim = limit
+
+    # Part 1: Fake News
+    if curr_off < f_total:
+        take = min(curr_lim, f_total - curr_off)
+        articles.extend(_read_csv_rows(dataset_meta["fake_csv"], curr_off, take, 0))
+        curr_lim -= take
+        curr_off = 0
     else:
-        curr_offset -= f_count
+        curr_off -= f_total
 
-    # Read from True.csv with optimization
-    if curr_limit > 0 and curr_offset < t_count:
-        fetch_t = min(curr_limit, t_count - curr_offset)
-        df_t = pd.read_csv(dataset_meta["true_csv"], skiprows=range(1, curr_offset + 1), nrows=fetch_t, usecols=["title", "text", "date"])
-        df_t["label"] = 1
-        articles.extend(_df_to_articles(df_t, f_count + curr_offset))
-    
-    gc.collect() # Cleanup after data fetch
+    # Part 2: True News
+    if curr_lim > 0 and curr_off < t_total:
+        take = min(curr_lim, t_total - curr_off)
+        articles.extend(_read_csv_rows(dataset_meta["true_csv"], curr_off, take, 1))
+
+    gc.collect()
     return articles
 
-def _df_to_articles(df: pd.DataFrame, start_id: int) -> List[Dict]:
-    df.columns = [c.strip().lower() for c in df.columns]
+def _read_csv_rows(path: str, offset: int, limit: int, label_int: int) -> List[Dict]:
+    """Iterate through CSV one row at a time. High memory efficiency."""
     res = []
-    for i, row in df.iterrows():
-        text = str(row.get("text", "")).strip()
-        label = "REAL" if int(row.get("label", 0)) == 1 else "FAKE"
-        res.append({
-            "id": start_id + i,
-            "title": str(row.get("title", "No Title"))[:200],
-            "summary": text[:300] + ("…" if len(text) > 300 else ""),
-            "full_text": text,
-            "label": label,
-            "confidence": 1.0,
-            "source": str(row.get("source", "Dataset")),
-            "published": str(row.get("date", ""))
-        })
+    try:
+        with open(path, mode='r', encoding='utf-8', errors='ignore') as f:
+            reader = csv.DictReader(f)
+            # Efficiently skip to offset and take limit
+            rows = islice(reader, offset, offset + limit)
+            for i, row in enumerate(rows):
+                title = row.get("title", "No Title")
+                text = row.get("text", "")
+                res.append({
+                    "id": f"{label_int}_{offset + i}",
+                    "title": str(title)[:200],
+                    "summary": str(text)[:300] + ("…" if len(text) > 300 else ""),
+                    "full_text": text,
+                    "label": "REAL" if label_int == 1 else "FAKE",
+                    "confidence": 1.0,
+                    "source": row.get("subject", "Dataset"),
+                    "published": row.get("date", "")
+                })
+    except Exception as e:
+        log.error(f"CSV Read error: {e}")
     return res
 
 def get_pipeline():
+    """Lazily load scikit-learn model."""
     global pipeline
     if pipeline is None and os.path.exists(MODEL_PATH):
         try:
             pipeline = joblib.load(MODEL_PATH)
-            log.info("ML Pipeline loaded ✅")
-            gc.collect() # Heavy object loaded, perform cleanup
+            log.info("ML Pipeline loaded into RAM ✅")
+            gc.collect()
         except Exception as e:
             log.error(f"Pipeline load failed: {e}")
     return pipeline
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-def translate_articles(articles: List[Dict], target_lang: str) -> List[Dict]:
-    if not target_lang or target_lang == "en":
-        return articles
-    try:
-        from deep_translator import GoogleTranslator
-        translator = GoogleTranslator(source='auto', target=target_lang)
-        for art in articles:
-            art["title"] = translator.translate(art["title"][:4999])
-            art["summary"] = translator.translate(art["summary"][:4999])
-    except Exception as e:
-        log.warning(f"Translation failed: {e}")
-    return articles
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route("/")
 def home():
-    return jsonify({"status": "online", "service": "TruthLens ML Service", "dataset_rows": dataset_meta["total_count"]})
+    return jsonify({
+        "status": "online", "service": "TruthLens ML Service",
+        "mode": "Nuclear (Pandas-free)", "dataset_rows": dataset_meta["total_count"]
+    })
 
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "indexed": dataset_meta["loaded"], "model": get_pipeline() is not None})
+    import psutil
+    process = psutil.Process(os.getpid())
+    ram_usage = process.memory_info().rss / 1024 / 1024
+    return jsonify({
+        "status": "ok", "ram_mb": round(ram_usage, 2),
+        "model": get_pipeline() is not None
+    })
 
 @app.route("/news")
 def get_news():
     offset = int(request.args.get("offset", 0))
-    limit = min(int(request.args.get("limit", 20)), 100)
+    limit = min(int(request.args.get("limit", 20)), 50)
     lang = request.args.get("lang", "en").lower()
-    articles = translate_articles(get_news_slice(offset, limit), lang)
+    
+    articles = get_news_slice(offset, limit)
+    # Note: Translation library is still kept for feature parity
+    if lang != "en":
+        try:
+            from deep_translator import GoogleTranslator
+            translator = GoogleTranslator(source='auto', target=lang)
+            for a in articles:
+                a["title"] = translator.translate(a["title"][:4999])
+                a["summary"] = translator.translate(a["summary"][:4999])
+        except: pass
     return jsonify({"success": True, "data": articles, "total": dataset_meta["total_count"]})
 
 @app.route("/news/digest")
 def get_digest():
-    limit = min(int(request.args.get("limit", 3)), 10)
-    # Return a few articles from the REAL section (starts at fake_count)
+    limit = min(int(request.args.get("limit", 3)), 5)
     ensure_dataset_indexed()
     articles = get_news_slice(dataset_meta["fake_count"], limit)
     return jsonify({"success": True, "data": articles})
@@ -219,19 +207,22 @@ def get_digest():
 @app.route("/news/search")
 def search_news():
     query = request.args.get("q", "").lower()
-    limit = min(int(request.args.get("limit", 10)), 50)
-    # Partial search in the first 1000 rows
-    pool = get_news_slice(0, 500) + get_news_slice(dataset_meta["fake_count"], 500)
-    results = [a for a in pool if query in a["title"].lower() or query in a["full_text"].lower()]
-    return jsonify({"success": True, "data": results[:limit]})
+    limit = min(int(request.args.get("limit", 5)), 10)
+    if not query: return jsonify({"success": True, "data": []})
+    
+    # Simple search in small fixed pool (1k rows)
+    articles = get_news_slice(0, 500) + get_news_slice(dataset_meta["fake_count"], 500)
+    res = [a for a in articles if query in a["title"].lower() or query in a["full_text"].lower()]
+    return jsonify({"success": True, "data": res[:limit]})
 
 @app.route("/predict", methods=["POST"])
 def predict():
     pipe = get_pipeline()
-    if not pipe: return jsonify({"success": False, "message": "Model offline"}), 503
+    if not pipe: return jsonify({"success": False, "message": "Model Offline"}), 503
     data = request.json or {}
     text = f"{data.get('title','')} {data.get('text','')}".strip()
     if not text: return jsonify({"success": False, "message": "No input"}), 400
+    
     proba = pipe.predict_proba([text])[0]
     is_real = proba[1] >= 0.5
     return jsonify({
@@ -243,7 +234,7 @@ def predict():
 def get_live_news():
     pipe = get_pipeline()
     section = request.args.get("section", "All")
-    limit = min(int(request.args.get("limit", 10)), 20)
+    limit = min(int(request.args.get("limit", 5)), 10)
     g_section = GUARDIAN_SECTIONS.get(section, "news")
     
     try:
@@ -256,8 +247,7 @@ def get_live_news():
         for i, it in enumerate(items):
             f = it.get("fields", {})
             title, body = f.get("headline", ""), f.get("bodyText", "")
-            label = "REAL"
-            conf = 1.0
+            label, conf = "REAL", 1.0
             if pipe:
                 p = pipe.predict_proba([f"{title} {body}"])[0]
                 label = "REAL" if p[1] >= 0.5 else "FAKE"
@@ -269,8 +259,8 @@ def get_live_news():
                 "published": it.get("webPublicationDate", ""), "is_live": True
             })
         return jsonify({"success": True, "data": articles})
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
+    except:
+        return jsonify({"success": False, "data": []}), 500
 
 @app.route("/api/bot/ask", methods=["POST"])
 def bot_ask():
@@ -280,8 +270,8 @@ def bot_ask():
         model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content(msg)
         return jsonify({"success": True, "reply": response.text})
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
+    except:
+        return jsonify({"success": False}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))

@@ -28,6 +28,5 @@ ENV PORT=5001
 EXPOSE 10000
 
 # Command to run the application with Gunicorn
-# Using 1 worker and multiple threads to minimize RAM usage on Render Free Tier
-# Added worker-tmp-dir to prevent disk-blocking crashes
-CMD gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 4 --worker-tmp-dir /dev/shm --timeout 120 --preload app:app
+# NUCLEAR FIX: No --preload, 1 worker, 4 threads to minimize RAM and start-up peak
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 4 --worker-tmp-dir /dev/shm --timeout 120 app:app
