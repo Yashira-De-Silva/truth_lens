@@ -97,16 +97,17 @@ def ensure_dataset_indexed():
         true = next((f for f in csv_files if "true" in os.path.basename(f).lower()), None)
 
         if fake and true:
-            # Hard-cap counts to prevent large indexing memory usage
-            f_count = min(sum(1 for _ in open(fake, encoding="utf-8", errors="ignore")) - 1, MAX_ROWS_PER_TYPE)
-            t_count = min(sum(1 for _ in open(true, encoding="utf-8", errors="ignore")) - 1, MAX_ROWS_PER_TYPE)
+            # Emergency Speed Fix: Skip line counting (which spikes RAM)
+            # Just assume we take MAX_ROWS_PER_TYPE for each
+            f_count = MAX_ROWS_PER_TYPE
+            t_count = MAX_ROWS_PER_TYPE
             
             dataset_meta.update({
                 "fake_csv": fake, "true_csv": true,
                 "fake_count": f_count, "true_count": t_count,
                 "total_count": f_count + t_count, "loaded": True
             })
-            log.info(f"Memory Guard Active: Capped FAKE at {f_count}, TRUE at {t_count}")
+            log.info(f"Speed Fix Active: Assume {f_count} FAKE, {t_count} TRUE")
             gc.collect() # Immediate cleanup
         else:
             log.error("Could not find dataset files.")
