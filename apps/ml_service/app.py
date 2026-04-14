@@ -1,28 +1,21 @@
 """
-TruthLens — Python ML Service (Hyper-Lazy Mode)
+TruthLens — Python ML Service (Logic-Only Mode)
 ==============================================
-Hardened for 512MB RAM using 'Import Hijacking' and native CSV streaming.
-Startup RAM targeted at <80MB.
+Offloads all data-handling to TiDB for 100% stability on 512MB RAM.
+This service now only handles ML Predictions and AI Chat.
 
 Endpoints:
   GET  /health              — Health check + RAM stats
-  GET  /news                — Lazy-indexed native CSV streaming
-  GET  /news/live           — Guardian API live news + Lazy ML labeling
-  GET  /news/digest         — Top articles
-  GET  /news/search         — Keyword search
   POST /predict             — Lazy-loaded ML classification
   POST /api/bot/ask         — AI Chatbot
+  GET  /news/live           — Guardian API live news + ML labeling
 """
 
 import os
-import re
-import csv
 import gc
-import signal
 import logging
-import subprocess
-from itertools import islice
-from typing import Optional, List, Dict, Any
+import signal
+from typing import Optional, Any
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -43,119 +36,21 @@ GUARDIAN_API_KEY = os.environ.get("GUARDIAN_API_KEY", "c6d32650-a403-4157-8569-4
 GUARDIAN_BASE    = "https://content.guardianapis.com"
 GEMINI_API_KEY   = os.environ.get("GEMINI_API_KEY", "AIzaSyAYZMNNVcB6BLIgVIQYTOhJ-xqT5qXVimc")
 
-# Memory Guard: Cap dataset at 10k real / 10k fake
-MAX_ROWS_PER_TYPE = 10000 
-
-GUARDIAN_SECTIONS = {
-    "All": "news", "Politics": "politics", "Business": "business", "Technology": "technology",
-    "Science": "science", "Health": "society", "Sports": "sport", "Entertainment": "film",
-}
-
 # ── Global State ──────────────────────────────────────────────────────────────
 pipeline: Optional[Any] = None
-dataset_meta = {
-    "fake_csv": None, "true_csv": None,
-    "fake_count": 0, "true_count": 0,
-    "total_count": 0, "loaded": False
-}
-
-# ── Native CSV Streaming Logic (Hyper-Lazy) ──────────────────────────────────
-
-def ensure_dataset_indexed():
-    """Locate dataset on-demand. Only runs when user hits /news."""
-    global dataset_meta
-    if dataset_meta["loaded"]: return
-
-    # HYPER-LAZY: Only import kagglehub when we actually need to download
-    log.info("Downloading/Indexing dataset (Lazy) …")
-    try:
-        import kagglehub
-        path = kagglehub.dataset_download("emineyetm/fake-news-detection-datasets")
-        for root, _, files in os.walk(path):
-            for f in files:
-                if "fake" in f.lower() and f.endswith(".csv"):
-                    dataset_meta["fake_csv"] = os.path.join(root, f)
-                if "true" in f.lower() and f.endswith(".csv"):
-                    dataset_meta["true_csv"] = os.path.join(root, f)
-
-        if dataset_meta["fake_csv"] and dataset_meta["true_csv"]:
-            dataset_meta.update({
-                "fake_count": MAX_ROWS_PER_TYPE,
-                "true_count": MAX_ROWS_PER_TYPE,
-                "total_count": MAX_ROWS_PER_TYPE * 2,
-                "loaded": True
-            })
-            log.info("Dataset indexed natively. ✅")
-        gc.collect()
-    except Exception as e:
-        log.error(f"Dataset lazy indexing failed: {e}")
-
-def get_news_slice(offset: int, limit: int) -> List[Dict]:
-    """Fetch rows using native Python CSV DictReader (Zero Pandas)."""
-    ensure_dataset_indexed()
-    articles = []
-    
-    f_total = dataset_meta["fake_count"]
-    t_total = dataset_meta["true_count"]
-
-    curr_off = offset
-    curr_lim = limit
-
-    # Part 1: Fake News
-    if curr_off < f_total:
-        take = min(curr_lim, f_total - curr_off)
-        articles.extend(_read_csv_rows(dataset_meta["fake_csv"], curr_off, take, 0))
-        curr_lim -= take
-        curr_off = 0
-    else:
-        curr_off -= f_total
-
-    # Part 2: True News
-    if curr_lim > 0 and curr_off < t_total:
-        take = min(curr_lim, t_total - curr_off)
-        articles.extend(_read_csv_rows(dataset_meta["true_csv"], curr_off, take, 1))
-
-    gc.collect()
-    return articles
-
-def _read_csv_rows(path: str, offset: int, limit: int, label_int: int) -> List[Dict]:
-    """Iterate through CSV one row at a time. High memory efficiency."""
-    res = []
-    if not path or not os.path.exists(path): return res
-    try:
-        with open(path, mode='r', encoding='utf-8', errors='ignore') as f:
-            reader = csv.DictReader(f)
-            rows = islice(reader, offset, offset + limit)
-            for i, row in enumerate(rows):
-                title = row.get("title", "No Title")
-                text = row.get("text", "")
-                res.append({
-                    "id": f"{label_int}_{offset + i}",
-                    "title": str(title)[:200],
-                    "summary": str(text)[:300] + ("…" if len(text) > 300 else ""),
-                    "full_text": text,
-                    "label": "REAL" if label_int == 1 else "FAKE",
-                    "confidence": 1.0,
-                    "source": row.get("subject", "Dataset"),
-                    "published": row.get("date", "")
-                })
-    except Exception as e:
-        log.error(f"CSV Read error: {e}")
-    return res
 
 def get_pipeline():
     """Hyper-Lazy model loading. Only loads when someone hits /predict."""
     global pipeline
     if pipeline is None and os.path.exists(MODEL_PATH):
         try:
-            # HYPER-LAZY: Only import heavy ML libraries when model loading starts
-            log.info("Importing ML libraries and loading model (Hyper-Lazy) …")
+            log.info("Importing ML libraries and loading model…")
             import joblib
             pipeline = joblib.load(MODEL_PATH)
             log.info("ML Pipeline loaded into RAM ✅")
             gc.collect()
         except Exception as e:
-            log.error(f"Hyper-Lazy Pipeline load failed: {e}")
+            log.error(f"Pipeline load failed: {e}")
     return pipeline
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -163,8 +58,9 @@ def get_pipeline():
 @app.route("/")
 def home():
     return jsonify({
-        "status": "online", "service": "TruthLens ML Service",
-        "mode": "Hyper-Lazy (Startup optimized)", "dataset_rows": dataset_meta["total_count"]
+        "status": "online", 
+        "service": "TruthLens ML Logic Service",
+        "description": "ML Predictions & AI Chat (Data-Free Mode)"
     })
 
 @app.route("/health")
@@ -176,45 +72,10 @@ def health():
     except:
         ram_usage = 0
     return jsonify({
-        "status": "ok", "ram_mb": round(ram_usage, 2),
+        "status": "ok", 
+        "ram_mb": round(ram_usage, 2),
         "model_in_ram": pipeline is not None
     })
-
-@app.route("/news")
-def get_news():
-    offset = int(request.args.get("offset", 0))
-    limit = min(int(request.args.get("limit", 20)), 50)
-    lang = request.args.get("lang", "en").lower()
-    
-    articles = get_news_slice(offset, limit)
-    
-    if lang != "en":
-        try:
-            from deep_translator import GoogleTranslator
-            translator = GoogleTranslator(source='auto', target=lang)
-            for a in articles:
-                a["title"] = translator.translate(a["title"][:4999])
-                a["summary"] = translator.translate(a["summary"][:4999])
-        except: pass
-    return jsonify({"success": True, "data": articles, "total": dataset_meta["total_count"]})
-
-@app.route("/news/digest")
-def get_digest():
-    limit = min(int(request.args.get("limit", 3)), 5)
-    ensure_dataset_indexed()
-    articles = get_news_slice(dataset_meta["fake_count"], limit)
-    return jsonify({"success": True, "data": articles})
-
-@app.route("/news/search")
-def search_news():
-    query = request.args.get("q", "").lower()
-    limit = min(int(request.args.get("limit", 5)), 10)
-    if not query: return jsonify({"success": True, "data": []})
-    
-    # Search in small fixed pool
-    articles = get_news_slice(0, 500) + get_news_slice(dataset_meta["fake_count"], 500)
-    res = [a for a in articles if query in a["title"].lower() or query in a["full_text"].lower()]
-    return jsonify({"success": True, "data": res[:limit]})
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -236,12 +97,11 @@ def get_live_news():
     pipe = get_pipeline()
     section = request.args.get("section", "All")
     limit = min(int(request.args.get("limit", 5)), 10)
-    g_section = GUARDIAN_SECTIONS.get(section, "news")
     
     import requests as http_requests
     try:
         r = http_requests.get(f"{GUARDIAN_BASE}/search", params={
-            "api-key": GUARDIAN_API_KEY, "section": g_section,
+            "api-key": GUARDIAN_API_KEY, "section": section.lower(),
             "show-fields": "headline,trailText,bodyText", "page-size": limit
         }, timeout=10)
         items = r.json().get("response", {}).get("results", [])

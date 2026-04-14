@@ -5,6 +5,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ChessController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FollowController;
+use App\Http\Controllers\NewsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -63,6 +64,11 @@ Route::get('/health-check', function () {
 });
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
+
+// ── News Feed (Public - Offloaded from ML Service) ─────────────────────────
+Route::get('/news',        [NewsController::class, 'index']);
+Route::get('/news/digest', [NewsController::class, 'digest']);
+Route::get('/news/search', [NewsController::class, 'search']);
 
 // ── Protected routes ──────────────────────────────────────────────────────
 Route::middleware('auth:api')->group(function () {

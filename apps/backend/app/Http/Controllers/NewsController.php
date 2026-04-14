@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\NewsArticle;
+use Illuminate\Http\Request;
+
+class NewsController extends Controller
+{
+    /**
+     * Get paginated news articles from TiDB.
+     */
+    public function index(Request $request)
+    {
+        $limit = $request->query('limit', 20);
+        $isFake = $request->query('is_fake');
+
+        $query = NewsArticle::query();
+
+        if ($isFake !== null) {
+            $query->where('is_fake', (bool)$isFake);
+        }
+
+        $articles = $query->orderBy('created_at', 'desc')->paginate($limit);
+
+        // Map to the format the Flutter app expects
+        $formatted = collect($articles->items())->map(function ($article) {
+            return [
+                'id' => $article->id,
+                'title' => $article->title,
+                'summary' => mb_substr($article->text, 0, 300) . (strlen($article->text) > 300 ? '...' : ''),
+                'full_text' => $article->text,
+                'label' => $article->is_fake ? 'FAKE' : 'REAL',
+                'confidence' => 1.0,
+                'source' => $article->subject ?? 'Dataset',
+                'published' => $article->date,
+            ];
+        });
+
+        return response()->json([
+            'success' => True,
+            'data' => $formatted,
+            'total' => $articles->total(),
+            'current_page' => $articles->currentPage(),
+            'last_page' => $articles->lastPage(),
+        ]);
+    }
+
+    /**
+     * Fetch a digest of news articles.
+     */
+    public function digest()
+    {
+        $articles = NewsArticle::inRandomOrder()->limit(3)->get();
+        
+        $formatted = $articles->map(function ($article) {
+            return [
+                'id' => $article->id,
+                'title' => $article->title,
+                'summary' => mb_substr($article->text, 0, 300) . '...',
+                'full_text' => $article->text,
+                'label' => $article->is_fake ? 'FAKE' : 'REAL',
+                'confidence' => 1.0,
+            ];
+        });
+
+        return response()->json(['success' => True, 'data' => $formatted]);
+    }
+
+    /**
+     * Search news articles by keyword.
+     */
+    public function search(Request $request)
+    {
+        $q = $request->query('q', '');
+        if (empty($q)) {
+            return response()->json(['success' => True, 'data' => []]);
+        }
+
+        $articles = NewsArticle::where('title', 'like', "%$q%")
+            ->orWhere('text', 'like', "%$q%")
+            ->limit(10)
+            ->get();
+
+        $formatted = $articles->map(function ($article) {
+            return [
+                'id' => $article->id,
+                'title' => $article->title,
+                'summary' => mb_substr($article->text, 0, 300) . '...',
+                'label' => $article->is_fake ? 'FAKE' : 'REAL',
+                'confidence' => 1.0,
+            ];
+        });
+
+        return response()->json(['success' => True, 'data' => $formatted]);
+    }
+}
