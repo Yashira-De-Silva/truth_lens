@@ -28,5 +28,5 @@ ENV PORT=5001
 EXPOSE 10000
 
 # Command to run the application with Gunicorn
-# NUCLEAR FIX: No --preload, 1 worker, 4 threads to minimize RAM and start-up peak
-CMD gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 4 --worker-tmp-dir /dev/shm --timeout 120 app:app
+# HYPER-LAZY FIX: 1 worker, 1 thread, NO preload to ensure <100MB startup RAM
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 1 --worker-tmp-dir /dev/shm --timeout 150 app:app
