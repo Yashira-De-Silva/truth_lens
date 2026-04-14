@@ -28,6 +28,10 @@ services:
         sync: false
       - key: DB_PASSWORD
         sync: false
+      - key: LOG_CHANNEL
+        value: errorlog
+      - key: MYSQL_ATTR_SSL_CA
+        value: /etc/ssl/certs/ca-certificates.crt
       - key: JWT_SECRET
         generateValue: true
 
