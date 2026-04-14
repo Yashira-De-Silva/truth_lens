@@ -17,7 +17,7 @@ Endpoints:
 import os
 import re
 import signal
-import pickle
+import joblib
 import random
 import logging
 import subprocess
@@ -158,8 +158,7 @@ def get_pipeline():
     global pipeline
     if pipeline is None and os.path.exists(MODEL_PATH):
         try:
-            with open(MODEL_PATH, "rb") as f:
-                pipeline = pickle.load(f)
+            pipeline = joblib.load(MODEL_PATH)
             log.info("ML Pipeline loaded ✅")
         except Exception as e:
             log.error(f"Pipeline load failed: {e}")

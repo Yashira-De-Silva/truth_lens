@@ -28,4 +28,5 @@ ENV PORT=5001
 EXPOSE 10000
 
 # Command to run the application with Gunicorn
-CMD gunicorn --bind 0.0.0.0:$PORT --timeout 120 app:app
+# Using 1 worker and multiple threads to minimize RAM usage on Render Free Tier
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120 --preload app:app
