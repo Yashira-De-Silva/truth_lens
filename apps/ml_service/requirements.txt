@@ -5,3 +5,4 @@ pandas
 scikit-learn
 google-generativeai
 deep-translator
+gunicorn

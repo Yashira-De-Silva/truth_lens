@@ -24,8 +24,8 @@ COPY . .
 ENV PYTHONUNBUFFERED=1
 ENV PORT=5001
 
-# Expose the port
-EXPOSE 5001
+# Expose the port (Render will override this, but 10000 is default)
+EXPOSE 10000
 
-# Command to run the application
-CMD ["python", "app.py"]
+# Command to run the application with Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:10000", "--timeout", "120", "app:app"]

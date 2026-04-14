@@ -321,6 +321,17 @@ def translate_articles(articles: list, target_lang: str) -> list:
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
+@app.route("/")
+def home():
+    """Root route for production landing/health visualization"""
+    return jsonify({
+        "status": "online",
+        "service": "TruthLens ML Service",
+        "version": "1.0.0",
+        "endpoints": ["/news", "/news/live", "/predict", "/health"]
+    })
+
+
 @app.route("/health")
 def health():
     return jsonify({"status": "ok", "model_loaded": pipeline is not None})
