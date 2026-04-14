@@ -14,6 +14,7 @@ Endpoints:
   POST /api/bot/ask         — AI Chatbot with ML context
 """
 
+import gc
 import os
 import re
 import signal
@@ -49,6 +50,9 @@ GEMINI_API_KEY   = os.environ.get("GEMINI_API_KEY", "AIzaSyAYZMNNVcB6BLIgVIQYTOh
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
+
+# Memory Guard: Limit the dataset size to keep RAM under 400MB
+MAX_ROWS_PER_TYPE = 10000 
 
 GUARDIAN_SECTIONS = {
     "All":           "news",
@@ -93,14 +97,17 @@ def ensure_dataset_indexed():
         true = next((f for f in csv_files if "true" in os.path.basename(f).lower()), None)
 
         if fake and true:
-            f_count = sum(1 for _ in open(fake, encoding="utf-8", errors="ignore")) - 1
-            t_count = sum(1 for _ in open(true, encoding="utf-8", errors="ignore")) - 1
+            # Hard-cap counts to prevent large indexing memory usage
+            f_count = min(sum(1 for _ in open(fake, encoding="utf-8", errors="ignore")) - 1, MAX_ROWS_PER_TYPE)
+            t_count = min(sum(1 for _ in open(true, encoding="utf-8", errors="ignore")) - 1, MAX_ROWS_PER_TYPE)
+            
             dataset_meta.update({
                 "fake_csv": fake, "true_csv": true,
                 "fake_count": f_count, "true_count": t_count,
                 "total_count": f_count + t_count, "loaded": True
             })
-            log.info(f"Dataset indexed: {f_count} FAKE, {t_count} TRUE. Total: {f_count + t_count}")
+            log.info(f"Memory Guard Active: Capped FAKE at {f_count}, TRUE at {t_count}")
+            gc.collect() # Immediate cleanup
         else:
             log.error("Could not find dataset files.")
     except Exception as e:
@@ -116,10 +123,11 @@ def get_news_slice(offset: int, limit: int) -> List[Dict]:
     f_count = dataset_meta["fake_count"]
     t_count = dataset_meta["true_count"]
 
-    # Read from Fake.csv
+    # Read from Fake.csv with optimization
     if curr_offset < f_count:
         fetch_f = min(curr_limit, f_count - curr_offset)
-        df_f = pd.read_csv(dataset_meta["fake_csv"], skiprows=range(1, curr_offset + 1), nrows=fetch_f)
+        # Usecols and engine='c' for speed and memory efficiency
+        df_f = pd.read_csv(dataset_meta["fake_csv"], skiprows=range(1, curr_offset + 1), nrows=fetch_f, usecols=["title", "text", "date"])
         df_f["label"] = 0
         articles.extend(_df_to_articles(df_f, curr_offset))
         curr_limit -= fetch_f
@@ -127,13 +135,14 @@ def get_news_slice(offset: int, limit: int) -> List[Dict]:
     else:
         curr_offset -= f_count
 
-    # Read from True.csv
+    # Read from True.csv with optimization
     if curr_limit > 0 and curr_offset < t_count:
         fetch_t = min(curr_limit, t_count - curr_offset)
-        df_t = pd.read_csv(dataset_meta["true_csv"], skiprows=range(1, curr_offset + 1), nrows=fetch_t)
+        df_t = pd.read_csv(dataset_meta["true_csv"], skiprows=range(1, curr_offset + 1), nrows=fetch_t, usecols=["title", "text", "date"])
         df_t["label"] = 1
         articles.extend(_df_to_articles(df_t, f_count + curr_offset))
-
+    
+    gc.collect() # Cleanup after data fetch
     return articles
 
 def _df_to_articles(df: pd.DataFrame, start_id: int) -> List[Dict]:
@@ -160,6 +169,7 @@ def get_pipeline():
         try:
             pipeline = joblib.load(MODEL_PATH)
             log.info("ML Pipeline loaded ✅")
+            gc.collect() # Heavy object loaded, perform cleanup
         except Exception as e:
             log.error(f"Pipeline load failed: {e}")
     return pipeline
