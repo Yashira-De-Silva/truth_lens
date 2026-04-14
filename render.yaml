@@ -1,0 +1,47 @@
+# Render Blueprint for TruthLens
+services:
+  # 1. Laravel Backend
+  - type: web
+    name: truth-lens-backend
+    env: docker
+    region: ohio # Change as needed
+    dockerContext: apps/backend
+    dockerfilePath: Dockerfile
+    plan: free
+    healthCheckPath: /api/me # Or another public endpoint
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false # User must set this or generate it
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+
+  # 2. Python ML Service
+  - type: web
+    name: truth-lens-ml-service
+    env: docker
+    region: ohio
+    dockerContext: apps/ml_service
+    dockerfilePath: Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GUARDIAN_API_KEY
+        sync: false

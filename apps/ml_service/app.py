@@ -279,11 +279,10 @@ def _safe_date(val) -> "str | None":
 # ── API Startup ───────────────────────────────────────────────────────────────
 
 # Pre-load on startup (avoids slow first request)
-try:
     _pipe, _df = get_pipeline_and_data()
     log.info("ML service ready ✅")
 except Exception as exc:
-    log.error(f"Failed to initialise ML service: {exc}")
+    log.error(f"Failed to initializing ML service: {exc}")
     _pipe, _df = None, None
 
 
@@ -638,5 +637,7 @@ def _free_port(port: int) -> None:
 
 
 if __name__ == "__main__":
-    _free_port(5001)
-    app.run(host="0.0.0.0", port=5001, debug=False)
+    # Use the port assigned by the hosting provider (Render, Koyeb, etc.)
+    port = int(os.environ.get("PORT", 5001))
+    log.info(f"Starting ML Service on port {port}...")
+    app.run(host="0.0.0.0", port=port, debug=False)
