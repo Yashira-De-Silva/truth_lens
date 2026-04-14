@@ -23,31 +23,14 @@ class ApiConfig {
       return _cached!;
     }
 
-    final discovered = await _discoverHost(port: _port);
-    if (discovered != null) {
-      _cached = 'http://$discovered:$_port/api';
-      return _cached!;
-    }
-
+    // Always use Cloud URL as default now
     _cached = kBaseUrl;
     return _cached!;
   }
   static Future<String> get mlServiceUrl async {
     if (_mlCached != null) return _mlCached!;
-    final knownIp = _extractIp(kMlServiceUrl);
-    if (knownIp != null && await _isReachable(knownIp, _mlPort)) {
-      _mlCached = 'http://$knownIp:$_mlPort';
-      return _mlCached!;
-    }
-
-    // Auto-discover on port 5001
-    final discovered = await _discoverHost(port: _mlPort);
-    if (discovered != null) {
-      _mlCached = 'http://$discovered:$_mlPort';
-      return _mlCached!;
-    }
-
-    // Fall back to compile-time constant
+    
+    // Always use Cloud URL as default now
     _mlCached = kMlServiceUrl;
     return _mlCached!;
   }
