@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('white_player_id');
             $table->unsignedBigInteger('black_player_id');
-            $table->text('fen')->default('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+            $table->text('fen');
             $table->json('moves')->nullable();          // array of "e2e4" notation
             $table->enum('status', ['waiting', 'active', 'finished', 'declined'])->default('waiting');
             $table->unsignedBigInteger('winner_id')->nullable();
