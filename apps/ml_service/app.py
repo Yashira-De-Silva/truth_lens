@@ -35,7 +35,7 @@ MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
 # ── Config ────────────────────────────────────────────────────────────────────
 GUARDIAN_API_KEY = os.environ.get("GUARDIAN_API_KEY", "c6d32650-a403-4157-8569-4e39624a022d")
 GUARDIAN_BASE    = "https://content.guardianapis.com"
-GEMINI_API_KEY   = os.environ.get("GEMINI_API_KEY", "AIzaSyAYZMNNVcB6BLIgVIQYTOhJ-xqT5qXVimc")
+GEMINI_API_KEY   = os.environ.get("GEMINI_API_KEY", "AIzaSyBLj3XLZMQSqSDAi0gpb1tWu5avKFTYowk")
 
 # ── Global State ──────────────────────────────────────────────────────────────
 pipeline: Optional[Any] = None
@@ -169,12 +169,21 @@ def bot_ask():
     if not msg: return jsonify({"success": False}), 400
     try:
         import google.generativeai as genai
+        from datetime import datetime
         if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
+        system_prompt = (
+            f"You are TruthBot, an AI assistant inside the TruthLens app — a news verification platform. "
+            f"The current date and time is: {now}. "
+            f"You help users verify news, fact-check claims, and provide accurate, up-to-date information. "
+            f"Keep responses concise and helpful."
+        )
+        model = genai.GenerativeModel("gemini-2.5-flash", system_instruction=system_prompt)
         response = model.generate_content(msg)
         return jsonify({"success": True, "reply": response.text})
-    except:
-        return jsonify({"success": False}), 500
+    except Exception as e:
+        log.error(f"Bot ask error: {e}", exc_info=True)
+        return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
