@@ -8,13 +8,13 @@ class NewsApiService {
   final String lang;
   NewsApiService({this.lang = 'en'});
 
-  /// Fetch N articles from the ML service.
+  /// Fetch N articles from the Laravel backend (TiDB Cloud).
   Future<List<Article>> fetchNews({int limit = 20, int offset = 0}) async {
-    final baseUrl = await ApiConfig.mlServiceUrl;
+    final baseUrl = await ApiConfig.baseUrl; // Use Laravel
     final uri = Uri.parse('$baseUrl/news?limit=$limit&offset=$offset&lang=$lang');
     final res = await http.get(uri).timeout(const Duration(seconds: 15));
     if (res.statusCode != 200)
-      throw Exception('ML service error: ${res.statusCode}');
+      throw Exception('Backend error: ${res.statusCode}');
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     final data = body['data'] as List<dynamic>;
     return data
@@ -22,13 +22,13 @@ class NewsApiService {
         .toList();
   }
 
-  /// Fetch top verified (REAL) articles for the Digest screen.
+  /// Fetch top verified (REAL) articles for the Digest screen from Laravel.
   Future<List<Article>> fetchDigest({int limit = 3}) async {
-    final baseUrl = await ApiConfig.mlServiceUrl;
+    final baseUrl = await ApiConfig.baseUrl; // Use Laravel
     final uri = Uri.parse('$baseUrl/news/digest?limit=$limit&lang=$lang');
     final res = await http.get(uri).timeout(const Duration(seconds: 15));
     if (res.statusCode != 200)
-      throw Exception('ML service error: ${res.statusCode}');
+      throw Exception('Backend error: ${res.statusCode}');
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     final data = body['data'] as List<dynamic>;
     return data
@@ -36,20 +36,20 @@ class NewsApiService {
         .toList();
   }
 
-  /// Search articles by keyword and/or category.
+  /// Search articles by keyword from Laravel.
   Future<List<Article>> searchNews({
     String query = '',
     String category = 'All',
     int limit = 20,
   }) async {
-    final baseUrl = await ApiConfig.mlServiceUrl;
+    final baseUrl = await ApiConfig.baseUrl; // Use Laravel
     final uri = Uri.parse(
       '$baseUrl/news/search?q=${Uri.encodeQueryComponent(query)}'
       '&category=${Uri.encodeQueryComponent(category)}&limit=$limit&lang=$lang',
     );
     final res = await http.get(uri).timeout(const Duration(seconds: 15));
     if (res.statusCode != 200)
-      throw Exception('ML service error: ${res.statusCode}');
+      throw Exception('Backend error: ${res.statusCode}');
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     final data = body['data'] as List<dynamic>;
     return data
@@ -68,7 +68,8 @@ class NewsApiService {
       '$baseUrl/news/live?limit=$limit'
       '&section=${Uri.encodeQueryComponent(section)}&lang=$lang',
     );
-    final res = await http.get(uri).timeout(const Duration(seconds: 20));
+    // Render free tier cold-starts can take 50+ seconds
+    final res = await http.get(uri).timeout(const Duration(seconds: 60));
     if (res.statusCode == 503) return []; // Guardian key not set yet
     if (res.statusCode != 200)
       throw Exception('ML service error: ${res.statusCode}');

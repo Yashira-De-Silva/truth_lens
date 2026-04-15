@@ -1,642 +1,266 @@
 """
-TruthLens — Python ML Service
-==============================
-Downloads the Kaggle fake-news dataset, trains a TF-IDF + LR classifier,
-and exposes a REST API for the Flutter app.
+TruthLens — Python ML Service (Logic-Only Mode)
+==============================================
+Offloads all data-handling to TiDB for 100% stability on 512MB RAM.
+This service now only handles ML Predictions and AI Chat.
 
 Endpoints:
-  GET  /health                              — health check
-  GET  /news?limit=20&offset=0             — paginated dataset articles
-  GET  /news/live?limit=10&section=...     — live Guardian API news + ML label
-  GET  /news/digest?limit=3                — top REAL-confidence articles
-  GET  /news/search?q=...&category=...     — keyword + category filter
-  POST /predict  {title, text}             — classify a custom article
-
-Run:
-  cd apps/ml_service
-  pip3 install -r requirements.txt
-  python3 app.py
+  GET  /health              — Health check + RAM stats
+  POST /predict             — Lazy-loaded ML classification
+  POST /api/bot/ask         — AI Chatbot
+  GET  /news/live           — Guardian API live news + ML labeling
 """
 
 import os
-import signal
-import pickle
-import random
+import gc
 import logging
-import subprocess
-from typing import Optional, Tuple
+import signal
+from typing import Optional, Any
 
-import kagglehub
-import pandas as pd
-import re
-import requests as http_requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-import google.generativeai as genai
+import requests as http_requests
 
+# Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)  # Allow Flutter app to call from any origin
+CORS(app)
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
 
-# ── Guardian API config ───────────────────────────────────────────────────────
-# Get a free key at: https://open-platform.theguardian.com/access
-# Then set it here OR export GUARDIAN_API_KEY=your_key before running.
+# ── Config ────────────────────────────────────────────────────────────────────
 GUARDIAN_API_KEY = os.environ.get("GUARDIAN_API_KEY", "c6d32650-a403-4157-8569-4e39624a022d")
 GUARDIAN_BASE    = "https://content.guardianapis.com"
+GEMINI_API_KEY   = os.environ.get("GEMINI_API_KEY", "AIzaSyBLj3XLZMQSqSDAi0gpb1tWu5avKFTYowk")
 
-# ── Gemini API config ─────────────────────────────────────────────────────────
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyAYZMNNVcB6BLIgVIQYTOhJ-xqT5qXVimc")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+# ── Global State ──────────────────────────────────────────────────────────────
+pipeline: Optional[Any] = None
 
-# ── Guardian section → category mapping ──────────────────────────────────────
-GUARDIAN_SECTIONS = {
-    "All":           "news",
-    "Politics":      "politics",
-    "Business":      "business",
-    "Technology":    "technology",
-    "Science":       "science",
-    "Health":        "society",
-    "Sports":        "sport",
-    "Entertainment": "film",
-}
-
-# ── Global state ──────────────────────────────────────────────────────────────
-pipeline: Optional[Pipeline] = None
-articles_df: Optional[pd.DataFrame] = None  # full dataset kept in memory
-
-
-# ── Dataset loading ───────────────────────────────────────────────────────────
-
-def load_dataset() -> pd.DataFrame:
-    """
-    Download (or use cached) the Kaggle dataset and return a clean DataFrame.
-    Handles two dataset formats:
-      1. Two-file format: Fake.csv + True.csv (no label column, add 0 and 1)
-      2. Single-file format: with a 'label' column already present
-    """
-    log.info("Downloading / loading dataset via kagglehub …")
-    dataset_path = kagglehub.dataset_download(
-        "emineyetm/fake-news-detection-datasets"
-    )
-    log.info(f"Dataset path: {dataset_path}")
-
-    # Collect all CSV files in the download directory
-    csv_files = []
-    for root, _dirs, files in os.walk(dataset_path):
-        for fname in files:
-            if fname.lower().endswith(".csv"):
-                csv_files.append(os.path.join(root, fname))
-
-    if not csv_files:
-        raise FileNotFoundError(f"No CSV files found in {dataset_path}")
-
-    log.info(f"CSV files found: {csv_files}")
-
-    # ── Detect Two-file Format (Fake.csv + True.csv) ──────────────────────────
-    fake_csv = next((f for f in csv_files if "fake" in os.path.basename(f).lower()), None)
-    true_csv = next((f for f in csv_files if "true" in os.path.basename(f).lower()), None)
-
-    if fake_csv and true_csv:
-        log.info(f"Using two-file format: Fake={fake_csv} | True={true_csv}")
-
-        df_fake = pd.read_csv(fake_csv)
-        df_fake.columns = [c.strip().lower() for c in df_fake.columns]
-        df_fake["label"] = 0  # 0 = FAKE
-
-        df_true = pd.read_csv(true_csv)
-        df_true.columns = [c.strip().lower() for c in df_true.columns]
-        df_true["label"] = 1  # 1 = REAL
-
-        df = pd.concat([df_fake, df_true], ignore_index=True)
-    else:
-        # ── Single-file Format ─────────────────────────────────────────────────
-        csv_path = max(csv_files, key=os.path.getsize)
-        log.info(f"Using single-file format: {csv_path}")
-        df = pd.read_csv(csv_path)
-        df.columns = [c.strip().lower() for c in df.columns]
-
-        if "label" not in df.columns:
-            raise ValueError(f"Expected a 'label' column; found: {list(df.columns)}")
-
-        # Coerce label to int (0 = FAKE, 1 = REAL)
-        if df["label"].dtype == object:
-            df["label"] = df["label"].str.strip().str.upper().map(
-                {"FAKE": 0, "REAL": 1, "0": 0, "1": 1}
-            )
-        df["label"] = pd.to_numeric(df["label"], errors="coerce")
-
-    df = df.dropna(subset=["label"])
-    df["label"] = df["label"].astype(int)
-
-    # ── Handle title/text columns ────────────────────────────────────────────
-    if "title" not in df.columns:
-        df["title"] = ""
-    if "text" not in df.columns:
-        if "body" in df.columns:
-            df["text"] = df["body"]
-        else:
-            df["text"] = ""
-
-    # ── Combine text for classification ──────────────────────────────────────
-    df["combined"] = (
-        df["title"].fillna("").astype(str)
-        + " "
-        + df["text"].fillna("").astype(str)
-    ).str.strip()
-
-    # Keep only rows with meaningful text
-    df = df[df["combined"].str.len() > 20].copy()
-    df = df.reset_index(drop=True)
-
-    # Add a 'source' column if not present
-    if "source" not in df.columns:
-        sources = [
-            "Reuters", "BBC", "CNN", "AP News", "The Guardian",
-            "NPR", "Al Jazeera", "Bloomberg", "Associated Press", "Fox News",
-        ]
-        df["source"] = [sources[i % len(sources)] for i in range(len(df))]
-
-    log.info(
-        f"Dataset ready: {len(df)} rows | "
-        f"FAKE={(df['label']==0).sum()} | REAL={(df['label']==1).sum()}"
-    )
-    return df
-
-
-# ── Model training ────────────────────────────────────────────────────────────
-
-def train_model(df: pd.DataFrame) -> Pipeline:
-    log.info("Training TF-IDF + Logistic Regression model …")
-    X = df["combined"]
-    y = df["label"]
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
-
-    pipe = Pipeline([
-        ("tfidf", TfidfVectorizer(
-            max_features=50_000,
-            ngram_range=(1, 2),
-            min_df=2,
-            sublinear_tf=True,
-        )),
-        ("clf", LogisticRegression(
-            C=5.0,
-            max_iter=1000,
-            solver="lbfgs",
-            n_jobs=-1,
-        )),
-    ])
-
-    pipe.fit(X_train, y_train)
-    accuracy = pipe.score(X_test, y_test)
-    log.info(f"Test accuracy: {accuracy:.4f}")
-    return pipe
-
-
-def get_pipeline_and_data() -> Tuple[Pipeline, pd.DataFrame]:
-    """Load from disk if available; otherwise download + train."""
-    global pipeline, articles_df
-
-    if pipeline is not None and articles_df is not None:
-        return pipeline, articles_df
-
-    # Always load the dataset (we need articles to serve)
-    df = load_dataset()
-    articles_df = df
-
-    if os.path.exists(MODEL_PATH):
-        log.info(f"Loading saved model from {MODEL_PATH}")
-        with open(MODEL_PATH, "rb") as f:
-            pipeline = pickle.load(f)
-    else:
-        pipeline = train_model(df)
-        with open(MODEL_PATH, "wb") as f:
-            pickle.dump(pipeline, f)
-        log.info(f"Model saved to {MODEL_PATH}")
-
-    return pipeline, articles_df
-
-
-# ── Article serialisation ─────────────────────────────────────────────────────
-
-def row_to_article(pipe: Pipeline, idx: int, row: pd.Series) -> dict:
-    """Convert a DataFrame row to the API article format."""
-    combined = str(row.get("combined", ""))
-    proba = pipe.predict_proba([combined])[0]  # [P(FAKE), P(REAL)]
-    real_prob = float(proba[1])
-    fake_prob = float(proba[0])
-
-    label = "REAL" if real_prob >= 0.5 else "FAKE"
-
-    # Trim text for summary (first ~3 sentences)
-    raw_text = str(row.get("text", "")).strip()
-    sentences = [s for s in re.split(r'(?<=[.!?])\s+', raw_text) if s.strip()]
-    if len(sentences) > 3:
-        summary = " ".join(sentences[:3]).strip()
-        if len(summary) > 300: summary = summary[:295] + "…"
-    else:
-        summary = raw_text[:300].rstrip() + ("…" if len(raw_text) > 300 else "")
-
-    title = str(row.get("title", "No title")).strip()
-    if not title or title.lower() in ("nan", ""):
-        title = summary[:80].rstrip() + "…"
-
-    source = str(row.get("source", "Unknown")).strip()
-
-    return {
-        "id":         int(idx),
-        "title":      title,
-        "summary":    summary,
-        "full_text":  raw_text,
-        "source":     source,
-        "label":      label,
-        "confidence": round(real_prob if label == "REAL" else fake_prob, 4),
-        "published":  _safe_date(row.get("date")),
-    }
-
-
-def _safe_date(val) -> "str | None":
-    """Convert a pandas date cell to a clean string or None."""
-    if val is None:
-        return None
-    s = str(val).strip()
-    return None if s.lower() in ("nan", "nat", "", "none") else s
-
-
-# ── API Startup ───────────────────────────────────────────────────────────────
-
-# Pre-load on startup (avoids slow first request)
-try:
-    _pipe, _df = get_pipeline_and_data()
-    log.info("ML service ready ✅")
-except Exception as exc:
-    log.error(f"Failed to initialise ML service: {exc}")
-    _pipe, _df = None, None
-
-
-# ── Translation Helper ────────────────────────────────────────────────────────
-
-def translate_articles(articles: list, target_lang: str) -> list:
-    """Translate a list of articles to the target language (e.g. 'si', 'ta') using GoogleTranslator."""
-    if target_lang == "en" or not target_lang:
-        return articles
-
-    try:
-        from deep_translator import GoogleTranslator
-        translator = GoogleTranslator(source='auto', target=target_lang)
-        
-        for art in articles:
-            try:
-                if art.get("title"):
-                    art["title"] = translator.translate(art["title"])
-                if art.get("summary"):
-                    art["summary"] = translator.translate(art["summary"])
-                if art.get("full_text"):
-                    text = art["full_text"]
-                    if len(text) > 4900:
-                        text = text[:4900]
-                    art["full_text"] = translator.translate(text)
-            except Exception as e:
-                log.warning(f"Failed to translate article {art.get('id')}: {e}")
-                
-        return articles
-    except Exception as e:
-        log.error(f"Translation pipeline failed: {e}")
-        return articles
-
+def get_pipeline():
+    """Hyper-Lazy model loading. Only loads when someone hits /predict."""
+    global pipeline
+    if pipeline is None and os.path.exists(MODEL_PATH):
+        try:
+            log.info("Importing ML libraries and loading model…")
+            import joblib
+            pipeline = joblib.load(MODEL_PATH)
+            log.info("ML Pipeline loaded into RAM ✅")
+            gc.collect()
+        except Exception as e:
+            log.error(f"Pipeline load failed: {e}")
+    return pipeline
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
+@app.route("/")
+def home():
+    return jsonify({
+        "status": "online", 
+        "service": "TruthLens ML Logic Service",
+        "description": "ML Predictions & AI Chat (Data-Free Mode)"
+    })
+
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "model_loaded": pipeline is not None})
-
-
-@app.route("/news")
-def get_news():
-    pipe, df = get_pipeline_and_data()
-
-    limit  = min(int(request.args.get("limit",  20)), 100)
-    offset = int(request.args.get("offset", 0))
-    lang   = request.args.get("lang", "en").strip().lower()
-
-    # Shuffle a reproducible sample based on offset so pages are stable
-    rng = random.Random(offset // limit)
-    indices = list(df.index)
-    rng.shuffle(indices)
-    page_indices = indices[offset: offset + limit]
-
-    articles = []
-    for idx in page_indices:
-        try:
-            articles.append(row_to_article(pipe, idx, df.loc[idx]))
-        except Exception:
-            continue
-
-    articles = translate_articles(articles, lang)
-    return jsonify({"success": True, "data": articles, "total": len(df)})
-
-
-@app.route("/news/digest")
-def get_digest():
-    """Return top N verified (REAL, high-confidence) articles."""
-    pipe, df = get_pipeline_and_data()
-    limit = min(int(request.args.get("limit", 3)), 10)
-    lang = request.args.get("lang", "en").strip().lower()
-
-    # Evaluate a sample of articles and pick the most confidently REAL ones
-    sample_size = min(500, len(df))
-    sample_df   = df.sample(n=sample_size, random_state=7)
-
-    scored = []
-    for idx, row in sample_df.iterrows():
-        try:
-            art = row_to_article(pipe, idx, row)
-            if art["label"] == "REAL":
-                scored.append(art)
-        except Exception:
-            continue
-
-    # Sort by confidence descending, take top N
-    scored.sort(key=lambda a: a["confidence"], reverse=True)
-    articles = translate_articles(scored[:limit], lang)
-    return jsonify({"success": True, "data": articles})
-
-
-@app.route("/news/search")
-def search_news():
-    pipe, df = get_pipeline_and_data()
-
-    query    = request.args.get("q", "").strip().lower()
-    category = request.args.get("category", "All").strip()
-    limit    = min(int(request.args.get("limit", 20)), 100)
-    lang     = request.args.get("lang", "en").strip().lower()
-
-    # Category → keyword mapping for simple filtering
-    category_keywords = {
-        "Politics":      ["politic", "government", "senate", "congress", "president", "election"],
-        "Business":      ["business", "economy", "market", "stock", "finance", "trade"],
-        "Technology":    ["tech", "ai", "software", "internet", "digital", "cyber"],
-        "Science":       ["science", "research", "study", "climate", "space", "nasa"],
-        "Health":        ["health", "medical", "vaccine", "hospital", "disease", "virus"],
-        "Sports":        ["sport", "game", "football", "basketball", "olympic", "athlete"],
-        "Entertainment": ["entertain", "movie", "music", "celebrity", "film", "actor"],
-    }
-
-    mask = pd.Series([True] * len(df), index=df.index)
-
-    if query:
-        mask &= (
-            df["title"].str.lower().str.contains(query, na=False)
-            | df["text"].str.lower().str.contains(query, na=False)
-        )
-
-    cat_kws = category_keywords.get(category)
-    if cat_kws:
-        cat_mask = df["title"].str.lower().apply(
-            lambda t: any(k in t for k in cat_kws)
-        ) | df["text"].str.lower().apply(
-            lambda t: any(k in t for k in cat_kws)
-        )
-        mask &= cat_mask
-
-    filtered = df[mask].head(limit * 5)  # over-fetch, then score
-
-    articles = []
-    for idx, row in filtered.iterrows():
-        try:
-            articles.append(row_to_article(pipe, idx, row))
-        except Exception:
-            continue
-        if len(articles) >= limit:
-            break
-
-    articles = translate_articles(articles, lang)
-    return jsonify({"success": True, "data": articles})
-
-
-@app.route("/api/bot/ask", methods=["POST"])
-def bot_ask():
-    """Handles chatbot requests using Gemini API and the ML Model."""
-    pipe, _ = get_pipeline_and_data()
-    body = request.get_json(force=True, silent=True) or {}
-    message = str(body.get("message", "")).strip()
-
-    if not message:
-        return jsonify({"success": False, "message": "Message cannot be empty"}), 400
-
-    if not GEMINI_API_KEY:
-        return jsonify({
-            "success": False, 
-            "reply": "I'm sorry, my AI backend is currently offline due to a missing Gemini API key. Please configure GEMINI_API_KEY in the ml_service to chat with me!"
-        }), 200
-
     try:
-        # Step 1: Check if the message contains potential news/gossips using our local ML model
-        # We process the user's message just to give context to Gemini
-        combined = message
-        proba = pipe.predict_proba([combined])[0]
-        real_prob = float(proba[1])
-        fake_prob = float(proba[0])
-        label = "REAL" if real_prob >= 0.5 else "FAKE"
-        confidence = round(real_prob if label == "REAL" else fake_prob, 4)
-
-        import datetime
-        current_time = datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p")
-
-        # Step 2: Formulate the prompt for Gemini
-        system_prompt = (
-            "You are TruthBot, a helpful, intelligent assistant for the TruthLens application.\n"
-            f"The current date and time is: {current_time}.\n"
-            "Your main duties are:\n"
-            "1. If the user shares news, rumors, or gossip, evaluate its truthfulness using your pre-trained knowledge and live search.\n"
-            "2. If the user asks for real-life solutions, personal advice, or general answers, provide clear, empathetic, and actionable advice.\n"
-            "3. Be concise and friendly.\n"
-            f"Note: Our internal ML model scanned the user's latest input and classified it with {confidence*100:.1f}% confidence as {label} news. "
-            "Use this ML context if the user is asking you to verify a news snippet, but ultimately use your own broader knowledge to give a detailed answer."
-        )
-
-        import requests
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
-        payload = {
-            "systemInstruction": {"parts": [{"text": system_prompt}]},
-            "contents": [{"parts": [{"text": message}]}],
-            "tools": [{"googleSearch": {}}]
-        }
-        
-        resp = requests.post(url, json=payload, timeout=20)
-        
-        if resp.status_code == 200:
-            data = resp.json()
-            try:
-                reply = data["candidates"][0]["content"]["parts"][0]["text"]
-            except (KeyError, IndexError):
-                reply = "I'm sorry, I couldn't understand the AI response."
-            return jsonify({"success": True, "reply": reply})
-        elif resp.status_code == 429:
-            return jsonify({"success": True, "reply": "I am receiving too many questions right now! Please wait about 60 seconds and ask me again. ⌛"})
-        else:
-            return jsonify({"success": False, "message": f"API error {resp.status_code}"}), 500
-
-    except Exception as e:
-        log.error(f"Chatbot error: {e}")
-        return jsonify({"success": False, "message": f"Chatbot error: {str(e)}"}), 500
-
+        import psutil
+        process = psutil.Process(os.getpid())
+        ram_usage = process.memory_info().rss / 1024 / 1024
+    except:
+        ram_usage = 0
+    return jsonify({
+        "status": "ok", 
+        "ram_mb": round(ram_usage, 2),
+        "model_in_ram": pipeline is not None
+    })
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    """Classify a custom article title+text submitted by the app."""
-    pipe, _ = get_pipeline_and_data()
-    body     = request.get_json(force=True, silent=True) or {}
-    title    = str(body.get("title", ""))
-    text     = str(body.get("text",  ""))
-    combined = f"{title} {text}".strip()
+    data = request.json or {}
+    text = f"{data.get('title','')} {data.get('text','')}".strip()
+    if not text: return jsonify({"success": False, "message": "No input"}), 400
+    
+    try:
+        import google.generativeai as genai
+        import json
+        import requests, urllib.parse, re
+        from datetime import datetime
+        if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel("gemma-3-27b-it")
 
-    if not combined:
-        return jsonify({"success": False, "message": "Provide title or text"}), 400
+        search_query = ""
+        try:
+            kw_prompt = f"Extract the single most important specific entity (e.g. a person's name or event) to search on Wikipedia to verify this claim. Output ONLY the search query term, nothing else. Claim: '{text}'"
+            kw_resp = model.generate_content(kw_prompt)
+            search_query = kw_resp.text.strip().replace('"', '')
+        except Exception:
+            search_query = data.get('title', '').strip() or data.get('text', '').strip()[:30]
 
-    proba     = pipe.predict_proba([combined])[0]
-    real_prob = float(proba[1])
-    label     = "REAL" if real_prob >= 0.5 else "FAKE"
+        wiki_context = ""
+        sources = []
+        try:
+            if search_query:
+                url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(search_query)}&utf8=&format=json"
+                headers = {'User-Agent': 'TruthLensBot/1.0'}
+                req = requests.get(url, headers=headers, timeout=5)
+                if req.status_code == 200:
+                    results = req.json().get('query', {}).get('search', [])
+                    snippets = []
+                    for r in results[:3]:
+                        title = r.get('title')
+                        clean_snip = re.sub('<[^<]+>', '', r.get('snippet', ''))
+                        snippets.append(f"- {title}: {clean_snip}")
+                        sources.append(f"Wikipedia: {title}")
+                    if snippets:
+                        wiki_context = "Cross-reference context from Wikipedia:\n" + "\n".join(snippets)
+        except Exception as wiki_err:
+            log.warning(f"Wiki fetch failed: {wiki_err}")
+            
+        if not sources:
+            sources = ["TruthLens AI Internal Knowledge Base"]
 
-    return jsonify({
-        "success":    True,
-        "label":      label,
-        "confidence": round(real_prob if label == "REAL" else float(proba[0]), 4),
-        "real_prob":  round(real_prob, 4),
-        "fake_prob":  round(float(proba[0]), 4),
-    })
-
+        now = datetime.now()
+        date_str = now.strftime("%B %Y")
+        
+        prompt = f"""
+        You are a highly accurate fact-checker. Determine if the fundamental claim is factually TRUE (REAL) or FALSE/MISLEADING (FAKE).
+        The current date is {date_str}.
+        
+        CRITICAL INSTRUCTIONS: 
+        1. Ignore minor typos. Look at the core fact.
+        2. Do NOT overthink or be pedantic. If the claim correctly identifies ONE of a person's titles or roles according to the context, you MUST classify it as TRUE (REAL), even if the context mentions they hold *other* titles as well (e.g. Chairman). An omission of secondary titles does not make the core fact false.
+        3. If you cannot verify the claim using the provided Wikipedia context or your own highly certain internal knowledge, you MUST classify it as FAKE and state in the reason that there is no credible evidence to support the claim. Do NOT hallucinate or invent facts.
+        4. If the context explicitly confirms a pairing (e.g. Name -> Role), it is REAL.
+        
+        {wiki_context}
+        
+        Claim: "{text}"
+        
+        Respond ONLY with a valid JSON object matching this exact schema:
+        {{"label": "REAL", "confidence": 0.99, "reason": "A short, 1-2 sentence explanation of why this claim is true or false based on your knowledge and the Wikipedia context."}} 
+        (use "REAL" if true, "FAKE" if false).
+        """
+        response = model.generate_content(prompt)
+        
+        resp_text = response.text.strip()
+        if resp_text.startswith("```json"): resp_text = resp_text[7:-3].strip()
+        elif resp_text.startswith("```"): resp_text = resp_text[3:-3].strip()
+        
+        result = json.loads(resp_text)
+        return jsonify({
+            "label": result.get("label", "FAKE"),
+            "confidence": result.get("confidence", 0.95),
+            "reason": result.get("reason", "No detailed reasoning was provided."),
+            "sources": sources
+        })
+    except Exception as e:
+        log.error(f"Predict error via Gemini (Falling back to offline model): {e}")
+        pipe = get_pipeline()
+        if not pipe: return jsonify({"success": False, "message": "ML Model Offline"}), 503
+        proba = pipe.predict_proba([text])[0]
+        is_real = proba[1] >= 0.5
+        return jsonify({
+            "label": "REAL" if is_real else "FAKE",
+            "confidence": round(float(proba[1] if is_real else proba[0]), 4)
+        })
 
 @app.route("/news/live")
 def get_live_news():
-    """
-    Fetch real-time articles from The Guardian API and classify each one
-    using the trained ML model.
-
-    Query params:
-      limit    — number of articles (default 10, max 50)
-      section  — category name matching the Flutter categories (default 'All')
-    """
-    pipe, _ = get_pipeline_and_data()
-
-    limit   = min(int(request.args.get("limit", 10)), 50)
+    pipe = get_pipeline()
     section = request.args.get("section", "All")
-    lang    = request.args.get("lang", "en").strip().lower()
-
-    if not GUARDIAN_API_KEY:
-        return jsonify({
-            "success": False,
-            "message": (
-                "Guardian API key not configured. "
-                "Set GUARDIAN_API_KEY env variable or edit GUARDIAN_API_KEY in app.py. "
-                "Get a free key at https://open-platform.theguardian.com/access"
-            ),
-            "data": []
-        }), 503
-
-    guardian_section = GUARDIAN_SECTIONS.get(section, "news")
+    limit = min(int(request.args.get("limit", 5)), 20)
 
     try:
-        resp = http_requests.get(
-            f"{GUARDIAN_BASE}/search",
-            params={
-                "api-key":       GUARDIAN_API_KEY,
-                "section":       guardian_section,
-                "show-fields":   "trailText,bodyText,headline",
-                "page-size":     limit,
-                "order-by":      "newest",
-            },
-            timeout=10,
-        )
-        resp.raise_for_status()
+        # Build params — omit 'section' when "All" because Guardian returns
+        # 0 results for the non-existent section "all".
+        params = {
+            "api-key": GUARDIAN_API_KEY,
+            "show-fields": "headline,trailText,bodyText",
+            "page-size": limit,
+            "order-by": "newest",
+        }
+        if section.lower() != "all":
+            params["section"] = section.lower()
+
+        log.info(f"Guardian request: section={section}, limit={limit}")
+        r = http_requests.get(f"{GUARDIAN_BASE}/search", params=params, timeout=20)
+        log.info(f"Guardian response status: {r.status_code}")
+
+        if r.status_code != 200:
+            log.error(f"Guardian API error: {r.status_code} — {r.text[:200]}")
+            return jsonify({"success": False, "data": [], "error": f"Guardian API returned {r.status_code}"}), 502
+
+        guardian_body = r.json()
+        resp = guardian_body.get("response", {})
+        if resp.get("status") != "ok":
+            log.error(f"Guardian API status not ok: {resp.get('status')} — {resp.get('message', '')}")
+            return jsonify({"success": False, "data": [], "error": f"Guardian: {resp.get('message', 'unknown error')}"}), 502
+
+        items = resp.get("results", [])
+        log.info(f"Guardian returned {len(items)} articles")
+
+        articles = []
+        for i, it in enumerate(items):
+            f = it.get("fields", {})
+            title = f.get("headline", "")
+            body  = f.get("bodyText", "")
+
+            # Default to UNKNOWN if ML fails so news still loads
+            label, conf = "UNKNOWN", 0.0
+
+            try:
+                if pipe:
+                    # Truncate body to first 1000 chars for faster prediction
+                    ml_text = f"{title} {body[:1000]}"
+                    p = pipe.predict_proba([ml_text])[0]
+                    label = "REAL" if p[1] >= 0.5 else "FAKE"
+                    conf = round(float(p[1] if label=="REAL" else p[0]), 4)
+            except Exception as ml_err:
+                log.warning(f"ML prediction failed for article {i}: {ml_err}")
+
+            articles.append({
+                "id": 90000 + i, "title": title, "summary": f.get("trailText", "")[:300],
+                "full_text": body, "label": label, "confidence": conf, "source": "The Guardian",
+                "published": it.get("webPublicationDate", ""), "is_live": True
+            })
+        return jsonify({"success": True, "data": articles})
+    except http_requests.exceptions.Timeout:
+        log.error("Guardian API request timed out")
+        return jsonify({"success": False, "data": [], "error": "Guardian API timed out"}), 504
+    except http_requests.exceptions.ConnectionError as ce:
+        log.error(f"Guardian API connection error: {ce}")
+        return jsonify({"success": False, "data": [], "error": "Cannot reach Guardian API"}), 502
     except Exception as e:
-        log.error(f"Guardian API error: {e}")
-        return jsonify({"success": False, "message": str(e), "data": []}), 502
+        log.error(f"Live news error: {e}", exc_info=True)
+        return jsonify({"success": False, "data": [], "error": str(e)}), 500
 
-    raw      = resp.json()
-    results  = raw.get("response", {}).get("results", [])
-    articles = []
-
-    for i, item in enumerate(results):
-        fields   = item.get("fields", {})
-        title    = fields.get("headline") or item.get("webTitle", "")
-        body     = fields.get("bodyText", "") or fields.get("trailText", "")
-        trail    = fields.get("trailText", body[:250])
-        section_name = item.get("sectionName", "The Guardian")
-
-        if title.lower().strip() == "corrections and clarifications":
-            title = trail
-            trail = "Corrections and clarifications."
-            body = "Corrections and clarifications."
-
-        combined = f"{title} {body}".strip()
-        if not combined:
-            continue
-
-        proba     = pipe.predict_proba([combined])[0]
-        real_prob = float(proba[1])
-        fake_prob = float(proba[0])
-        label     = "REAL" if real_prob >= 0.5 else "FAKE"
-
-        sentences = [s for s in re.split(r'(?<=[.!?])\s+', trail) if s.strip()]
-        if len(sentences) > 3:
-            summary = " ".join(sentences[:3]).strip()
-            if len(summary) > 300: summary = summary[:295] + "…"
-        else:
-            summary = trail[:300].rstrip() + ("…" if len(trail) > 300 else "")
-
-        articles.append({
-            "id":         90000 + i,   # offset to avoid collisions with dataset IDs
-            "title":      title,
-            "summary":    summary,
-            "full_text":  body,
-            "source":     f"The Guardian – {section_name}",
-            "label":      label,
-            "confidence": round(real_prob if label == "REAL" else fake_prob, 4),
-            "url":        item.get("webUrl", ""),
-            "published":  item.get("webPublicationDate", ""),
-            "is_live":    True,
-        })
-
-    articles = translate_articles(articles, lang)
-    return jsonify({"success": True, "data": articles, "source": "guardian"})
-
-
-# ── Entry point ───────────────────────────────────────────────────────────────
-
-def _free_port(port: int) -> None:
-    """Kill any process currently listening on *port* so Flask can bind cleanly.
-    This prevents the 'Address already in use' error when restarting the service.
-    """
+@app.route("/api/bot/ask", methods=["POST"])
+def bot_ask():
+    msg = request.json.get("message", "").strip()
+    if not msg: return jsonify({"success": False}), 400
     try:
-        result = subprocess.run(
-            ["lsof", "-ti", f":{port}"],
-            capture_output=True, text=True, timeout=5,
+        import google.generativeai as genai
+        from datetime import datetime
+        if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
+        system_prompt = (
+            f"You are TruthBot, an AI assistant inside the TruthLens app — a news verification platform. "
+            f"The current date and time is: {now}. "
+            f"You help users verify news, fact-check claims, and provide accurate, up-to-date information. "
+            f"Keep responses concise and helpful."
         )
-        pids = result.stdout.strip().split()
-        for pid in pids:
-            pid = pid.strip()
-            if pid and pid.isdigit():
-                os.kill(int(pid), signal.SIGKILL)
-                log.info(f"Freed port {port} by killing PID {pid}")
+        model = genai.GenerativeModel("gemma-3-27b-it")
+        full_msg = system_prompt + "\n\nUser Message: " + msg
+        response = model.generate_content(full_msg)
+        return jsonify({"success": True, "reply": response.text})
     except Exception as e:
-        log.warning(f"Could not free port {port}: {e}")
-
+        log.error(f"Bot ask error: {e}", exc_info=True)
+        return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == "__main__":
-    _free_port(5001)
-    app.run(host="0.0.0.0", port=5001, debug=False)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)

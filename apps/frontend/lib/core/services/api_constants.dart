@@ -1,4 +1,4 @@
-import 'dart:io';
-
-String get kBaseUrl => Platform.isAndroid ? 'http://10.0.2.2:8000/api' : 'http://127.0.0.1:8000/api';
-String get kMlServiceUrl => Platform.isAndroid ? 'http://10.0.2.2:5001' : 'http://127.0.0.1:5001';
+// Production URLs for TruthLens
+const String kBaseUrl = 'https://truth-lens-backend-aa7e.onrender.com/api';
+// Local ML service via Android emulator (10.0.2.2 = host machine's localhost)
+const String kMlServiceUrl = 'http://10.0.2.2:10000';

@@ -48,24 +48,43 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     super.dispose();
   }
 
-  Future<void> _loadInitial() async {
-    setState(() => _isLoading = true);
-    try {
-      final results = await _svc.fetchNews(limit: 20);
-      setState(() => _articles = results);
-    } catch (_) {
-    } finally {
-      setState(() => _isLoading = false);
+  String _mapCategoryToSection(String category) {
+    switch (category) {
+      case 'Politics': return 'politics';
+      case 'Business': return 'business';
+      case 'Technology': return 'technology';
+      case 'Science': return 'science';
+      case 'Health': return 'society';
+      case 'Sports': return 'sport';
+      case 'Entertainment': return 'culture';
+      default: return 'all';
     }
+  }
+
+  Future<void> _loadInitial() async {
+    await _performSearch();
   }
 
   Future<void> _performSearch() async {
     setState(() => _isLoading = true);
     try {
-      final results = await _svc.searchNews(
-        query: _searchController.text.trim(),
-        category: _selectedCategory,
-      );
+      final query = _searchController.text.trim();
+      List<Article> results;
+
+      if (query.isEmpty && _selectedCategory == 'All') {
+        results = await _svc.fetchNews(limit: 20);
+      } else if (query.isEmpty) {
+        results = await _svc.fetchLiveNews(
+          section: _mapCategoryToSection(_selectedCategory),
+          limit: 20,
+        );
+      } else {
+        results = await _svc.searchNews(
+          query: query,
+          category: _selectedCategory,
+        );
+      }
+
       setState(() => _articles = results);
       if (results.isEmpty && mounted) {
         final l10n = AppLocalizations.of(context)!;
@@ -100,22 +119,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (context) => const _VerifyNewsSheet(),
-          );
-        },
-        backgroundColor: AppColors.secondary,
-        icon: const Icon(Icons.fact_check, color: Colors.white),
-        label: Text(
-          l10n.verifyNews,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -179,6 +182,41 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   ],
                 ),
               ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const _VerifyNewsSheet(),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.secondary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 4,
+                    ),
+                    icon: const Icon(Icons.fact_check, size: 22),
+                    label: Text(
+                      l10n.verifyNews,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
 
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -729,7 +767,8 @@ class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
             else if (_error != null)
               Text(_error!, style: TextStyle(color: AppColors.error)),
 
-            if (!_isLoading && _result == null) ...[
+            if (!_isLoading) ...[
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _verify,
                 style: ElevatedButton.styleFrom(
@@ -755,6 +794,9 @@ class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
   Widget _buildResultIndicator(AppLocalizations l10n) {
     final label = _result!['label'] as String;
     final confidence = (_result!['confidence'] as num).toDouble();
+    final reason = _result!['reason'] as String?;
+    final sourcesList = _result!['sources'] as List<dynamic>?;
+    final sources = sourcesList?.map((e) => e.toString()).toList();
     
     final isReal = label == 'REAL';
     final color = isReal ? AppColors.success : AppColors.error;
@@ -793,6 +835,48 @@ class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
               fontSize: 14,
             ),
           ),
+          if (reason != null && reason.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.auto_awesome, color: AppColors.secondary, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      reason,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 14,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (sources != null && sources.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Sources: ${sources.join(", ")}',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
