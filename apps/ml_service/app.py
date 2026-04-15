@@ -80,18 +80,52 @@ def health():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    pipe = get_pipeline()
-    if not pipe: return jsonify({"success": False, "message": "ML Model Offline"}), 503
     data = request.json or {}
     text = f"{data.get('title','')} {data.get('text','')}".strip()
     if not text: return jsonify({"success": False, "message": "No input"}), 400
     
-    proba = pipe.predict_proba([text])[0]
-    is_real = proba[1] >= 0.5
-    return jsonify({
-        "label": "REAL" if is_real else "FAKE",
-        "confidence": round(float(proba[1] if is_real else proba[0]), 4)
-    })
+    try:
+        import google.generativeai as genai
+        import json
+        from datetime import datetime
+        if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
+        now = datetime.now()
+        date_str = now.strftime("%B %Y")
+        
+        prompt = f"""
+        You are a highly accurate fact-checker for the TruthLens app. 
+        The current date is {date_str}.
+        Determine if the fundamental claim being made is factually TRUE (REAL) or FALSE/MISLEADING (FAKE).
+        Ignore minor typos (e.g. "trumph" instead of "Trump"). Look at the core fact.
+        Claim: "{text}"
+        
+        Respond ONLY with a valid JSON object matching this exact schema:
+        {{"label": "REAL", "confidence": 0.99, "reason": "A short, 1-2 sentence explanation of why this claim is true or false based on your knowledge."}} 
+        (use "REAL" if true, "FAKE" if false).
+        """
+        model = genai.GenerativeModel("gemma-3-27b-it")
+        response = model.generate_content(prompt)
+        
+        resp_text = response.text.strip()
+        if resp_text.startswith("```json"): resp_text = resp_text[7:-3].strip()
+        elif resp_text.startswith("```"): resp_text = resp_text[3:-3].strip()
+        
+        result = json.loads(resp_text)
+        return jsonify({
+            "label": result.get("label", "FAKE"),
+            "confidence": result.get("confidence", 0.95),
+            "reason": result.get("reason", "No detailed reasoning was provided.")
+        })
+    except Exception as e:
+        log.error(f"Predict error via Gemini (Falling back to offline model): {e}")
+        pipe = get_pipeline()
+        if not pipe: return jsonify({"success": False, "message": "ML Model Offline"}), 503
+        proba = pipe.predict_proba([text])[0]
+        is_real = proba[1] >= 0.5
+        return jsonify({
+            "label": "REAL" if is_real else "FAKE",
+            "confidence": round(float(proba[1] if is_real else proba[0]), 4)
+        })
 
 @app.route("/news/live")
 def get_live_news():
@@ -178,8 +212,9 @@ def bot_ask():
             f"You help users verify news, fact-check claims, and provide accurate, up-to-date information. "
             f"Keep responses concise and helpful."
         )
-        model = genai.GenerativeModel("gemini-2.5-flash", system_instruction=system_prompt)
-        response = model.generate_content(msg)
+        model = genai.GenerativeModel("gemma-3-27b-it")
+        full_msg = system_prompt + "\n\nUser Message: " + msg
+        response = model.generate_content(full_msg)
         return jsonify({"success": True, "reply": response.text})
     except Exception as e:
         log.error(f"Bot ask error: {e}", exc_info=True)
