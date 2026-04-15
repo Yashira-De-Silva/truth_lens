@@ -123,14 +123,17 @@ def get_live_news():
         for i, it in enumerate(items):
             f = it.get("fields", {})
             title, body = f.get("headline", ""), f.get("bodyText", "")
-            label, conf = "REAL", 1.0
-            if pipe:
-                try:
+            
+            # Default to UNKNOWN if ML fails so news still loads
+            label, conf = "UNKNOWN", 0.0
+            
+            try:
+                if pipe:
                     p = pipe.predict_proba([f"{title} {body}"])[0]
                     label = "REAL" if p[1] >= 0.5 else "FAKE"
                     conf = round(float(p[1] if label=="REAL" else p[0]), 4)
-                except Exception as ml_err:
-                    log.warning(f"ML prediction failed for article {i}: {ml_err}")
+            except Exception as ml_err:
+                log.warning(f"ML prediction failed for article {i}: {ml_err}")
             
             articles.append({
                 "id": 90000 + i, "title": title, "summary": f.get("trailText", "")[:300],
