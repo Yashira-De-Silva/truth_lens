@@ -58,8 +58,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       return;
     }
     if (next.status == AuthStatus.error && next.error != null) {
-      AppSnackbar.showError(context, next.error!);
+      final error = next.error!;
       ref.read(authProvider.notifier).clearError();
+
+      // If credentials are wrong, the account likely doesn't exist in production.
+      // Guide the user to register instead.
+      final lowerError = error.toLowerCase();
+      if (lowerError.contains('invalid') ||
+          lowerError.contains('credentials') ||
+          lowerError.contains('password') ||
+          lowerError.contains('email')) {
+        AppSnackbar.showError(
+          context,
+          'Account not found. Please register first.',
+        );
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const RegisterScreen()),
+            );
+          }
+        });
+      } else {
+        AppSnackbar.showError(context, error);
+      }
     }
   }
   @override
