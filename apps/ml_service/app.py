@@ -96,24 +96,41 @@ def predict():
 def get_live_news():
     pipe = get_pipeline()
     section = request.args.get("section", "All")
-    limit = min(int(request.args.get("limit", 5)), 10)
+    limit = min(int(request.args.get("limit", 5)), 20)
     
     import requests as http_requests
     try:
-        r = http_requests.get(f"{GUARDIAN_BASE}/search", params={
-            "api-key": GUARDIAN_API_KEY, "section": section.lower(),
-            "show-fields": "headline,trailText,bodyText", "page-size": limit
-        }, timeout=10)
-        items = r.json().get("response", {}).get("results", [])
+        # Build params — omit 'section' when "All" because Guardian returns
+        # 0 results for the non-existent section "all".
+        params = {
+            "api-key": GUARDIAN_API_KEY,
+            "show-fields": "headline,trailText,bodyText",
+            "page-size": limit,
+            "order-by": "newest",
+        }
+        if section.lower() != "all":
+            params["section"] = section.lower()
+
+        log.info(f"Guardian request: section={section}, limit={limit}")
+        r = http_requests.get(f"{GUARDIAN_BASE}/search", params=params, timeout=15)
+        log.info(f"Guardian response status: {r.status_code}")
+
+        guardian_body = r.json()
+        items = guardian_body.get("response", {}).get("results", [])
+        log.info(f"Guardian returned {len(items)} articles")
+
         articles = []
         for i, it in enumerate(items):
             f = it.get("fields", {})
             title, body = f.get("headline", ""), f.get("bodyText", "")
             label, conf = "REAL", 1.0
             if pipe:
-                p = pipe.predict_proba([f"{title} {body}"])[0]
-                label = "REAL" if p[1] >= 0.5 else "FAKE"
-                conf = round(float(p[1] if label=="REAL" else p[0]), 4)
+                try:
+                    p = pipe.predict_proba([f"{title} {body}"])[0]
+                    label = "REAL" if p[1] >= 0.5 else "FAKE"
+                    conf = round(float(p[1] if label=="REAL" else p[0]), 4)
+                except Exception as ml_err:
+                    log.warning(f"ML prediction failed for article {i}: {ml_err}")
             
             articles.append({
                 "id": 90000 + i, "title": title, "summary": f.get("trailText", "")[:300],
@@ -121,8 +138,9 @@ def get_live_news():
                 "published": it.get("webPublicationDate", ""), "is_live": True
             })
         return jsonify({"success": True, "data": articles})
-    except:
-        return jsonify({"success": False, "data": []}), 500
+    except Exception as e:
+        log.error(f"Live news error: {e}", exc_info=True)
+        return jsonify({"success": False, "data": [], "error": str(e)}), 500
 
 @app.route("/api/bot/ask", methods=["POST"])
 def bot_ask():

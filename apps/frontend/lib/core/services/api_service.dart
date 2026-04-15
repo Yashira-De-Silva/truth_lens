@@ -68,7 +68,8 @@ class NewsApiService {
       '$baseUrl/news/live?limit=$limit'
       '&section=${Uri.encodeQueryComponent(section)}&lang=$lang',
     );
-    final res = await http.get(uri).timeout(const Duration(seconds: 20));
+    // Render free tier cold-starts can take 50+ seconds
+    final res = await http.get(uri).timeout(const Duration(seconds: 60));
     if (res.statusCode == 503) return []; // Guardian key not set yet
     if (res.statusCode != 200)
       throw Exception('ML service error: ${res.statusCode}');
