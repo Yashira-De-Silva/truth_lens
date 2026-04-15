@@ -127,10 +127,14 @@ def predict():
         date_str = now.strftime("%B %Y")
         
         prompt = f"""
-        You are a highly accurate fact-checker for the TruthLens app. 
+        You are a highly accurate fact-checker. Determine if the fundamental claim is factually TRUE (REAL) or FALSE/MISLEADING (FAKE).
         The current date is {date_str}.
-        Determine if the fundamental claim being made is factually TRUE (REAL) or FALSE/MISLEADING (FAKE).
-        Ignore minor typos. Look at the core fact.
+        
+        CRITICAL INSTRUCTIONS: 
+        1. Ignore minor typos. Look at the core fact.
+        2. Do NOT overthink or be pedantic. If the claim correctly identifies ONE of a person's titles or roles according to the context, you MUST classify it as TRUE (REAL), even if the context mentions they hold *other* titles as well (e.g. Chairman). An omission of secondary titles does not make the core fact false.
+        3. If you cannot verify the claim using the provided Wikipedia context or your own highly certain internal knowledge, you MUST classify it as FAKE and state in the reason that there is no credible evidence to support the claim. Do NOT hallucinate or invent facts.
+        4. If the context explicitly confirms a pairing (e.g. Name -> Role), it is REAL.
         
         {wiki_context}
         

@@ -767,7 +767,8 @@ class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
             else if (_error != null)
               Text(_error!, style: TextStyle(color: AppColors.error)),
 
-            if (!_isLoading && _result == null) ...[
+            if (!_isLoading) ...[
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _verify,
                 style: ElevatedButton.styleFrom(
