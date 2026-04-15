@@ -19,6 +19,7 @@ from typing import Optional, Any
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import requests as http_requests
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -97,8 +98,7 @@ def get_live_news():
     pipe = get_pipeline()
     section = request.args.get("section", "All")
     limit = min(int(request.args.get("limit", 5)), 20)
-    
-    import requests as http_requests
+
     try:
         # Build params — omit 'section' when "All" because Guardian returns
         # 0 results for the non-existent section "all".
@@ -112,35 +112,53 @@ def get_live_news():
             params["section"] = section.lower()
 
         log.info(f"Guardian request: section={section}, limit={limit}")
-        r = http_requests.get(f"{GUARDIAN_BASE}/search", params=params, timeout=15)
+        r = http_requests.get(f"{GUARDIAN_BASE}/search", params=params, timeout=20)
         log.info(f"Guardian response status: {r.status_code}")
 
+        if r.status_code != 200:
+            log.error(f"Guardian API error: {r.status_code} — {r.text[:200]}")
+            return jsonify({"success": False, "data": [], "error": f"Guardian API returned {r.status_code}"}), 502
+
         guardian_body = r.json()
-        items = guardian_body.get("response", {}).get("results", [])
+        resp = guardian_body.get("response", {})
+        if resp.get("status") != "ok":
+            log.error(f"Guardian API status not ok: {resp.get('status')} — {resp.get('message', '')}")
+            return jsonify({"success": False, "data": [], "error": f"Guardian: {resp.get('message', 'unknown error')}"}), 502
+
+        items = resp.get("results", [])
         log.info(f"Guardian returned {len(items)} articles")
 
         articles = []
         for i, it in enumerate(items):
             f = it.get("fields", {})
-            title, body = f.get("headline", ""), f.get("bodyText", "")
-            
+            title = f.get("headline", "")
+            body  = f.get("bodyText", "")
+
             # Default to UNKNOWN if ML fails so news still loads
             label, conf = "UNKNOWN", 0.0
-            
+
             try:
                 if pipe:
-                    p = pipe.predict_proba([f"{title} {body}"])[0]
+                    # Truncate body to first 1000 chars for faster prediction
+                    ml_text = f"{title} {body[:1000]}"
+                    p = pipe.predict_proba([ml_text])[0]
                     label = "REAL" if p[1] >= 0.5 else "FAKE"
                     conf = round(float(p[1] if label=="REAL" else p[0]), 4)
             except Exception as ml_err:
                 log.warning(f"ML prediction failed for article {i}: {ml_err}")
-            
+
             articles.append({
                 "id": 90000 + i, "title": title, "summary": f.get("trailText", "")[:300],
                 "full_text": body, "label": label, "confidence": conf, "source": "The Guardian",
                 "published": it.get("webPublicationDate", ""), "is_live": True
             })
         return jsonify({"success": True, "data": articles})
+    except http_requests.exceptions.Timeout:
+        log.error("Guardian API request timed out")
+        return jsonify({"success": False, "data": [], "error": "Guardian API timed out"}), 504
+    except http_requests.exceptions.ConnectionError as ce:
+        log.error(f"Guardian API connection error: {ce}")
+        return jsonify({"success": False, "data": [], "error": "Cannot reach Guardian API"}), 502
     except Exception as e:
         log.error(f"Live news error: {e}", exc_info=True)
         return jsonify({"success": False, "data": [], "error": str(e)}), 500
