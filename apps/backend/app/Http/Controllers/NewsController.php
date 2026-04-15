@@ -73,22 +73,37 @@ class NewsController extends Controller
     public function search(Request $request)
     {
         $q = $request->query('q', '');
-        if (empty($q)) {
+        $category = $request->query('category', 'All');
+
+        if (empty($q) && $category === 'All') {
             return response()->json(['success' => True, 'data' => []]);
         }
 
-        $articles = NewsArticle::where('title', 'like', "%$q%")
-            ->orWhere('text', 'like', "%$q%")
-            ->limit(10)
-            ->get();
+        $query = NewsArticle::query();
+
+        if ($category !== 'All') {
+            $query->where('subject', 'like', "%$category%");
+        }
+
+        if (!empty($q)) {
+            $query->where(function($query) use ($q) {
+                $query->where('title', 'like', "%$q%")
+                      ->orWhere('text', 'like', "%$q%");
+            });
+        }
+
+        $articles = $query->limit(20)->get();
 
         $formatted = $articles->map(function ($article) {
             return [
                 'id' => $article->id,
                 'title' => $article->title,
-                'summary' => mb_substr($article->text, 0, 300) . '...',
+                'summary' => mb_substr($article->text, 0, 300) . (strlen($article->text) > 300 ? '...' : ''),
+                'full_text' => $article->text,
                 'label' => $article->is_fake ? 'FAKE' : 'REAL',
                 'confidence' => 1.0,
+                'source' => $article->subject ?? 'Dataset',
+                'published' => $article->date,
             ];
         });
 
