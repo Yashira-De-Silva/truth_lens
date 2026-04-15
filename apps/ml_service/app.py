@@ -87,8 +87,42 @@ def predict():
     try:
         import google.generativeai as genai
         import json
+        import requests, urllib.parse, re
         from datetime import datetime
         if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel("gemma-3-27b-it")
+
+        search_query = ""
+        try:
+            kw_prompt = f"Extract the single most important specific entity (e.g. a person's name or event) to search on Wikipedia to verify this claim. Output ONLY the search query term, nothing else. Claim: '{text}'"
+            kw_resp = model.generate_content(kw_prompt)
+            search_query = kw_resp.text.strip().replace('"', '')
+        except Exception:
+            search_query = data.get('title', '').strip() or data.get('text', '').strip()[:30]
+
+        wiki_context = ""
+        sources = []
+        try:
+            if search_query:
+                url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(search_query)}&utf8=&format=json"
+                headers = {'User-Agent': 'TruthLensBot/1.0'}
+                req = requests.get(url, headers=headers, timeout=5)
+                if req.status_code == 200:
+                    results = req.json().get('query', {}).get('search', [])
+                    snippets = []
+                    for r in results[:3]:
+                        title = r.get('title')
+                        clean_snip = re.sub('<[^<]+>', '', r.get('snippet', ''))
+                        snippets.append(f"- {title}: {clean_snip}")
+                        sources.append(f"Wikipedia: {title}")
+                    if snippets:
+                        wiki_context = "Cross-reference context from Wikipedia:\n" + "\n".join(snippets)
+        except Exception as wiki_err:
+            log.warning(f"Wiki fetch failed: {wiki_err}")
+            
+        if not sources:
+            sources = ["TruthLens AI Internal Knowledge Base"]
+
         now = datetime.now()
         date_str = now.strftime("%B %Y")
         
@@ -96,14 +130,16 @@ def predict():
         You are a highly accurate fact-checker for the TruthLens app. 
         The current date is {date_str}.
         Determine if the fundamental claim being made is factually TRUE (REAL) or FALSE/MISLEADING (FAKE).
-        Ignore minor typos (e.g. "trumph" instead of "Trump"). Look at the core fact.
+        Ignore minor typos. Look at the core fact.
+        
+        {wiki_context}
+        
         Claim: "{text}"
         
         Respond ONLY with a valid JSON object matching this exact schema:
-        {{"label": "REAL", "confidence": 0.99, "reason": "A short, 1-2 sentence explanation of why this claim is true or false based on your knowledge."}} 
+        {{"label": "REAL", "confidence": 0.99, "reason": "A short, 1-2 sentence explanation of why this claim is true or false based on your knowledge and the Wikipedia context."}} 
         (use "REAL" if true, "FAKE" if false).
         """
-        model = genai.GenerativeModel("gemma-3-27b-it")
         response = model.generate_content(prompt)
         
         resp_text = response.text.strip()
@@ -114,7 +150,8 @@ def predict():
         return jsonify({
             "label": result.get("label", "FAKE"),
             "confidence": result.get("confidence", 0.95),
-            "reason": result.get("reason", "No detailed reasoning was provided.")
+            "reason": result.get("reason", "No detailed reasoning was provided."),
+            "sources": sources
         })
     except Exception as e:
         log.error(f"Predict error via Gemini (Falling back to offline model): {e}")

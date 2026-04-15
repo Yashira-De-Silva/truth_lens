@@ -794,6 +794,8 @@ class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
     final label = _result!['label'] as String;
     final confidence = (_result!['confidence'] as num).toDouble();
     final reason = _result!['reason'] as String?;
+    final sourcesList = _result!['sources'] as List<dynamic>?;
+    final sources = sourcesList?.map((e) => e.toString()).toList();
     
     final isReal = label == 'REAL';
     final color = isReal ? AppColors.success : AppColors.error;
@@ -856,6 +858,21 @@ class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+          if (sources != null && sources.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Sources: ${sources.join(", ")}',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  height: 1.4,
+                ),
               ),
             ),
           ],
