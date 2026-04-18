@@ -800,7 +800,7 @@ class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
     
     final isReal = label == 'REAL';
     final color = isReal ? AppColors.success : AppColors.error;
-    final text = isReal ? 'Likely True' : 'Likely Fake';
+    final text = isReal ? 'True' : 'Fake';
     final icon = isReal ? Icons.check_circle : Icons.warning_rounded;
 
     return Container(
