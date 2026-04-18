@@ -8,6 +8,7 @@ import '../auth/auth_provider.dart';
 import 'chat_provider.dart';
 import 'chat_service.dart' as svc;
 import 'chat_theme.dart';
+import 'call_screen.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -508,6 +509,46 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
             ),
           ),
+          GestureDetector(
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CallScreen(otherUser: widget.otherUser),
+                ),
+              );
+
+              if (result != null && result is Map<String, dynamic>) {
+                final status = result['status'] as String;
+                final duration = result['duration'] as int;
+                
+                String logMsg;
+                if (status == 'Answered') {
+                  final m = (duration ~/ 60).toString().padLeft(2, '0');
+                  final s = (duration % 60).toString().padLeft(2, '0');
+                  logMsg = '📞 Call ended • $m:$s';
+                } else {
+                  logMsg = '📞 Missed voice call';
+                }
+                
+                ref.read(messagesProvider(widget.conversationId).notifier).send(logMsg);
+              }
+            },
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.call,
+                color: AppColors.success,
+                size: 20,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: _showThemeSelector,
             child: Container(
