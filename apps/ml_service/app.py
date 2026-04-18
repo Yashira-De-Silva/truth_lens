@@ -94,7 +94,7 @@ def predict():
 
         search_query = ""
         try:
-            kw_prompt = f"Extract the single most important specific entity (e.g. a person's name or event) to search on Wikipedia to verify this claim. Output ONLY the search query term, nothing else. Claim: '{text}'"
+            kw_prompt = f"Extract the single most important specific entity (e.g. a person's name or event) to search on Wikipedia to verify this claim. If the claim contains an abbreviation or alias, expand it to the full name. Output ONLY the search query term, nothing else. Claim: '{text}'"
             kw_resp = model.generate_content(kw_prompt)
             search_query = kw_resp.text.strip().replace('"', '')
         except Exception:
@@ -135,6 +135,7 @@ def predict():
         2. Do NOT overthink or be pedantic. If the claim correctly identifies ONE of a person's titles or roles according to the context, you MUST classify it as TRUE (REAL), even if the context mentions they hold *other* titles as well (e.g. Chairman). An omission of secondary titles does not make the core fact false.
         3. If you cannot verify the claim using the provided Wikipedia context or your own highly certain internal knowledge, you MUST classify it as FAKE and state in the reason that there is no credible evidence to support the claim. Do NOT hallucinate or invent facts.
         4. If the context explicitly confirms a pairing (e.g. Name -> Role), it is REAL.
+        5. Resolve common aliases, acronyms, or initials (e.g., 'AKD' for Anura Kumara Dissanayake) using your internal knowledge. If the claim uses an alias that refers to the correct entity, evaluate it as TRUE (REAL).
         
         {wiki_context}
         
