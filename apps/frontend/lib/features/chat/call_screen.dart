@@ -1,28 +1,33 @@
 import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import 'chat_service.dart' as svc;
+import 'call_provider.dart';
 
-class CallScreen extends StatefulWidget {
+class CallScreen extends ConsumerStatefulWidget {
+  final int callId;
   final svc.BackendUser otherUser;
   final bool isVideo;
+  final bool isIncoming;
 
   const CallScreen({
     super.key,
+    required this.callId,
     required this.otherUser,
     this.isVideo = false,
+    this.isIncoming = false,
   });
 
   @override
-  State<CallScreen> createState() => _CallScreenState();
+  ConsumerState<CallScreen> createState() => _CallScreenState();
 }
 
-class _CallScreenState extends State<CallScreen> {
-  String _status = 'Ringing...';
+class _CallScreenState extends ConsumerState<CallScreen> {
   int _seconds = 0;
   Timer? _callTimer;
-  Timer? _connectTimer;
+  bool _timerStarted = false;
 
   String get _formattedTime {
     final m = (_seconds ~/ 60).toString().padLeft(2, '0');
@@ -31,39 +36,54 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  void _simulateAnswer() {
-    if (_status == 'Connected') return;
-    setState(() {
-      _status = 'Connected';
-    });
-    _callTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          _seconds++;
-        });
-      }
-    });
-  }
-
-  @override
   void dispose() {
     _callTimer?.cancel();
     super.dispose();
   }
 
-  void _endCall() {
-    Navigator.pop(context, {
-      'status': _status == 'Connected' ? 'Answered' : 'Missed',
-      'duration': _seconds,
-    });
+  void _endCall() async {
+    await ref.read(callProvider.notifier).updateStatus(widget.callId, 'ended');
+    if (mounted) {
+      Navigator.pop(context, {
+        'status': 'ended',
+        'duration': _seconds,
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final callState = ref.watch(callProvider);
+    final activeCall = callState.activeCall;
+
+    // Use current active call status, if ended in background, exit
+    String statusStr = 'Connecting...';
+    if (activeCall != null && activeCall['id'] == widget.callId) {
+      statusStr = activeCall['status'] as String;
+    } else if (callState.activeCall == null) {
+      // It was ended remotely!
+      statusStr = 'ended';
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && Navigator.canPop(context)) {
+          Navigator.pop(context, {
+            'status': 'ended',
+            'duration': _seconds,
+          });
+        }
+      });
+    }
+
+    if (statusStr == 'answered' && !_timerStarted) {
+      _timerStarted = true;
+      _callTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (mounted) setState(() { _seconds++; });
+      });
+    }
+
+    final displayStatus = statusStr == 'answered' 
+        ? _formattedTime 
+        : (statusStr == 'ringing' ? 'Ringing...' : 'Ended');
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -88,14 +108,7 @@ class _CallScreenState extends State<CallScreen> {
                       onPressed: () => Navigator.pop(context),
                     ),
                     const Icon(Icons.lock, color: Colors.white54, size: 16),
-                    if (_status != 'Connected')
-                      IconButton(
-                        icon: const Icon(Icons.call, color: AppColors.success, size: 24),
-                        onPressed: _simulateAnswer,
-                        tooltip: 'Simulate Answer',
-                      )
-                    else
-                      const SizedBox(width: 48), 
+                    const SizedBox(width: 48), 
                   ],
                 ),
               ),
@@ -111,12 +124,12 @@ class _CallScreenState extends State<CallScreen> {
                       gradient: LinearGradient(
                         colors: [
                           AppColors.secondary,
-                          AppColors.secondary.withOpacity(0.6),
+                          AppColors.secondary.withValues(alpha: 0.6),
                         ],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.secondary.withOpacity(0.3),
+                          color: AppColors.secondary.withValues(alpha: 0.3),
                           blurRadius: 30,
                           spreadRadius: 5,
                         ),
@@ -124,7 +137,7 @@ class _CallScreenState extends State<CallScreen> {
                     ),
                     child: Center(
                       child: Text(
-                        widget.otherUser.name[0].toUpperCase(),
+                        widget.otherUser.name.isNotEmpty ? widget.otherUser.name[0].toUpperCase() : '?',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 48,
@@ -144,9 +157,9 @@ class _CallScreenState extends State<CallScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _status == 'Connected' ? _formattedTime : _status,
+                    displayStatus,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 16,
                       letterSpacing: 1.2,
                     ),
@@ -158,10 +171,10 @@ class _CallScreenState extends State<CallScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
                   border: Border(
-                    top: BorderSide(color: Colors.white.withOpacity(0.1)),
+                    top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                   ),
                 ),
                 child: ClipRRect(

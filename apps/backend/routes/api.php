@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CallController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ChessController;
 use App\Http\Controllers\CommentController;
@@ -96,6 +97,11 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/conversations/{conversationId}/messages',   [ChatController::class, 'sendMessage']);
         Route::post('/conversations/{conversationId}/read',       [ChatController::class, 'markRead']);
         Route::delete('/messages/{messageId}',                    [ChatController::class, 'deleteMessage']);
+
+        // ── Calls ─────────────────────────────────────────────────────────────
+        Route::post('/calls/initiate',                            [CallController::class, 'initiate']);
+        Route::get('/calls/active',                               [CallController::class, 'getActive']);
+        Route::put('/calls/{callId}/status',                      [CallController::class, 'updateStatus']);
     });
 
     // ── Chess ─────────────────────────────────────────────────────────────

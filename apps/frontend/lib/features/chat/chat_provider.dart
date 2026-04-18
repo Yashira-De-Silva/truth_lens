@@ -166,8 +166,10 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final msgs = await svc.getMessages(token, conversationId);
+      if (!mounted) return;
       state = state.copyWith(messages: msgs, isLoading: false);
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
@@ -182,11 +184,13 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
         body.trim(),
         replyToId: replyToId,
       );
+      if (!mounted) return;
       state = state.copyWith(
         messages: [...state.messages, msg],
         isSending: false,
       );
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(isSending: false, error: e.toString());
     }
   }

@@ -230,3 +230,51 @@ Future<void> markConversationRead(
       )
       .timeout(const Duration(seconds: 10));
 }
+
+// ── Call Signaling ────────────────────────────────────────────────────────
+Future<Map<String, dynamic>> initiateCall(String token, int receiverId, {bool isVideo = false}) async {
+  final base = await ApiConfig.baseUrl;
+  final res = await http.post(
+    Uri.parse('$base/chat/calls/initiate'),
+    headers: _authHeaders(token),
+    body: jsonEncode({
+      'receiver_id': receiverId,
+      'type': isVideo ? 'video' : 'audio'
+    }),
+  ).timeout(const Duration(seconds: 15));
+  
+  final body = jsonDecode(res.body) as Map<String, dynamic>;
+  if ((res.statusCode == 200 || res.statusCode == 201) && body['success'] == true) {
+    return body['data'] as Map<String, dynamic>;
+  }
+  throw Exception(body['message'] ?? 'Failed to initiate call');
+}
+
+Future<Map<String, dynamic>?> getActiveCall(String token) async {
+  final base = await ApiConfig.baseUrl;
+  final res = await http.get(
+    Uri.parse('$base/chat/calls/active'),
+    headers: _authHeaders(token),
+  ).timeout(const Duration(seconds: 10));
+  
+  final body = jsonDecode(res.body) as Map<String, dynamic>;
+  if (res.statusCode == 200 && body['success'] == true) {
+    return body['data'] as Map<String, dynamic>?;
+  }
+  throw Exception(body['message'] ?? 'Failed to check active calls');
+}
+
+Future<void> updateCallStatus(String token, int callId, String status) async {
+  final base = await ApiConfig.baseUrl;
+  final res = await http.put(
+    Uri.parse('$base/chat/calls/$callId/status'),
+    headers: _authHeaders(token),
+    body: jsonEncode({'status': status}),
+  ).timeout(const Duration(seconds: 10));
+  
+  final body = jsonDecode(res.body) as Map<String, dynamic>;
+  if (res.statusCode != 200 || body['success'] != true) {
+    throw Exception(body['message'] ?? 'Failed to update call status');
+  }
+}
+

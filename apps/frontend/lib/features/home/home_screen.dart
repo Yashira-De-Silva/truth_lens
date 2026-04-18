@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../news/news_feed_screen.dart';
@@ -8,16 +9,20 @@ import '../digest/digest_screen.dart';
 import '../chat/chats_list_screen.dart';
 import '../profile/profile_screen.dart';
 import '../ai_assistant/screens/ai_chat_screen.dart';
+import '../chat/call_provider.dart';
+import '../chat/incoming_call_screen.dart';
+import '../auth/auth_provider.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _index = 0;
+  bool _isIncomingCallShowing = false;
 
   final List<Widget> _pages = [
     const NewsFeedScreen(),
@@ -29,6 +34,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final myIdStr = authState.user?['id']?.toString();
+
+    ref.listen(callProvider, (previous, next) {
+      if (next.activeCall != null && next.activeCall!['status'] == 'ringing') {
+        final callerId = next.activeCall!['caller_id']?.toString();
+        if (callerId == myIdStr) {
+          // I am the caller! So I don't show incoming call screen.
+          return;
+        }
+        
+        if (!_isIncomingCallShowing) {
+          _isIncomingCallShowing = true;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => IncomingCallScreen(callData: next.activeCall!),
+            ),
+          ).then((_) => _isIncomingCallShowing = false);
+        }
+      } else if (next.activeCall == null) {
+        if (_isIncomingCallShowing) {
+          Navigator.pop(context); // Dismiss ringing if caller hangs up
+          _isIncomingCallShowing = false;
+        }
+      }
+    });
+
     return Scaffold(
       body: _pages[_index],
       extendBody: true,

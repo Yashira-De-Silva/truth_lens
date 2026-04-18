@@ -9,6 +9,7 @@ import 'chat_provider.dart';
 import 'chat_service.dart' as svc;
 import 'chat_theme.dart';
 import 'call_screen.dart';
+import 'call_provider.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -511,10 +512,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           GestureDetector(
             onTap: () async {
+              final myId = _myId;
+              // we don't have widget.otherUser.id directly maybe? wait, otherUser is a BackendUser which has id!
+              final callId = await ref.read(callProvider.notifier).initiate(widget.otherUser.id);
+              if (callId == null) return;
+
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CallScreen(otherUser: widget.otherUser),
+                  builder: (context) => CallScreen(
+                    callId: callId,
+                    otherUser: widget.otherUser,
+                  ),
                 ),
               );
 
@@ -523,7 +532,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 final duration = result['duration'] as int;
                 
                 String logMsg;
-                if (status == 'Answered') {
+                if (status == 'answered' || duration > 0) {
                   final m = (duration ~/ 60).toString().padLeft(2, '0');
                   final s = (duration % 60).toString().padLeft(2, '0');
                   logMsg = '📞 Call ended • $m:$s';
