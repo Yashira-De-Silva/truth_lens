@@ -594,7 +594,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildTimestamp(String createdAt) {
-    final timestamp = DateTime.tryParse(createdAt) ?? DateTime.now();
+    final timestamp = (DateTime.tryParse(createdAt) ?? DateTime.now()).toLocal();
     final now = DateTime.now();
     final difference = now.difference(timestamp);
     String displayText;
@@ -738,8 +738,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     children: [
                       Text(
                         DateFormat('h:mm a').format(
-                          DateTime.tryParse(message.createdAt) ??
-                              DateTime.now(),
+                          (DateTime.tryParse(message.createdAt) ??
+                              DateTime.now()).toLocal(),
                         ),
                         style: TextStyle(
                           color: isMe
