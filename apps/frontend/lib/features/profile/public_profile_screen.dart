@@ -7,7 +7,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
 import '../../core/services/follow_service.dart' as fsvc;
+import '../news/news_providers.dart';
+import '../news/article_model.dart';
+import '../news/news_feed_screen.dart';
+import '../article/article_details_screen.dart';
+import '../profile/profile_model.dart';
 import '../auth/auth_provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../chat/chat_service.dart' as csvc;
 import '../chat/chat_screen.dart';
 import '../chess/chess_screen.dart';
@@ -743,12 +749,15 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                         if (widget.isOwnProfile && profile != null && profile.activities.isNotEmpty) ...[
                           _buildSectionTitle('Recent Activity'),
                           const SizedBox(height: 12),
-                          ...profile.activities.map((activity) => Padding(
+                          ...profile.activities.map((act) => Padding(
                             padding: const EdgeInsets.only(bottom: 8.0),
                             child: _buildActivityItem(
-                              activity.type == 'read' ? 'Read' : (activity.type == 'bookmark' ? 'Bookmarked' : 'Commented on'),
-                              activity.description,
-                              _getTimeAgo(activity.createdAt),
+                              context,
+                              ref,
+                              act.type == 'read' ? 'Read' : (act.type == 'bookmark' ? 'Bookmarked' : 'Commented on'),
+                              act.description,
+                              _getTimeAgo(act.createdAt),
+                              act.articleId,
                             ),
                           )).toList(),
                         ] else if (!widget.isOwnProfile && widget.userId != null)
@@ -763,12 +772,15 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                     children: [
                                       _buildSectionTitle('Recent Activity'),
                                       const SizedBox(height: 12),
-                                      ...p.activities.map((activity) => Padding(
+                                      ...p.activities.map((act) => Padding(
                                         padding: const EdgeInsets.only(bottom: 8.0),
                                         child: _buildActivityItem(
-                                          activity.type == 'read' ? 'Read' : (activity.type == 'bookmark' ? 'Bookmarked' : 'Commented on'),
-                                          activity.description,
-                                          _getTimeAgo(activity.createdAt),
+                                          ctx,
+                                          ref,
+                                          act.type == 'read' ? 'Read' : (act.type == 'bookmark' ? 'Bookmarked' : 'Commented on'),
+                                          act.description,
+                                          _getTimeAgo(act.createdAt),
+                                          act.articleId,
                                         ),
                                       )).toList(),
                                     ],
@@ -819,67 +831,111 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     );
   }
 
-  Widget _buildActivityItem(String action, String article, String time) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0B1220).withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.secondary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(8),
+  Widget _buildActivityItem(
+    BuildContext context,
+    WidgetRef ref,
+    String action,
+    String articleTitle,
+    String time,
+    int? articleId,
+  ) {
+    return InkWell(
+      onTap: articleId == null ? null : () async {
+        // Show loading indicator
+        final l10n = AppLocalizations.of(context)!;
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => const Center(child: CircularProgressIndicator()),
+        );
+
+        try {
+          final api = ref.read(newsApiProvider);
+          final articleObj = await api.fetchArticleById(articleId);
+          
+          if (!context.mounted) return;
+          Navigator.pop(context); // Remove loading
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ArticleDetailsScreen(article: articleObj),
             ),
-            child: Icon(
-              _getActivityIcon(action),
-              color: AppColors.secondary,
-              size: 16,
+          );
+        } catch (e) {
+          if (!context.mounted) return;
+          Navigator.pop(context); // Remove loading
+          AppSnackbar.showError(context, 'Could not open article');
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0B1220).withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.secondary.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                _getActivityIcon(action),
+                color: AppColors.secondary,
+                size: 16,
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      action,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 12,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        action,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      time,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 11,
+                      const Spacer(),
+                      Text(
+                        time,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 11,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  article,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    articleTitle,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            if (articleId != null)
+              Icon(
+                Icons.chevron_right,
+                color: Colors.white.withValues(alpha: 0.3),
+                size: 20,
+              ),
+          ],
+        ),
       ),
     );
   }

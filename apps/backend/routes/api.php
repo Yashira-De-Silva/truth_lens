@@ -70,6 +70,7 @@ Route::post('/login',    [AuthController::class, 'login']);
 Route::get('/news',        [NewsController::class, 'index']);
 Route::get('/news/digest', [NewsController::class, 'digest']);
 Route::get('/news/search', [NewsController::class, 'search']);
+Route::get('/news/{id}',   [NewsController::class, 'show']);
 
 // ── Protected routes ──────────────────────────────────────────────────────
 Route::middleware('auth:api')->group(function () {

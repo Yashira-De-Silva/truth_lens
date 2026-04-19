@@ -97,12 +97,14 @@ class Activity {
   final int id;
   final String type;
   final String description;
+  final int? articleId;
   final DateTime createdAt;
 
   Activity({
     required this.id,
     required this.type,
     required this.description,
+    this.articleId,
     required this.createdAt,
   });
 
@@ -111,6 +113,7 @@ class Activity {
       'id': id,
       'type': type,
       'description': description,
+      'article_id': articleId,
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -120,6 +123,7 @@ class Activity {
       id: json['id'] as int? ?? 0,
       type: json['type'] ?? 'unknown',
       description: json['description'] ?? '',
+      articleId: json['article_id'] as int?,
       createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
     );
   }

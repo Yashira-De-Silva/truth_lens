@@ -97,6 +97,17 @@ class NewsApiService {
       throw Exception('ML service error: ${res.statusCode}');
     return jsonDecode(res.body) as Map<String, dynamic>;
   }
+
+  /// Fetch a single article by ID from Laravel.
+  Future<Article> fetchArticleById(int id) async {
+    final baseUrl = await ApiConfig.baseUrl;
+    final uri = Uri.parse('$baseUrl/news/$id');
+    final res = await http.get(uri).timeout(const Duration(seconds: 15));
+    if (res.statusCode != 200)
+      throw Exception('Backend error: ${res.statusCode}');
+    final body = jsonDecode(res.body) as Map<String, dynamic>;
+    return Article.fromJson(body['data'] as Map<String, dynamic>);
+  }
 }
 
 class NewsResponse {
