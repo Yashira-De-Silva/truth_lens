@@ -173,11 +173,13 @@ class FollowController extends Controller
             return response()->json(['success' => true, 'data' => []]);
         }
 
-        $users = User::where('name', 'like', "%$q%")
-            ->orWhere('email', 'like', "%$q%")
-            ->where('id', '!=', auth()->id()) // Exclude self
-            ->limit(20)
-            ->get(['id', 'name', 'email', 'profile_image', 'bio']);
+        $users = User::where(function($query) use ($q) {
+            $query->where('name', 'like', "%$q%")
+                  ->orWhere('email', 'like', "%$q%");
+        })
+        ->where('id', '!=', auth()->id()) // Exclude self
+        ->limit(20)
+        ->get(['id', 'name', 'email', 'profile_image', 'bio']);
 
         // Format to include computed counts
         $data = $users->map(function ($u) {
