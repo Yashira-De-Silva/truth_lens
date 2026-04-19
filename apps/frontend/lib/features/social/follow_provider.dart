@@ -33,6 +33,5 @@ final followingProvider = FutureProvider.autoDispose<List<svc.FollowUser>>((
 final publicProfileProvider = FutureProvider.autoDispose
     .family<svc.PublicUserProfile?, int>((ref, userId) async {
       final token = ref.watch(authProvider).token ?? '';
-      if (token.isEmpty) return null;
       return svc.getUserProfile(token, userId);
     });

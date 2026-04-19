@@ -379,12 +379,12 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                               child: Column(
                                 children: [
-                                  Consumer(
-                                    builder: (context, ref, _) {
-                                      final profile = ref.watch(profileProvider);
-                                      final avatarPath = widget.isOwnProfile
-                                          ? profile.avatarPath
-                                          : null;
+                                    Consumer(
+                                      builder: (context, ref, _) {
+                                        final profile = widget.isOwnProfile ? ref.watch(profileProvider) : null;
+                                        final avatarPath = widget.isOwnProfile
+                                            ? profile?.avatarPath
+                                            : null;
 
                                       if (avatarPath != null &&
                                           avatarPath.isNotEmpty &&
@@ -1120,7 +1120,11 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     String token,
     fsvc.FollowStatus status,
   ) async {
-    if (widget.userId == null || token.isEmpty) return;
+    if (widget.userId == null) return;
+    if (token.isEmpty) {
+      AppSnackbar.showError(context, 'Please log in to follow users');
+      return;
+    }
     setState(() => _followLoading = true);
     try {
       if (status.isFollowing) {
@@ -1148,7 +1152,11 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     WidgetRef ref,
     String token,
   ) async {
-    if (widget.userId == null || token.isEmpty) return;
+    if (widget.userId == null) return;
+    if (token.isEmpty) {
+      AppSnackbar.showError(context, 'Please log in to message users');
+      return;
+    }
     try {
       final conv = await csvc.getOrCreateConversation(token, widget.userId!);
       if (context.mounted) {
@@ -1172,7 +1180,11 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     WidgetRef ref,
     String token,
   ) async {
-    if (widget.userId == null || token.isEmpty) return;
+    if (widget.userId == null) return;
+    if (token.isEmpty) {
+      AppSnackbar.showError(context, 'Please log in to challenge users');
+      return;
+    }
     try {
       final game = await chess.challengeUser(token, widget.userId!);
       if (context.mounted) {

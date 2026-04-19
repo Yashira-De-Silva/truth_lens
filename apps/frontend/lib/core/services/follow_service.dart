@@ -3,11 +3,16 @@ import 'package:http/http.dart' as http;
 import '../../core/services/api_config.dart';
 import '../../features/profile/profile_model.dart';
 
-Map<String, String> _headers(String token) => {
-  'Content-Type': 'application/json',
-  'Accept': 'application/json',
-  'Authorization': 'Bearer $token',
-};
+Map<String, String> _headers(String token) {
+  final headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+  if (token.isNotEmpty) {
+    headers['Authorization'] = 'Bearer $token';
+  }
+  return headers;
+}
 
 // ── Models ────────────────────────────────────────────────────────────────────
 
