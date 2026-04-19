@@ -79,6 +79,7 @@ class ChessController extends Controller
             'white_player_id' => $me,
             'black_player_id' => $userId,
             'status'          => 'waiting',
+            'fen'             => 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
             'moves'           => [],
         ]);
         $game->load('whitePlayer', 'blackPlayer');
