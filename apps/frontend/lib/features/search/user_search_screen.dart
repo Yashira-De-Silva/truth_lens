@@ -253,21 +253,19 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: GestureDetector(
-        onTap: canViewProfile
-            ? () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PublicProfileScreen(
-                      userId: user.id,
-                      userName: user.name,
-                      userEmail: user.email,
-                      userBio: user.bio,
-                    ),
-                  ),
-                );
-              }
-            : null,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PublicProfileScreen(
+                userId: user.id,
+                userName: user.name,
+                userEmail: user.email,
+                userBio: user.bio,
+              ),
+            ),
+          );
+        },
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -320,7 +318,6 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ),
                             ),
                           ],
                         ),
