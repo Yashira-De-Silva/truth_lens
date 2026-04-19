@@ -136,7 +136,7 @@ class FollowController extends Controller
             return response()->json(['success' => false, 'message' => 'User not found.'], 404);
         }
 
-        $me             = auth()->id();
+        $me             = auth('api')->id();
         $followersCount = Follow::where('following_id', $userId)->count();
         $followingCount = Follow::where('follower_id', $userId)->count();
         
@@ -172,7 +172,7 @@ class FollowController extends Controller
     public function search(Request $request): JsonResponse
     {
         $q = $request->query('q', '');
-        $me = auth()->id();
+        $me = auth('api')->id();
         $totalUsers = User::count();
         \Log::info("UserSearch: Querying for '$q' | AuthID: " . $me . " | TotalUsersInDB: $totalUsers");
         
