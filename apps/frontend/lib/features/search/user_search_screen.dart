@@ -1,8 +1,12 @@
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../profile/public_profile_screen.dart';
+import '../../core/services/follow_service.dart' as fsvc;
+import '../auth/auth_provider.dart';
+import '../../core/services/follow_service.dart';
 
 class UserSearchScreen extends ConsumerStatefulWidget {
   const UserSearchScreen({super.key});
@@ -13,51 +17,10 @@ class UserSearchScreen extends ConsumerStatefulWidget {
 
 class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<_UserSearchResult> _searchResults = [];
+  List<FollowUser> _searchResults = [];
   bool _isSearching = false;
-
-  final List<_UserSearchResult> _allUsers = [
-    _UserSearchResult(
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      bio: 'News enthusiast and fact checker',
-      visibility: 'public',
-      articlesRead: 127,
-      isFriend: false,
-    ),
-    _UserSearchResult(
-      name: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      bio: 'Journalist and investigative reporter',
-      visibility: 'public',
-      articlesRead: 243,
-      isFriend: true,
-    ),
-    _UserSearchResult(
-      name: 'Mike Johnson',
-      email: 'mike.j@example.com',
-      bio: 'Political analyst',
-      visibility: 'friends',
-      articlesRead: 89,
-      isFriend: true,
-    ),
-    _UserSearchResult(
-      name: 'Sarah Williams',
-      email: 'sarah.w@example.com',
-      bio: null,
-      visibility: 'private',
-      articlesRead: 45,
-      isFriend: false,
-    ),
-    _UserSearchResult(
-      name: 'David Brown',
-      email: 'david.brown@example.com',
-      bio: 'Technology reporter',
-      visibility: 'public',
-      articlesRead: 156,
-      isFriend: false,
-    ),
-  ];
+  bool _isLoading = false;
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -69,28 +32,53 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
   void _onSearchChanged() {
-    setState(() {
-      _isSearching = _searchController.text.isNotEmpty;
-      if (_isSearching) {
-        _searchResults = _allUsers
-            .where(
-              (user) =>
-                  user.name.toLowerCase().contains(
-                    _searchController.text.toLowerCase(),
-                  ) ||
-                  user.email.toLowerCase().contains(
-                    _searchController.text.toLowerCase(),
-                  ),
-            )
-            .toList();
-      } else {
-        _searchResults = [];
-      }
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      _performSearch();
     });
+  }
+
+  Future<void> _performSearch() async {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) {
+      setState(() {
+        _isSearching = false;
+        _searchResults = [];
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _isLoading = true;
+    });
+
+    try {
+      final token = ref.read(authProvider).token;
+      if (token == null) return;
+
+      final results = await fsvc.searchUsers(token, query);
+      if (mounted) {
+        setState(() {
+          _searchResults = results;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error searching users: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -201,25 +189,27 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
               const SizedBox(height: 16),
               Expanded(
                 child: _isSearching
-                    ? _searchResults.isEmpty
-                          ? Center(
-                              child: Text(
-                                'No users found',
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.6),
-                                  fontSize: 16,
+                    ? _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _searchResults.isEmpty
+                            ? Center(
+                                child: Text(
+                                  'No users found',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.6),
+                                    fontSize: 16,
+                                  ),
                                 ),
-                              ),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              itemCount: _searchResults.length,
-                              itemBuilder: (context, index) {
-                                return _buildUserCard(_searchResults[index]);
-                              },
-                            )
+                              )
+                            : ListView.builder(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                itemCount: _searchResults.length,
+                                itemBuilder: (context, index) {
+                                  return _buildUserCard(_searchResults[index]);
+                                },
+                              )
                     : Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -257,10 +247,8 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
     );
   }
 
-  Widget _buildUserCard(_UserSearchResult user) {
-    bool canViewProfile =
-        user.visibility == 'public' ||
-        (user.visibility == 'friends' && user.isFriend);
+  Widget _buildUserCard(FollowUser user) {
+    bool canViewProfile = true; // For now all searchable users are public
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -271,11 +259,10 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => PublicProfileScreen(
+                      userId: user.id,
                       userName: user.name,
                       userEmail: user.email,
                       userBio: user.bio,
-                      profileVisibility: user.visibility,
-                      isOwnProfile: false,
                     ),
                   ),
                 );
@@ -334,27 +321,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                                 ),
                               ),
                             ),
-                            if (user.isFriend)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.accent.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  'Friend',
-                                  style: TextStyle(
-                                    color: AppColors.accent,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -408,7 +375,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${user.articlesRead} articles read',
+                              '${user.articlesReadCount ?? 0} articles read',
                               style: TextStyle(
                                 color: AppColors.secondary.withValues(
                                   alpha: 0.8,
@@ -437,20 +404,3 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
   }
 }
 
-class _UserSearchResult {
-  final String name;
-  final String email;
-  final String? bio;
-  final String visibility;
-  final int articlesRead;
-  final bool isFriend;
-
-  _UserSearchResult({
-    required this.name,
-    required this.email,
-    this.bio,
-    required this.visibility,
-    required this.articlesRead,
-    required this.isFriend,
-  });
-}

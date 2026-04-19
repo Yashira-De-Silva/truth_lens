@@ -161,4 +161,36 @@ class FollowController extends Controller
             ],
         ]);
     }
+
+    /**
+     * GET /api/users/search
+     * Search for users by name or email.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $q = $request->query('q', '');
+        if (empty($q)) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        $users = User::where('name', 'like', "%$q%")
+            ->orWhere('email', 'like', "%$q%")
+            ->where('id', '!=', auth()->id()) // Exclude self
+            ->limit(20)
+            ->get(['id', 'name', 'email', 'profile_image', 'bio']);
+
+        // Format to include computed counts
+        $data = $users->map(function ($u) {
+            return [
+                'id'            => $u->id,
+                'name'          => $u->name,
+                'email'         => $u->email,
+                'profile_image' => $u->profile_image,
+                'bio'           => $u->bio,
+                'articles_read_count' => $u->articles_read_count,
+            ];
+        });
+
+        return response()->json(['success' => true, 'data' => $data]);
+    }
 }

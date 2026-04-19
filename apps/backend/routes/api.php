@@ -87,6 +87,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/follow/status/{userId}',  [FollowController::class, 'status']);
     Route::get('/followers',               [FollowController::class, 'followers']);
     Route::get('/following',               [FollowController::class, 'following']);
+    Route::get('/users/search',            [FollowController::class, 'search']);
     Route::get('/users/{userId}/profile',  [FollowController::class, 'publicProfile']);
 
     // ── Chat ──────────────────────────────────────────────────────────────

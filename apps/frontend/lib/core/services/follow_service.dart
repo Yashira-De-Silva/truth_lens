@@ -80,17 +80,25 @@ class FollowUser {
   final String name;
   final String email;
   final String? profileImage;
+  final String? bio;
+  final int? articlesReadCount;
+
   const FollowUser({
     required this.id,
     required this.name,
     required this.email,
     this.profileImage,
+    this.bio,
+    this.articlesReadCount,
   });
+
   factory FollowUser.fromJson(Map<String, dynamic> j) => FollowUser(
     id: j['id'] as int,
     name: j['name'] as String,
     email: j['email'] as String? ?? '',
     profileImage: j['profile_image'] as String?,
+    bio: j['bio'] as String?,
+    articlesReadCount: j['articles_read_count'] as int?,
   );
 }
 
@@ -164,4 +172,17 @@ Future<PublicUserProfile?> getUserProfile(String token, int userId) async {
     return PublicUserProfile.fromJson(body['data'] as Map<String, dynamic>);
   }
   return null;
+}
+Future<List<FollowUser>> searchUsers(String token, String query) async {
+  final base = await ApiConfig.baseUrl;
+  final res = await http
+      .get(Uri.parse('$base/users/search?q=$query'), headers: _headers(token))
+      .timeout(const Duration(seconds: 10));
+  final body = jsonDecode(res.body) as Map<String, dynamic>;
+  if (res.statusCode == 200 && body['success'] == true) {
+    return (body['data'] as List)
+        .map((e) => FollowUser.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+  return [];
 }
