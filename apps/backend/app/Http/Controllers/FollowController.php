@@ -169,7 +169,8 @@ class FollowController extends Controller
     public function search(Request $request): JsonResponse
     {
         $q = $request->query('q', '');
-        \Log::info("UserSearch: Querying for '$q' | AuthID: " . auth()->id());
+        $totalUsers = User::count();
+        \Log::info("UserSearch: Querying for '$q' | AuthID: " . auth()->id() . " | TotalUsersInDB: $totalUsers");
         
         if (empty($q)) {
             return response()->json(['success' => true, 'data' => []]);
@@ -180,7 +181,6 @@ class FollowController extends Controller
             $query->whereRaw('LOWER(name) LIKE ?', ["%$lowerQ%"])
                   ->orWhereRaw('LOWER(email) LIKE ?', ["%$lowerQ%"]);
         })
-        ->where('id', '!=', auth()->id()) // Exclude self
         ->limit(20)
         ->get(['id', 'name', 'email', 'profile_image', 'bio']);
 
