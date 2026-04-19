@@ -169,20 +169,25 @@ class FollowController extends Controller
     public function search(Request $request): JsonResponse
     {
         $q = $request->query('q', '');
+        $me = auth()->id();
         $totalUsers = User::count();
-        \Log::info("UserSearch: Querying for '$q' | AuthID: " . auth()->id() . " | TotalUsersInDB: $totalUsers");
+        \Log::info("UserSearch: Querying for '$q' | AuthID: " . $me . " | TotalUsersInDB: $totalUsers");
         
         if (empty($q)) {
             return response()->json(['success' => true, 'data' => []]);
         }
 
-        $users = User::where(function($query) use ($q) {
+        $query = User::where(function($qBuilder) use ($q) {
             $lowerQ = strtolower($q);
-            $query->whereRaw('LOWER(name) LIKE ?', ["%$lowerQ%"])
-                  ->orWhereRaw('LOWER(email) LIKE ?', ["%$lowerQ%"]);
-        })
-        ->limit(20)
-        ->get(['id', 'name', 'email', 'profile_image', 'bio']);
+            $qBuilder->whereRaw('LOWER(name) LIKE ?', ["%$lowerQ%"])
+                     ->orWhereRaw('LOWER(email) LIKE ?', ["%$lowerQ%"]);
+        });
+
+        if ($me) {
+            $query->where('id', '!=', $me);
+        }
+
+        $users = $query->limit(20)->get(['id', 'name', 'email', 'profile_image', 'bio']);
 
         // Format to include computed counts
         $data = $users->map(function ($u) {
