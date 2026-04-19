@@ -109,4 +109,58 @@ class NewsController extends Controller
 
         return response()->json(['success' => True, 'data' => $formatted]);
     }
+    /**
+     * Get a single news article by ID.
+     */
+    public function show($id)
+    {
+        $article = NewsArticle::find($id);
+
+        if (!$article) {
+            return response()->json(['success' => false, 'message' => 'Article not found.'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $article->id,
+                'title' => $article->title,
+                'summary' => mb_substr($article->text, 0, 300) . (strlen($article->text) > 300 ? '...' : ''),
+                'full_text' => $article->text,
+                'label' => $article->is_fake ? 'FAKE' : 'REAL',
+                'confidence' => 1.0,
+                'source' => $article->subject ?? 'Dataset',
+                'published' => $article->date,
+            ]
+        ]);
+    }
+
+    /**
+     * Log that a user has read an article.
+     */
+    public function logRead(Request $request, $id)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $article = NewsArticle::find($id);
+        $title = $article ? $article->title : "article #$id";
+
+        // Record the activity
+        \App\Models\UserActivity::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'type' => 'read',
+                'article_id' => $id,
+            ],
+            [
+                'description' => 'Read: ' . $title,
+                'updated_at' => now(),
+            ]
+        );
+
+        return response()->json(['success' => true]);
+    }
 }

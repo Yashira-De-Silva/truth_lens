@@ -66,13 +66,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Future<void> _performSearch() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     try {
       final query = _searchController.text.trim();
       List<Article> results;
 
       if (query.isEmpty && _selectedCategory == 'All') {
-        results = await _svc.fetchNews(limit: 20);
+        final response = await _svc.fetchNews(limit: 20);
+        results = response.articles;
       } else if (query.isEmpty) {
         results = await _svc.fetchLiveNews(
           section: _mapCategoryToSection(_selectedCategory),
@@ -85,6 +87,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         );
       }
 
+      if (!mounted) return;
       setState(() => _articles = results);
       if (results.isEmpty && mounted) {
         final l10n = AppLocalizations.of(context)!;
@@ -101,12 +104,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         );
       }
     } finally {
-      setState(() => _isLoading = false);
+    if (!mounted) return;
+    setState(() => _isLoading = false);
     }
   }
 
   void _clearSearch() {
     _searchController.clear();
+    if (!mounted) return;
     setState(() {
       _searchQuery = '';
       _selectedCategory = 'All';

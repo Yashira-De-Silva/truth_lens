@@ -26,13 +26,29 @@ class CallNotifier extends StateNotifier<CallState> {
   Timer? _pollTimer;
 
   CallNotifier(this.ref) : super(CallState()) {
-    _startPolling();
+    // Only start polling if we are already authenticated, or when we become authenticated.
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next.token != null && _pollTimer == null) {
+        _startPolling();
+      } else if (next.token == null && _pollTimer != null) {
+        _stopPolling();
+      }
+    }, fireImmediately: true);
   }
 
   void _startPolling() {
+    _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       _pollActiveCall();
     });
+  }
+
+  void _stopPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = null;
+    if (state.activeCall != null) {
+      state = state.copyWith(clearCall: true);
+    }
   }
 
   Future<void> _pollActiveCall() async {

@@ -43,13 +43,50 @@ class User extends Authenticatable implements JWTSubject
      *
      * @return array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_premium' => 'boolean',
+    ];
+
+    protected $appends = [
+        'articles_read_count',
+        'comments_count',
+        'bookmarks_count',
+    ];
+
+    // ── Relationships ────────────────────────────────────────────────────────
+
+    public function activities()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_premium' => 'boolean',
-        ];
+        return $this->hasMany(UserActivity::class);
+    }
+
+    public function bookmarks()
+    {
+        return $this->hasMany(UserBookmark::class);
+    }
+
+    public function articleComments()
+    {
+        return $this->hasMany(ArticleComment::class);
+    }
+
+    // ── Accessors ────────────────────────────────────────────────────────────
+
+    public function getArticlesReadCountAttribute(): int
+    {
+        return $this->activities()->where('type', 'read')->distinct('article_id')->count();
+    }
+
+    public function getCommentsCountAttribute(): int
+    {
+        return $this->articleComments()->count();
+    }
+
+    public function getBookmarksCountAttribute(): int
+    {
+        return $this->bookmarks()->count();
     }
 
     // ── JWTSubject ──────────────────────────────────────────────────────────

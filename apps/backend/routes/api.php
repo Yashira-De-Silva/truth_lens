@@ -70,6 +70,7 @@ Route::post('/login',    [AuthController::class, 'login']);
 Route::get('/news',        [NewsController::class, 'index']);
 Route::get('/news/digest', [NewsController::class, 'digest']);
 Route::get('/news/search', [NewsController::class, 'search']);
+Route::get('/news/{id}',   [NewsController::class, 'show']);
 
 // ── Protected routes ──────────────────────────────────────────────────────
 Route::middleware('auth:api')->group(function () {
@@ -115,6 +116,14 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/games/{id}/resign',    [ChessController::class, 'resign']);
         Route::post('/games/{id}/finish',    [ChessController::class, 'finish']);
     });
+
+    // ── News Feed (Protected Logging) ───────────────────────────────────
+    Route::post('/news/{id}/log-read', [NewsController::class, 'logRead']);
+
+    // ── Bookmarks ─────────────────────────────────────────────────────────
+    Route::get('/bookmarks',           [BookmarkController::class, 'index']);
+    Route::post('/bookmarks',          [BookmarkController::class, 'store']);
+    Route::delete('/bookmarks/{id}',   [BookmarkController::class, 'destroy']);
 
     // ── Comments ──────────────────────────────────────────────────────────
     Route::get('/articles/{articleId}/comments',  [CommentController::class, 'index']);

@@ -83,6 +83,15 @@ class CommentController extends Controller
             'body'       => $request->body,
         ]);
 
+        // Record the activity
+        \App\Models\UserActivity::create([
+            'user_id'     => auth()->id(),
+            'type'        => 'comment',
+            'article_id'  => $articleId,
+            'reference_id' => $comment->id,
+            'description' => 'Commented on article #' . $articleId,
+        ]);
+
         $comment->load('user');
 
         return response()->json([

@@ -2,11 +2,18 @@ import 'dart:ui';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
 import '../../core/services/follow_service.dart' as fsvc;
+import '../news/news_providers.dart';
+import '../news/article_model.dart';
+import '../news/news_feed_screen.dart';
+import '../article/article_details_screen.dart';
+import '../profile/profile_model.dart';
 import '../auth/auth_provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../chat/chat_service.dart' as csvc;
 import '../chat/chat_screen.dart';
 import '../chess/chess_screen.dart';
@@ -195,7 +202,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final stats = {'Articles Read': '127', 'Comments': '45', 'Bookmarks': '23'};
+    widget.isOwnProfile ? ref.watch(profileProvider) : null;
 
     final profile = widget.isOwnProfile ? ref.watch(profileProvider) : null;
     final displayName = widget.isOwnProfile ? profile!.name : widget.userName;
@@ -348,402 +355,441 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
               const SizedBox(height: 24),
 
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0B1220).withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
-                          ),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Column(
-                              children: [
-                                Consumer(
-                                  builder: (context, ref, _) {
-                                    final profile = ref.watch(profileProvider);
-                                    final avatarPath = widget.isOwnProfile
-                                        ? profile.avatarPath
-                                        : null;
-
-                                    if (avatarPath != null &&
-                                        avatarPath.isNotEmpty &&
-                                        File(avatarPath).existsSync()) {
-                                      return Container(
-                                        width: 100,
-                                        height: 100,
-                                        decoration: const BoxDecoration(
-                                          shape: BoxShape.circle,
-                                        ),
-                                        clipBehavior: Clip.antiAlias,
-                                        child: CircleAvatar(
-                                          radius: 50,
-                                          backgroundImage: FileImage(
-                                            File(avatarPath),
-                                          ),
-                                        ),
-                                      );
-                                    }
-
-                                    return Container(
-                                      width: 100,
-                                      height: 100,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            AppColors.secondary,
-                                            AppColors.secondary.withValues(
-                                              alpha: 0.6,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          displayName.isNotEmpty
-                                              ? displayName[0].toUpperCase()
-                                              : 'U',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 48,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  displayName,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                if (displayVisibility == 'public' ||
-                                    displayVisibility == 'friends')
-                                  Text(
-                                    displayEmail,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.6,
-                                      ),
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                if (displayBio.isNotEmpty) ...[
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    displayBio,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                      fontSize: 14,
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                ],
-                                const SizedBox(height: 16),
-                                Wrap(
-                                  spacing: 8,
-                                  children: [
-                                    if (widget.isPremium)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color(0xFFFFD700),
-                                              Color(0xFFFFA500),
-                                            ],
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            20,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: const [
-                                            Icon(
-                                              Icons.workspace_premium,
-                                              size: 14,
-                                              color: Color(0xFF1A1F3A),
-                                            ),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              'Premium',
-                                              style: TextStyle(
-                                                color: Color(0xFF1A1F3A),
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    GestureDetector(
-                                      onTap: widget.isOwnProfile
-                                          ? _showVisibilityDialog
-                                          : null,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _getVisibilityColor(
-                                            displayVisibility,
-                                          ).withValues(alpha: 0.2),
-                                          borderRadius: BorderRadius.circular(
-                                            20,
-                                          ),
-                                          border: Border.all(
-                                            color: _getVisibilityColor(
-                                              displayVisibility,
-                                            ).withValues(alpha: 0.5),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              _getVisibilityIcon(
-                                                displayVisibility,
-                                              ),
-                                              size: 14,
-                                              color: _getVisibilityColor(
-                                                displayVisibility,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              _getVisibilityLabel(
-                                                displayVisibility,
-                                              ),
-                                              style: TextStyle(
-                                                color: _getVisibilityColor(
-                                                  displayVisibility,
-                                                ),
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            if (widget.isOwnProfile) ...[
-                                              const SizedBox(width: 4),
-                                              Icon(
-                                                Icons.edit,
-                                                size: 12,
-                                                color: _getVisibilityColor(
-                                                  displayVisibility,
-                                                ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      if (!widget.isOwnProfile && widget.userId != null)
-                        Consumer(
-                          builder: (_, ref, __) {
-                            final profileAsync = ref.watch(
-                              publicProfileProvider(widget.userId!),
-                            );
-                            return profileAsync.when(
-                              loading: () => const SizedBox.shrink(),
-                              error: (_, __) => const SizedBox.shrink(),
-                              data: (profile) {
-                                final followers = profile?.followersCount ?? 0;
-                                final following = profile?.followingCount ?? 0;
-                                return Container(
-                                  padding: const EdgeInsets.all(20),
-                                  margin: const EdgeInsets.only(bottom: 20),
-                                  decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF0B1220,
-                                    ).withValues(alpha: 0.6),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.1,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceAround,
-                                    children: [
-                                      _statItem('$followers', 'Followers'),
-                                      _statItem('$following', 'Following'),
-                                      _statItem(
-                                        stats['Articles Read']!,
-                                        'Articles',
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        )
-                      else
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    if (widget.isOwnProfile) {
+                      await ref.read(profileProvider.notifier).refreshFromBackend();
+                    }
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
                         Container(
-                          padding: const EdgeInsets.all(20),
-                          margin: const EdgeInsets.only(bottom: 20),
+                          padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF0B1220,
-                            ).withValues(alpha: 0.6),
+                            color: const Color(0xFF0B1220).withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: Colors.white.withValues(alpha: 0.1),
                             ),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: stats.entries.map((stat) {
-                              return _statItem(stat.value, stat.key);
-                            }).toList(),
-                          ),
-                        ),
-
-                      if (!widget.isOwnProfile && widget.userId != null)
-                        Consumer(
-                          builder: (ctx, ref, __) {
-                            final statusAsync = ref.watch(
-                              followStatusProvider(widget.userId!),
-                            );
-                            final token = ref.watch(authProvider).token ?? '';
-                            return statusAsync.when(
-                              loading: () => const SizedBox(
-                                height: 52,
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.secondary,
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              ),
-                              error: (_, __) => const SizedBox.shrink(),
-                              data: (status) => Column(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: Column(
                                 children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _actionButton(
-                                          icon: status.isFollowing
-                                              ? Icons.person_remove
-                                              : Icons.person_add,
-                                          label: status.isFollowing
-                                              ? 'Unfollow'
-                                              : 'Follow',
-                                          color: status.isFollowing
-                                              ? Colors.white.withValues(
-                                                  alpha: 0.15,
-                                                )
-                                              : AppColors.secondary,
-                                          textColor: Colors.white,
-                                          bordered: status.isFollowing,
-                                          loading: _followLoading,
-                                          onTap: () => _toggleFollow(
-                                            ctx,
-                                            ref,
-                                            token,
-                                            status,
+                                  Consumer(
+                                    builder: (context, ref, _) {
+                                      final profile = ref.watch(profileProvider);
+                                      final avatarPath = widget.isOwnProfile
+                                          ? profile.avatarPath
+                                          : null;
+
+                                      if (avatarPath != null &&
+                                          avatarPath.isNotEmpty &&
+                                          File(avatarPath).existsSync()) {
+                                        return Container(
+                                          width: 100,
+                                          height: 100,
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                          ),
+                                          clipBehavior: Clip.antiAlias,
+                                          child: CircleAvatar(
+                                            radius: 50,
+                                            backgroundImage: FileImage(
+                                              File(avatarPath),
+                                            ),
+                                          ),
+                                        );
+                                      }
+
+                                      return Container(
+                                        width: 100,
+                                        height: 100,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              AppColors.secondary,
+                                              AppColors.secondary.withValues(
+                                                alpha: 0.6,
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      ),
-                                      if (status.isMutual) ...[
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: _actionButton(
-                                            icon: Icons.chat_bubble_outline,
-                                            label: 'Message',
-                                            color: const Color(0xFF1A2A40),
-                                            textColor: Colors.white,
-                                            bordered: true,
-                                            loading: false,
-                                            onTap: () =>
-                                                _openChat(ctx, ref, token),
-                                          ),
-                                        ),
-                                      ],
-                                      if (status.isFollowing) ...[
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: _actionButton(
-                                            icon: Icons.sports_esports_outlined,
-                                            label: '♟ Chess',
-                                            color: const Color(0xFF1A2A40),
-                                            textColor: Colors.white,
-                                            bordered: true,
-                                            loading: false,
-                                            onTap: () => _challengeChess(
-                                              ctx,
-                                              ref,
-                                              token,
+                                        child: Center(
+                                          child: Text(
+                                            displayName.isNotEmpty
+                                                ? displayName[0].toUpperCase()
+                                                : 'U',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 48,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                         ),
-                                      ],
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    displayName,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  if (displayVisibility == 'public' ||
+                                      displayVisibility == 'friends')
+                                    Text(
+                                      displayEmail,
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.6,
+                                        ),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  if (displayBio.isNotEmpty) ...[
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      displayBio,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                        fontSize: 14,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 16),
+                                  Wrap(
+                                    spacing: 8,
+                                    children: [
+                                      if (widget.isPremium)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            gradient: const LinearGradient(
+                                              colors: [
+                                                Color(0xFFFFD700),
+                                                Color(0xFFFFA500),
+                                              ],
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: const [
+                                              Icon(
+                                                Icons.workspace_premium,
+                                                size: 14,
+                                                color: Color(0xFF1A1F3A),
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Premium',
+                                                style: TextStyle(
+                                                  color: Color(0xFF1A1F3A),
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      GestureDetector(
+                                        onTap: widget.isOwnProfile
+                                            ? _showVisibilityDialog
+                                            : null,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: _getVisibilityColor(
+                                              displayVisibility,
+                                            ).withValues(alpha: 0.2),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                            border: Border.all(
+                                              color: _getVisibilityColor(
+                                                displayVisibility,
+                                              ).withValues(alpha: 0.5),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                _getVisibilityIcon(
+                                                  displayVisibility,
+                                                ),
+                                                size: 14,
+                                                color: _getVisibilityColor(
+                                                  displayVisibility,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                _getVisibilityLabel(
+                                                  displayVisibility,
+                                                ),
+                                                style: TextStyle(
+                                                  color: _getVisibilityColor(
+                                                    displayVisibility,
+                                                  ),
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              if (widget.isOwnProfile) ...[
+                                                const SizedBox(width: 4),
+                                                Icon(
+                                                  Icons.edit,
+                                                  size: 12,
+                                                  color: _getVisibilityColor(
+                                                    displayVisibility,
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ),
-                                  const SizedBox(height: 20),
                                 ],
                               ),
-                            );
-                          },
+                            ),
+                          ),
                         ),
 
-                      const SizedBox(height: 0),
+                        const SizedBox(height: 20),
 
-                      // Recent Activity  
-                      _buildSectionTitle('Recent Activity'),
-                      const SizedBox(height: 12),
-                      _buildActivityItem(
-                        'Commented on',
-                        'AI Revolutionizes News Verification',
-                        '2h ago',
-                      ),
-                      const SizedBox(height: 8),
-                      _buildActivityItem(
-                        'Bookmarked',
-                        'Political Summit Addresses Climate Change',
-                        '5h ago',
-                      ),
-                      const SizedBox(height: 8),
-                      _buildActivityItem(
-                        'Read',
-                        'Stock Market Reaches New Heights',
-                        '1d ago',
-                      ),
-                    ],
+                        if (!widget.isOwnProfile && widget.userId != null)
+                          Consumer(
+                            builder: (_, ref, __) {
+                              final profileAsync = ref.watch(
+                                publicProfileProvider(widget.userId!),
+                              );
+                              return profileAsync.when(
+                                loading: () => const SizedBox.shrink(),
+                                error: (_, __) => const SizedBox.shrink(),
+                                data: (p) {
+                                  final stats = p != null ? {
+                                    'Articles Read': '${p.articlesReadCount}',
+                                    'Comments': '${p.commentsCount}',
+                                    'Bookmarks': '${p.bookmarksCount}',
+                                  } : {'Articles Read': '0', 'Comments': '0', 'Bookmarks': '0'};
+                                  
+                                  final followers = p?.followersCount ?? 0;
+                                  final following = p?.followingCount ?? 0;
+                                  return Container(
+                                    padding: const EdgeInsets.all(20),
+                                    margin: const EdgeInsets.only(bottom: 20),
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFF0B1220,
+                                      ).withValues(alpha: 0.6),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceAround,
+                                      children: [
+                                        _statItem('$followers', 'Followers'),
+                                        _statItem('$following', 'Following'),
+                                        _statItem(
+                                          stats['Articles Read']!,
+                                          'Articles',
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          )
+                        else if (profile != null)
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFF0B1220,
+                              ).withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.1),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _statItem('${profile.articlesReadCount}', 'Articles Read'),
+                                _statItem('${profile.commentsCount}', 'Comments'),
+                                _statItem('${profile.bookmarksCount}', 'Bookmarks'),
+                              ],
+                            ),
+                          ),
+
+                        if (!widget.isOwnProfile && widget.userId != null)
+                          Consumer(
+                            builder: (ctx, ref, __) {
+                              final statusAsync = ref.watch(
+                                followStatusProvider(widget.userId!),
+                              );
+                              final token = ref.watch(authProvider).token ?? '';
+                              return statusAsync.when(
+                                loading: () => const SizedBox(
+                                  height: 52,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.secondary,
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                ),
+                                error: (_, __) => const SizedBox.shrink(),
+                                data: (status) => Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _actionButton(
+                                            icon: status.isFollowing
+                                                ? Icons.person_remove
+                                                : Icons.person_add,
+                                            label: status.isFollowing
+                                                ? 'Unfollow'
+                                                : 'Follow',
+                                            color: status.isFollowing
+                                                ? Colors.white.withValues(
+                                                    alpha: 0.15,
+                                                  )
+                                                : AppColors.secondary,
+                                            textColor: Colors.white,
+                                            bordered: status.isFollowing,
+                                            loading: _followLoading,
+                                            onTap: () => _toggleFollow(
+                                              ctx,
+                                              ref,
+                                              token,
+                                              status,
+                                            ),
+                                          ),
+                                        ),
+                                        if (status.isMutual) ...[
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: _actionButton(
+                                              icon: Icons.chat_bubble_outline,
+                                              label: 'Message',
+                                              color: const Color(0xFF1A2A40),
+                                              textColor: Colors.white,
+                                              bordered: true,
+                                              loading: false,
+                                              onTap: () =>
+                                                  _openChat(ctx, ref, token),
+                                            ),
+                                          ),
+                                        ],
+                                        if (status.isFollowing) ...[
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: _actionButton(
+                                              icon: Icons.sports_esports_outlined,
+                                              label: '♟ Chess',
+                                              color: const Color(0xFF1A2A40),
+                                              textColor: Colors.white,
+                                              bordered: true,
+                                              loading: false,
+                                              onTap: () => _challengeChess(
+                                                ctx,
+                                                ref,
+                                                token,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    const SizedBox(height: 20),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+
+                        const SizedBox(height: 0),
+
+                        // Recent Activity  
+                        if (widget.isOwnProfile && profile != null && profile.activities.isNotEmpty) ...[
+                          _buildSectionTitle('Recent Activity'),
+                          const SizedBox(height: 12),
+                          ...profile.activities.map((act) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: _buildActivityItem(
+                              context,
+                              ref,
+                              act.type == 'read' ? 'Read' : (act.type == 'bookmark' ? 'Bookmarked' : 'Commented on'),
+                              act.description,
+                              _getTimeAgo(act.createdAt),
+                              act.articleId,
+                            ),
+                          )).toList(),
+                        ] else if (!widget.isOwnProfile && widget.userId != null)
+                           Consumer(builder: (ctx, ref, __) {
+                              final profileAsync = ref.watch(publicProfileProvider(widget.userId!));
+                              return profileAsync.when(
+                                loading: () => const SizedBox.shrink(),
+                                error: (_, __) => const SizedBox.shrink(),
+                                data: (p) {
+                                  if (p == null || p.activities.isEmpty) return const SizedBox.shrink();
+                                  return Column(
+                                    children: [
+                                      _buildSectionTitle('Recent Activity'),
+                                      const SizedBox(height: 12),
+                                      ...p.activities.map((act) => Padding(
+                                        padding: const EdgeInsets.only(bottom: 8.0),
+                                        child: _buildActivityItem(
+                                          ctx,
+                                          ref,
+                                          act.type == 'read' ? 'Read' : (act.type == 'bookmark' ? 'Bookmarked' : 'Commented on'),
+                                          act.description,
+                                          _getTimeAgo(act.createdAt),
+                                          act.articleId,
+                                        ),
+                                      )).toList(),
+                                    ],
+                                  );
+                                }
+                              );
+                           }),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -752,6 +798,23 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
         ),
       ),
     );
+  }
+
+  String _getTimeAgo(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inDays > 7) {
+      return intl.DateFormat('MMM d').format(timestamp);
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
+    }
   }
 
   Widget _buildSectionTitle(String title) {
@@ -768,67 +831,111 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     );
   }
 
-  Widget _buildActivityItem(String action, String article, String time) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0B1220).withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.secondary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(8),
+  Widget _buildActivityItem(
+    BuildContext context,
+    WidgetRef ref,
+    String action,
+    String articleTitle,
+    String time,
+    int? articleId,
+  ) {
+    return InkWell(
+      onTap: articleId == null ? null : () async {
+        // Show loading indicator
+        final l10n = AppLocalizations.of(context)!;
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => const Center(child: CircularProgressIndicator()),
+        );
+
+        try {
+          final api = ref.read(newsApiProvider);
+          final articleObj = await api.fetchArticleById(articleId);
+          
+          if (!context.mounted) return;
+          Navigator.pop(context); // Remove loading
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ArticleDetailsScreen(article: articleObj),
             ),
-            child: Icon(
-              _getActivityIcon(action),
-              color: AppColors.secondary,
-              size: 16,
+          );
+        } catch (e) {
+          if (!context.mounted) return;
+          Navigator.pop(context); // Remove loading
+          AppSnackbar.showError(context, 'Could not open article');
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0B1220).withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.secondary.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                _getActivityIcon(action),
+                color: AppColors.secondary,
+                size: 16,
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      action,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 12,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        action,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      time,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 11,
+                      const Spacer(),
+                      Text(
+                        time,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 11,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  article,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    articleTitle,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            if (articleId != null)
+              Icon(
+                Icons.chevron_right,
+                color: Colors.white.withValues(alpha: 0.3),
+                size: 20,
+              ),
+          ],
+        ),
       ),
     );
   }

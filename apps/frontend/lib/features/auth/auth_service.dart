@@ -8,6 +8,13 @@ const _userKey = 'auth_user';
 const _loginTimestampKey = 'auth_login_timestamp';
 const _sessionDays = 30;
 
+// Cached SharedPreferences instance — avoids repeated getInstance() disk I/O.
+SharedPreferences? _prefsCache;
+Future<SharedPreferences> get _prefs async {
+  _prefsCache ??= await SharedPreferences.getInstance();
+  return _prefsCache!;
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 Map<String, String> get _jsonHeaders => {
@@ -20,45 +27,45 @@ Map<String, String> _authHeaders(String token) => {
       'Authorization': 'Bearer $token',
     };
 Future<void> saveToken(String token) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(_tokenKey, token);
+  final p = await _prefs;
+  await p.setString(_tokenKey, token);
 }
 
 Future<String?> loadToken() async {
-  final prefs = await SharedPreferences.getInstance();
-  return prefs.getString(_tokenKey);
+  final p = await _prefs;
+  return p.getString(_tokenKey);
 }
 
 Future<void> clearToken() async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.remove(_tokenKey);
-  await prefs.remove(_userKey);
-  await prefs.remove(_loginTimestampKey);
+  final p = await _prefs;
+  await p.remove(_tokenKey);
+  await p.remove(_userKey);
+  await p.remove(_loginTimestampKey);
 }
 
 Future<void> saveUser(Map<String, dynamic> user) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(_userKey, jsonEncode(user));
+  final p = await _prefs;
+  await p.setString(_userKey, jsonEncode(user));
 }
 
 Future<Map<String, dynamic>?> loadUser() async {
-  final prefs = await SharedPreferences.getInstance();
-  final raw = prefs.getString(_userKey);
+  final p = await _prefs;
+  final raw = p.getString(_userKey);
   if (raw == null) return null;
   return jsonDecode(raw) as Map<String, dynamic>;
 }
 
 Future<void> saveLoginTimestamp() async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setInt(
+  final p = await _prefs;
+  await p.setInt(
     _loginTimestampKey,
     DateTime.now().toUtc().millisecondsSinceEpoch,
   );
 }
 
 Future<bool> isSessionExpired() async {
-  final prefs = await SharedPreferences.getInstance();
-  final ts = prefs.getInt(_loginTimestampKey);
+  final p = await _prefs;
+  final ts = p.getInt(_loginTimestampKey);
   if (ts == null) return true;
   final loginTime = DateTime.fromMillisecondsSinceEpoch(ts, isUtc: true);
   return DateTime.now().toUtc().difference(loginTime).inDays >= _sessionDays;
@@ -190,6 +197,70 @@ Future<void> cancelPremium(String token) async {
     );
   }
 }
+
+// ── User Activity & Statistics ───────────────────────────────────────────────
+
+Future<void> logRead(String token, int articleId) async {
+  final base = await ApiConfig.baseUrl;
+  await http
+      .post(
+        Uri.parse('$base/news/$articleId/log-read'),
+        headers: _authHeaders(token),
+      )
+      .timeout(const Duration(seconds: 10));
+}
+
+// ── Server-side Bookmarks ────────────────────────────────────────────────────
+
+Future<List<Map<String, dynamic>>> fetchBookmarks(String token) async {
+  final base = await ApiConfig.baseUrl;
+  final response = await http
+      .get(
+        Uri.parse('$base/bookmarks'),
+        headers: _authHeaders(token),
+      )
+      .timeout(const Duration(seconds: 15));
+  final body = jsonDecode(response.body) as Map<String, dynamic>;
+  if (response.statusCode == 200 && body['success'] == true) {
+    return (body['data'] as List).cast<Map<String, dynamic>>();
+  }
+  return [];
+}
+
+Future<void> saveBookmark({
+  required String token,
+  required int articleId,
+  required String title,
+  String? source,
+  String? summary,
+  Map<String, dynamic>? rawData,
+}) async {
+  final base = await ApiConfig.baseUrl;
+  await http
+      .post(
+        Uri.parse('$base/bookmarks'),
+        headers: _authHeaders(token),
+        body: jsonEncode({
+          'article_id': articleId,
+          'title': title,
+          'source': source,
+          'summary': summary,
+          'raw_data': rawData,
+        }),
+      )
+      .timeout(const Duration(seconds: 15));
+}
+
+Future<void> removeBookmark(String token, int articleId) async {
+  final base = await ApiConfig.baseUrl;
+  await http
+      .delete(
+        Uri.parse('$base/bookmarks/$articleId'),
+        headers: _authHeaders(token),
+      )
+      .timeout(const Duration(seconds: 10));
+}
+
 AuthResult _parseAuthResponse(http.Response response) {
   final body = jsonDecode(response.body) as Map<String, dynamic>;
   if ((response.statusCode == 200 || response.statusCode == 201) &&
