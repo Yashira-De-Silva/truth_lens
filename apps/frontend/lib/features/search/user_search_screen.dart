@@ -344,13 +344,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                         ),
                         const SizedBox(height: 4),
                         if (canViewProfile) ...[
-                          Text(
-                            user.email,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              fontSize: 13,
-                            ),
-                          ),
+                          // Email hidden for privacy
                           if (user.bio != null) ...[
                             const SizedBox(height: 4),
                             Text(

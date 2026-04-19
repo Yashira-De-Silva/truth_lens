@@ -206,9 +206,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 
     final profile = widget.isOwnProfile ? ref.watch(profileProvider) : null;
     final displayName = widget.isOwnProfile ? profile!.name : widget.userName;
-    final displayEmail = widget.isOwnProfile
-        ? profile!.email
-        : widget.userEmail;
+    final displayEmail = ''; // Hidden for privacy
     final displayBio = widget.isOwnProfile
         ? profile!.bio
         : (widget.userBio ?? '');
@@ -446,17 +444,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  if (displayVisibility == 'public' ||
-                                      displayVisibility == 'friends')
-                                    Text(
-                                      displayEmail,
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.6,
-                                        ),
-                                        fontSize: 14,
-                                      ),
-                                    ),
+                                  // Email hidden for privacy
                                   if (displayBio.isNotEmpty) ...[
                                     const SizedBox(height: 16),
                                     Text(
@@ -683,7 +671,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                         _statItem('$followers', 'Followers'),
                                         _statItem('$following', 'Following'),
                                         _statItem(
-                                          stats['Articles Read']!,
+                                          stats['Articles']!,
                                           'Articles',
                                         ),
                                       ],
