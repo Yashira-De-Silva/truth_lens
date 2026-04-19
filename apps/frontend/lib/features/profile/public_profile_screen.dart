@@ -750,21 +750,19 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                             ),
                                           ),
                                         ),
-                                        if (status.isMutual) ...[
-                                          const SizedBox(width: 10),
-                                          Expanded(
-                                            child: _actionButton(
-                                              icon: Icons.chat_bubble_outline,
-                                              label: 'Message',
-                                              color: const Color(0xFF1A2A40),
-                                              textColor: Colors.white,
-                                              bordered: true,
-                                              loading: false,
-                                              onTap: () =>
-                                                  _openChat(ctx, ref, token),
-                                            ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: _actionButton(
+                                            icon: Icons.chat_bubble_outline,
+                                            label: 'Message',
+                                            color: const Color(0xFF1A2A40),
+                                            textColor: Colors.white,
+                                            bordered: true,
+                                            loading: false,
+                                            onTap: () =>
+                                                _openChat(ctx, ref, token),
                                           ),
-                                        ],
+                                        ),
                                         if (status.isFollowing) ...[
                                           const SizedBox(width: 10),
                                           Expanded(
