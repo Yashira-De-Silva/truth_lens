@@ -73,6 +73,7 @@ Route::get('/news/search', [NewsController::class, 'search']);
 Route::get('/news/{id}',   [NewsController::class, 'show']);
 Route::get('/users/search',           [FollowController::class, 'search']);
 Route::get('/users/{userId}/profile', [FollowController::class, 'publicProfile']);
+Route::get('/follow/status/{userId}', [FollowController::class, 'status']);
 
 // ── Protected routes ──────────────────────────────────────────────────────
 Route::middleware('auth:api')->group(function () {
@@ -86,7 +87,7 @@ Route::middleware('auth:api')->group(function () {
     // ── Follow / Social ───────────────────────────────────────────────────
     Route::post('/follow/{userId}',        [FollowController::class, 'follow']);
     Route::delete('/follow/{userId}',      [FollowController::class, 'unfollow']);
-    Route::get('/follow/status/{userId}',  [FollowController::class, 'status']);
+    // Moved status to public
     Route::get('/followers',               [FollowController::class, 'followers']);
     Route::get('/following',               [FollowController::class, 'following']);
     Route::get('/following',               [FollowController::class, 'following']);

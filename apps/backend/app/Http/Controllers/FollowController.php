@@ -74,10 +74,10 @@ class FollowController extends Controller
      */
     public function status(int $userId): JsonResponse
     {
-        $me = auth()->id();
+        $me = auth('api')->id();
 
-        $iFollow     = Follow::where('follower_id', $me)->where('following_id', $userId)->exists();
-        $theyFollow  = Follow::where('follower_id', $userId)->where('following_id', $me)->exists();
+        $iFollow     = $me ? Follow::where('follower_id', $me)->where('following_id', $userId)->exists() : false;
+        $theyFollow  = $me ? Follow::where('follower_id', $userId)->where('following_id', $me)->exists() : false;
 
         return response()->json([
             'success'      => true,
