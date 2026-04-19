@@ -36,6 +36,7 @@ class PublicUserProfile {
   final int followingCount;
   final bool isFollowing;
   final bool isMutual;
+  final bool followsYou;
   final List<Activity> activities;
 
   const PublicUserProfile({
@@ -48,6 +49,7 @@ class PublicUserProfile {
     required this.followingCount,
     required this.isFollowing,
     required this.isMutual,
+    required this.followsYou,
     this.articlesReadCount = 0,
     this.commentsCount = 0,
     this.bookmarksCount = 0,
@@ -65,7 +67,8 @@ class PublicUserProfile {
         followingCount: j['following_count'] as int? ?? 0,
         isFollowing: j['is_following'] as bool? ?? false,
         isMutual: j['is_mutual'] as bool? ?? false,
-        articlesReadCount: j['articles_read_count'] ?? 0,
+        followsYou: j['follows_you'] as bool? ?? false,
+        articlesReadCount: j['articles_read_count'] as int? ?? 0,
         commentsCount: j['comments_count'] ?? 0,
         bookmarksCount: j['bookmarks_count'] ?? 0,
         activities: (j['activities'] as List?)
@@ -82,6 +85,7 @@ class FollowUser {
   final String? profileImage;
   final String? bio;
   final int? articlesReadCount;
+  final bool followsYou;
 
   const FollowUser({
     required this.id,
@@ -90,6 +94,7 @@ class FollowUser {
     this.profileImage,
     this.bio,
     this.articlesReadCount,
+    this.followsYou = false,
   });
 
   factory FollowUser.fromJson(Map<String, dynamic> j) => FollowUser(
@@ -99,6 +104,7 @@ class FollowUser {
     profileImage: j['profile_image'] as String?,
     bio: j['bio'] as String?,
     articlesReadCount: j['articles_read_count'] as int?,
+    followsYou: j['follows_you'] as bool? ?? false,
   );
 }
 

@@ -139,8 +139,10 @@ class FollowController extends Controller
         $me             = auth()->id();
         $followersCount = Follow::where('following_id', $userId)->count();
         $followingCount = Follow::where('follower_id', $userId)->count();
-        $iFollow        = Follow::where('follower_id', $me)->where('following_id', $userId)->exists();
-        $theyFollow     = Follow::where('follower_id', $userId)->where('following_id', $me)->exists();
+        
+        // Handle guest users — if not logged in, they follow no one and no one follows them back in this context
+        $iFollow        = $me ? Follow::where('follower_id', $me)->where('following_id', $userId)->exists() : false;
+        $theyFollow     = $me ? Follow::where('follower_id', $userId)->where('following_id', $me)->exists() : false;
 
         return response()->json([
             'success' => true,
@@ -154,6 +156,7 @@ class FollowController extends Controller
                 'following_count' => $followingCount,
                 'is_following'    => $iFollow,
                 'is_mutual'       => $iFollow && $theyFollow,
+                'follows_you'     => $theyFollow,
                 'articles_read_count' => $user->articles_read_count,
                 'comments_count'      => $user->comments_count,
                 'bookmarks_count'     => $user->bookmarks_count,
@@ -189,8 +192,9 @@ class FollowController extends Controller
 
         $users = $query->limit(20)->get(['id', 'name', 'email', 'profile_image', 'bio']);
 
-        // Format to include computed counts
-        $data = $users->map(function ($u) {
+        // Format to include computed counts and follow status
+        $data = $users->map(function ($u) use ($me) {
+            $followsYou = $me ? Follow::where('follower_id', $u->id)->where('following_id', $me)->exists() : false;
             return [
                 'id'            => $u->id,
                 'name'          => $u->name,
@@ -198,6 +202,7 @@ class FollowController extends Controller
                 'profile_image' => $u->profile_image,
                 'bio'           => $u->bio,
                 'articles_read_count' => $u->articles_read_count,
+                'follows_you'   => $followsYou,
             ];
         });
 

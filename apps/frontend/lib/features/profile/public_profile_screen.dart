@@ -581,6 +581,67 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                           ),
                         ),
 
+                        if (!widget.isOwnProfile && widget.userId != null)
+                          Consumer(
+                            builder: (context, ref, _) {
+                              final profileAsync = ref.watch(
+                                publicProfileProvider(widget.userId!),
+                              );
+                              return profileAsync.when(
+                                loading: () => const SizedBox.shrink(),
+                                error: (_, __) => const SizedBox.shrink(),
+                                data: (p) {
+                                  if (p == null || !p.followsYou) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.person_pin,
+                                            size: 14,
+                                            color: Colors.white.withValues(
+                                              alpha: 0.7,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Follows You',
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.7,
+                                              ),
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+
                         const SizedBox(height: 20),
 
                         if (!widget.isOwnProfile && widget.userId != null)
@@ -594,10 +655,10 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                 error: (_, __) => const SizedBox.shrink(),
                                 data: (p) {
                                   final stats = p != null ? {
-                                    'Articles Read': '${p.articlesReadCount}',
-                                    'Comments': '${p.commentsCount}',
-                                    'Bookmarks': '${p.bookmarksCount}',
-                                  } : {'Articles Read': '0', 'Comments': '0', 'Bookmarks': '0'};
+                                    'Followers': '${p.followersCount}',
+                                    'Following': '${p.followingCount}',
+                                    'Articles': '${p.articlesReadCount}',
+                                  } : {'Followers': '0', 'Following': '0', 'Articles': '0'};
                                   
                                   final followers = p?.followersCount ?? 0;
                                   final following = p?.followingCount ?? 0;

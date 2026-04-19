@@ -71,7 +71,8 @@ Route::get('/news',        [NewsController::class, 'index']);
 Route::get('/news/digest', [NewsController::class, 'digest']);
 Route::get('/news/search', [NewsController::class, 'search']);
 Route::get('/news/{id}',   [NewsController::class, 'show']);
-Route::get('/users/search', [FollowController::class, 'search']);
+Route::get('/users/search',           [FollowController::class, 'search']);
+Route::get('/users/{userId}/profile', [FollowController::class, 'publicProfile']);
 
 // ── Protected routes ──────────────────────────────────────────────────────
 Route::middleware('auth:api')->group(function () {
@@ -89,7 +90,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/followers',               [FollowController::class, 'followers']);
     Route::get('/following',               [FollowController::class, 'following']);
     Route::get('/following',               [FollowController::class, 'following']);
-    Route::get('/users/{userId}/profile',  [FollowController::class, 'publicProfile']);
+    // Removed duplicate and private-only profile route
 
     // ── Chat ──────────────────────────────────────────────────────────────
     Route::prefix('chat')->group(function () {
