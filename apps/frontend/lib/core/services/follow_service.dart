@@ -3,11 +3,16 @@ import 'package:http/http.dart' as http;
 import '../../core/services/api_config.dart';
 import '../../features/profile/profile_model.dart';
 
-Map<String, String> _headers(String token) => {
-  'Content-Type': 'application/json',
-  'Accept': 'application/json',
-  'Authorization': 'Bearer $token',
-};
+Map<String, String> _headers(String token) {
+  final headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+  if (token.isNotEmpty) {
+    headers['Authorization'] = 'Bearer $token';
+  }
+  return headers;
+}
 
 // ── Models ────────────────────────────────────────────────────────────────────
 
@@ -36,6 +41,7 @@ class PublicUserProfile {
   final int followingCount;
   final bool isFollowing;
   final bool isMutual;
+  final bool followsYou;
   final List<Activity> activities;
 
   const PublicUserProfile({
@@ -48,6 +54,7 @@ class PublicUserProfile {
     required this.followingCount,
     required this.isFollowing,
     required this.isMutual,
+    required this.followsYou,
     this.articlesReadCount = 0,
     this.commentsCount = 0,
     this.bookmarksCount = 0,
@@ -65,7 +72,8 @@ class PublicUserProfile {
         followingCount: j['following_count'] as int? ?? 0,
         isFollowing: j['is_following'] as bool? ?? false,
         isMutual: j['is_mutual'] as bool? ?? false,
-        articlesReadCount: j['articles_read_count'] ?? 0,
+        followsYou: j['follows_you'] as bool? ?? false,
+        articlesReadCount: j['articles_read_count'] as int? ?? 0,
         commentsCount: j['comments_count'] ?? 0,
         bookmarksCount: j['bookmarks_count'] ?? 0,
         activities: (j['activities'] as List?)
@@ -80,17 +88,28 @@ class FollowUser {
   final String name;
   final String email;
   final String? profileImage;
+  final String? bio;
+  final int? articlesReadCount;
+  final bool followsYou;
+
   const FollowUser({
     required this.id,
     required this.name,
     required this.email,
     this.profileImage,
+    this.bio,
+    this.articlesReadCount,
+    this.followsYou = false,
   });
+
   factory FollowUser.fromJson(Map<String, dynamic> j) => FollowUser(
     id: j['id'] as int,
     name: j['name'] as String,
     email: j['email'] as String? ?? '',
     profileImage: j['profile_image'] as String?,
+    bio: j['bio'] as String?,
+    articlesReadCount: j['articles_read_count'] as int?,
+    followsYou: j['follows_you'] as bool? ?? false,
   );
 }
 
@@ -164,4 +183,17 @@ Future<PublicUserProfile?> getUserProfile(String token, int userId) async {
     return PublicUserProfile.fromJson(body['data'] as Map<String, dynamic>);
   }
   return null;
+}
+Future<List<FollowUser>> searchUsers(String token, String query) async {
+  final base = await ApiConfig.baseUrl;
+  final res = await http
+      .get(Uri.parse('$base/users/search?q=$query'), headers: _headers(token))
+      .timeout(const Duration(seconds: 10));
+  final body = jsonDecode(res.body) as Map<String, dynamic>;
+  if (res.statusCode == 200 && body['success'] == true) {
+    return (body['data'] as List)
+        .map((e) => FollowUser.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+  return [];
 }

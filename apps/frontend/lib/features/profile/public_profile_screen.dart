@@ -206,9 +206,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
 
     final profile = widget.isOwnProfile ? ref.watch(profileProvider) : null;
     final displayName = widget.isOwnProfile ? profile!.name : widget.userName;
-    final displayEmail = widget.isOwnProfile
-        ? profile!.email
-        : widget.userEmail;
+    final displayEmail = ''; // Hidden for privacy
     final displayBio = widget.isOwnProfile
         ? profile!.bio
         : (widget.userBio ?? '');
@@ -381,12 +379,12 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                               child: Column(
                                 children: [
-                                  Consumer(
-                                    builder: (context, ref, _) {
-                                      final profile = ref.watch(profileProvider);
-                                      final avatarPath = widget.isOwnProfile
-                                          ? profile.avatarPath
-                                          : null;
+                                    Consumer(
+                                      builder: (context, ref, _) {
+                                        final profile = widget.isOwnProfile ? ref.watch(profileProvider) : null;
+                                        final avatarPath = widget.isOwnProfile
+                                            ? profile?.avatarPath
+                                            : null;
 
                                       if (avatarPath != null &&
                                           avatarPath.isNotEmpty &&
@@ -446,17 +444,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  if (displayVisibility == 'public' ||
-                                      displayVisibility == 'friends')
-                                    Text(
-                                      displayEmail,
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.6,
-                                        ),
-                                        fontSize: 14,
-                                      ),
-                                    ),
+                                  // Email hidden for privacy
                                   if (displayBio.isNotEmpty) ...[
                                     const SizedBox(height: 16),
                                     Text(
@@ -581,6 +569,67 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                           ),
                         ),
 
+                        if (!widget.isOwnProfile && widget.userId != null)
+                          Consumer(
+                            builder: (context, ref, _) {
+                              final profileAsync = ref.watch(
+                                publicProfileProvider(widget.userId!),
+                              );
+                              return profileAsync.when(
+                                loading: () => const SizedBox.shrink(),
+                                error: (_, __) => const SizedBox.shrink(),
+                                data: (p) {
+                                  if (p == null || !p.followsYou) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.person_pin,
+                                            size: 14,
+                                            color: Colors.white.withValues(
+                                              alpha: 0.7,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Follows You',
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.7,
+                                              ),
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+
                         const SizedBox(height: 20),
 
                         if (!widget.isOwnProfile && widget.userId != null)
@@ -594,10 +643,10 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                 error: (_, __) => const SizedBox.shrink(),
                                 data: (p) {
                                   final stats = p != null ? {
-                                    'Articles Read': '${p.articlesReadCount}',
-                                    'Comments': '${p.commentsCount}',
-                                    'Bookmarks': '${p.bookmarksCount}',
-                                  } : {'Articles Read': '0', 'Comments': '0', 'Bookmarks': '0'};
+                                    'Followers': '${p.followersCount}',
+                                    'Following': '${p.followingCount}',
+                                    'Articles': '${p.articlesReadCount}',
+                                  } : {'Followers': '0', 'Following': '0', 'Articles': '0'};
                                   
                                   final followers = p?.followersCount ?? 0;
                                   final following = p?.followingCount ?? 0;
@@ -622,7 +671,7 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                         _statItem('$followers', 'Followers'),
                                         _statItem('$following', 'Following'),
                                         _statItem(
-                                          stats['Articles Read']!,
+                                          stats['Articles']!,
                                           'Articles',
                                         ),
                                       ],
@@ -1071,7 +1120,11 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     String token,
     fsvc.FollowStatus status,
   ) async {
-    if (widget.userId == null || token.isEmpty) return;
+    if (widget.userId == null) return;
+    if (token.isEmpty) {
+      AppSnackbar.showError(context, 'Please log in to follow users');
+      return;
+    }
     setState(() => _followLoading = true);
     try {
       if (status.isFollowing) {
@@ -1099,7 +1152,11 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     WidgetRef ref,
     String token,
   ) async {
-    if (widget.userId == null || token.isEmpty) return;
+    if (widget.userId == null) return;
+    if (token.isEmpty) {
+      AppSnackbar.showError(context, 'Please log in to message users');
+      return;
+    }
     try {
       final conv = await csvc.getOrCreateConversation(token, widget.userId!);
       if (context.mounted) {
@@ -1123,7 +1180,11 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     WidgetRef ref,
     String token,
   ) async {
-    if (widget.userId == null || token.isEmpty) return;
+    if (widget.userId == null) return;
+    if (token.isEmpty) {
+      AppSnackbar.showError(context, 'Please log in to challenge users');
+      return;
+    }
     try {
       final game = await chess.challengeUser(token, widget.userId!);
       if (context.mounted) {

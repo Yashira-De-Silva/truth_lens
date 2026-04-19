@@ -24,6 +24,10 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
     Future<void> refreshFromBackend() async {
     final token = await svc.loadToken();
     if (token == null) return;
+    
+    // Hardening: Don't call backend if the session is known to be expired
+    final expired = await svc.isSessionExpired();
+    if (expired) return;
     try {
       final data = await svc.me(token);
       state = UserProfile.fromJson(data);
