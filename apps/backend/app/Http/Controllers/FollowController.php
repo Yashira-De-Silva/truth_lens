@@ -169,13 +169,16 @@ class FollowController extends Controller
     public function search(Request $request): JsonResponse
     {
         $q = $request->query('q', '');
+        \Log::info("UserSearch: Querying for '$q' | AuthID: " . auth()->id());
+        
         if (empty($q)) {
             return response()->json(['success' => true, 'data' => []]);
         }
 
         $users = User::where(function($query) use ($q) {
-            $query->where('name', 'like', "%$q%")
-                  ->orWhere('email', 'like', "%$q%");
+            $lowerQ = strtolower($q);
+            $query->whereRaw('LOWER(name) LIKE ?', ["%$lowerQ%"])
+                  ->orWhereRaw('LOWER(email) LIKE ?', ["%$lowerQ%"]);
         })
         ->where('id', '!=', auth()->id()) // Exclude self
         ->limit(20)

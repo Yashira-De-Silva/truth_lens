@@ -62,7 +62,9 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
       final token = ref.read(authProvider).token;
       if (token == null) return;
 
+      print('DEBUG: Searching for "$query"...');
       final results = await fsvc.searchUsers(token, query);
+      print('DEBUG: Found ${results.length} results.');
       if (mounted) {
         setState(() {
           _searchResults = results;
