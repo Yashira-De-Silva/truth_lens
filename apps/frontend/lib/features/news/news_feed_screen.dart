@@ -19,6 +19,7 @@ class NewsFeedState {
   final bool isLoading;
   final bool isLoadingMore;
   final bool hasMore;
+  final int total;
   final NewsFeedMode mode;
   final String? error;
 
@@ -27,6 +28,7 @@ class NewsFeedState {
     this.isLoading = false,
     this.isLoadingMore = false,
     this.hasMore = true,
+    this.total = 0,
     this.mode = NewsFeedMode.dataset,
     this.error,
   });
@@ -36,6 +38,7 @@ class NewsFeedState {
     bool? isLoading,
     bool? isLoadingMore,
     bool? hasMore,
+    int? total,
     NewsFeedMode? mode,
     String? error,
     bool clearError = false,
@@ -44,6 +47,7 @@ class NewsFeedState {
     isLoading: isLoading ?? this.isLoading,
     isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     hasMore: hasMore ?? this.hasMore,
+    total: total ?? this.total,
     mode: mode ?? this.mode,
     error: clearError ? null : (error ?? this.error),
   );
@@ -65,11 +69,12 @@ class NewsFeedNotifier extends StateNotifier<NewsFeedState> {
       clearError: true,
     );
     try {
-      final articles = await _svc.fetchNews(limit: _pageSize, offset: 0);
+      final response = await _svc.fetchNews(limit: _pageSize, offset: 0);
       state = state.copyWith(
-        articles: articles,
+        articles: response.articles,
+        total: response.total,
         isLoading: false,
-        hasMore: articles.length >= _pageSize,
+        hasMore: response.articles.length >= _pageSize,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -84,11 +89,12 @@ class NewsFeedNotifier extends StateNotifier<NewsFeedState> {
     state = state.copyWith(isLoadingMore: true);
     try {
       final offset = state.articles.length;
-      final articles = await _svc.fetchNews(limit: _pageSize, offset: offset);
+      final response = await _svc.fetchNews(limit: _pageSize, offset: offset);
       state = state.copyWith(
-        articles: [...state.articles, ...articles],
+        articles: [...state.articles, ...response.articles],
+        total: response.total,
         isLoadingMore: false,
-        hasMore: articles.length >= _pageSize,
+        hasMore: response.articles.length >= _pageSize,
       );
     } catch (e) {
       state = state.copyWith(isLoadingMore: false);
@@ -106,13 +112,17 @@ class NewsFeedNotifier extends StateNotifier<NewsFeedState> {
     );
     try {
       final List<Article> articles;
+      int total = 0;
       if (mode == NewsFeedMode.live) {
         articles = await _svc.fetchLiveNews(limit: _pageSize);
       } else {
-        articles = await _svc.fetchNews(limit: _pageSize, offset: 0);
+        final res = await _svc.fetchNews(limit: _pageSize, offset: 0);
+        articles = res.articles;
+        total = res.total;
       }
       state = state.copyWith(
         articles: articles,
+        total: total,
         isLoading: false,
         hasMore: mode == NewsFeedMode.dataset && articles.length >= _pageSize,
       );
@@ -120,6 +130,7 @@ class NewsFeedNotifier extends StateNotifier<NewsFeedState> {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
+
 
   Future<void> refresh() async {
     await switchMode(state.mode);
@@ -224,7 +235,7 @@ class _NewsFeedScreenState extends ConsumerState<NewsFeedScreen> {
                           Text(
                             isLive
                                 ? '🔴 Live from The Guardian'
-                                : '${feed.articles.length} of 44,898 articles',
+                                : '${feed.articles.length} of ${feed.total} articles',
                             style: TextStyle(
                               color: isLive
                                   ? Colors.redAccent
@@ -550,16 +561,12 @@ class _ArticleCard extends ConsumerWidget {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Title row ───────────────────────────────────
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Title row ───────────────────────────────────
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -829,9 +836,7 @@ class _ArticleCard extends ConsumerWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
+        );
   }
 }
 String _formatDate(String raw) {

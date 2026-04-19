@@ -154,6 +154,10 @@ class FollowController extends Controller
                 'following_count' => $followingCount,
                 'is_following'    => $iFollow,
                 'is_mutual'       => $iFollow && $theyFollow,
+                'articles_read_count' => $user->articles_read_count,
+                'comments_count'      => $user->comments_count,
+                'bookmarks_count'     => $user->bookmarks_count,
+                'activities'          => $user->activities()->latest()->limit(10)->get(),
             ],
         ]);
     }

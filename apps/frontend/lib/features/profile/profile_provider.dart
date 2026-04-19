@@ -21,19 +21,12 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
     await refreshFromBackend();
   }
 
-  Future<void> refreshFromBackend() async {
+    Future<void> refreshFromBackend() async {
     final token = await svc.loadToken();
     if (token == null) return;
     try {
       final data = await svc.me(token);
-      state = state.copyWith(
-        name: data['name'] as String?,
-        email: data['email'] as String?,
-        bio: data['bio'] as String? ?? '',
-        apiKey: data['api_key'] as String?,
-        avatarPath: data['profile_image'] as String? ?? state.avatarPath,
-        id: data['id'] as int?,
-      );
+      state = UserProfile.fromJson(data);
       
       final isPremium = data['is_premium'] == 1 || data['is_premium'] == true;
       final prefs = await SharedPreferences.getInstance();

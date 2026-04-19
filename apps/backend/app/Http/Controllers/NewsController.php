@@ -109,4 +109,29 @@ class NewsController extends Controller
 
         return response()->json(['success' => True, 'data' => $formatted]);
     }
+    /**
+     * Log that a user has read an article.
+     */
+    public function logRead(Request $request, $id)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        // Record the activity
+        \App\Models\UserActivity::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'type' => 'read',
+                'article_id' => $id,
+            ],
+            [
+                'description' => 'Read article #' . $id,
+                'updated_at' => now(),
+            ]
+        );
+
+        return response()->json(['success' => true]);
+    }
 }

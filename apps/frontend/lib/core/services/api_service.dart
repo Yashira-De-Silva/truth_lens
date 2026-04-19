@@ -9,7 +9,7 @@ class NewsApiService {
   NewsApiService({this.lang = 'en'});
 
   /// Fetch N articles from the Laravel backend (TiDB Cloud).
-  Future<List<Article>> fetchNews({int limit = 20, int offset = 0}) async {
+  Future<NewsResponse> fetchNews({int limit = 20, int offset = 0}) async {
     final baseUrl = await ApiConfig.baseUrl; // Use Laravel
     final uri = Uri.parse('$baseUrl/news?limit=$limit&offset=$offset&lang=$lang');
     final res = await http.get(uri).timeout(const Duration(seconds: 15));
@@ -17,9 +17,10 @@ class NewsApiService {
       throw Exception('Backend error: ${res.statusCode}');
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     final data = body['data'] as List<dynamic>;
-    return data
+    final articles = data
         .map((e) => Article.fromJson(e as Map<String, dynamic>))
         .toList();
+    return NewsResponse(articles: articles, total: body['total'] ?? 0);
   }
 
   /// Fetch top verified (REAL) articles for the Digest screen from Laravel.
@@ -96,6 +97,12 @@ class NewsApiService {
       throw Exception('ML service error: ${res.statusCode}');
     return jsonDecode(res.body) as Map<String, dynamic>;
   }
+}
+
+class NewsResponse {
+  final List<Article> articles;
+  final int total;
+  NewsResponse({required this.articles, required this.total});
 }
 
 // ── Legacy stub kept for compatibility with news_providers.dart ───────────────

@@ -23,25 +23,19 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _index = 0;
   bool _isIncomingCallShowing = false;
-
-  final List<Widget> _pages = [
-    const NewsFeedScreen(),
-    const SearchScreen(),
-    DigestScreen(),
-    const ChatsListScreen(),
-    const ProfileScreen(),
-  ];
+  final Set<int> _visited = {0};
 
   @override
   Widget build(BuildContext context) {
+    _visited.add(_index);
     final authState = ref.watch(authProvider);
+    
     final myIdStr = authState.user?['id']?.toString();
 
     ref.listen(callProvider, (previous, next) {
       if (next.activeCall != null && next.activeCall!['status'] == 'ringing') {
         final callerId = next.activeCall!['caller_id']?.toString();
         if (callerId == myIdStr) {
-          // I am the caller! So I don't show incoming call screen.
           return;
         }
         
@@ -56,14 +50,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
       } else if (next.activeCall == null) {
         if (_isIncomingCallShowing) {
-          Navigator.pop(context); // Dismiss ringing if caller hangs up
+          Navigator.pop(context);
           _isIncomingCallShowing = false;
         }
       }
     });
 
     return Scaffold(
-      body: _pages[_index],
+      body: IndexedStack(
+        index: _index,
+        children: List.generate(5, (i) {
+          if (!_visited.contains(i)) return const SizedBox.shrink();
+          switch (i) {
+            case 0: return const NewsFeedScreen();
+            case 1: return const SearchScreen();
+            case 2: return DigestScreen();
+            case 3: return const ChatsListScreen();
+            case 4: return const ProfileScreen();
+            default: return const SizedBox.shrink();
+          }
+        }),
+      ),
       extendBody: true,
       floatingActionButton: FloatingActionButton(
         onPressed: () {

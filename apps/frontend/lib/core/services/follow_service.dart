@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../core/services/api_config.dart';
+import '../../features/profile/profile_model.dart';
 
 Map<String, String> _headers(String token) => {
   'Content-Type': 'application/json',
@@ -28,10 +29,14 @@ class PublicUserProfile {
   final String email;
   final String? bio;
   final String? profileImage;
+  final int articlesReadCount;
+  final int commentsCount;
+  final int bookmarksCount;
   final int followersCount;
   final int followingCount;
   final bool isFollowing;
   final bool isMutual;
+  final List<Activity> activities;
 
   const PublicUserProfile({
     required this.id,
@@ -43,6 +48,10 @@ class PublicUserProfile {
     required this.followingCount,
     required this.isFollowing,
     required this.isMutual,
+    this.articlesReadCount = 0,
+    this.commentsCount = 0,
+    this.bookmarksCount = 0,
+    this.activities = const [],
   });
 
   factory PublicUserProfile.fromJson(Map<String, dynamic> j) =>
@@ -56,6 +65,13 @@ class PublicUserProfile {
         followingCount: j['following_count'] as int? ?? 0,
         isFollowing: j['is_following'] as bool? ?? false,
         isMutual: j['is_mutual'] as bool? ?? false,
+        articlesReadCount: j['articles_read_count'] ?? 0,
+        commentsCount: j['comments_count'] ?? 0,
+        bookmarksCount: j['bookmarks_count'] ?? 0,
+        activities: (j['activities'] as List?)
+                ?.map((e) => Activity.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            [],
       );
 }
 

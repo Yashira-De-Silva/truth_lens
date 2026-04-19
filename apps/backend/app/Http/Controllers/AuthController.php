@@ -187,9 +187,16 @@ class AuthController extends Controller
      */
     public function me(): JsonResponse
     {
+        $user = auth()->user();
+        if ($user) {
+            $user->load(['activities' => function($query) {
+                $query->orderBy('created_at', 'desc')->limit(15);
+            }]);
+        }
+
         return response()->json([
             'success' => true,
-            'data'    => auth()->user(),
+            'data'    => $user,
         ]);
     }
 

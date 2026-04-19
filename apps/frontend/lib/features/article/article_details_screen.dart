@@ -7,6 +7,7 @@ import '../news/article_model.dart';
 import 'comment_model.dart';
 import 'comment_provider.dart';
 import '../profile/profile_provider.dart';
+import '../auth/auth_service.dart' as svc;
 
 class ArticleDetailsScreen extends ConsumerStatefulWidget {
   final Article? article;
@@ -28,8 +29,18 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(commentsProvider(_articleId).notifier).load();
+      
+      // Log read activity
+      if (widget.article != null) {
+        final token = await svc.loadToken();
+        if (token != null) {
+          await svc.logRead(token, widget.article!.id);
+          // Refresh profile stats after reading
+          ref.read(profileProvider.notifier).refreshFromBackend();
+        }
+      }
     });
   }
 
