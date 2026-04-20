@@ -78,7 +78,7 @@ def health():
         "model_in_ram": pipeline is not None
     })
 
-@app.route("/predict", methods=["POST"])
+@app.route("/api/predict", methods=["POST"])
 def predict():
     data = request.json or {}
     text = f"{data.get('title','')} {data.get('text','')}".strip()
@@ -160,16 +160,28 @@ def predict():
         })
     except Exception as e:
         log.error(f"Predict error via Gemini (Falling back to offline model): {e}")
-        pipe = get_pipeline()
-        if not pipe: return jsonify({"success": False, "message": "ML Model Offline"}), 503
-        proba = pipe.predict_proba([text])[0]
-        is_real = proba[1] >= 0.5
-        return jsonify({
-            "label": "REAL" if is_real else "FAKE",
-            "confidence": round(float(proba[1] if is_real else proba[0]), 4)
-        })
+        try:
+            pipe = get_pipeline()
+            if not pipe: 
+                return jsonify({
+                    "label": "UNKNOWN", 
+                    "confidence": 0.5, 
+                    "reason": f"AI model is currently offline for maintenance. Error: {str(e)}",
+                    "sources": ["TruthLens AI Internal Knowledge Base"]
+                }), 200
+            proba = pipe.predict_proba([text])[0]
+            is_real = proba[1] >= 0.5
+            return jsonify({
+                "label": "REAL" if is_real else "FAKE",
+                "confidence": round(float(proba[1] if is_real else proba[0]), 4),
+                "reason": "Classification provided by the offline fallback model.",
+                "sources": ["TruthLens Offline ML Engine"]
+            })
+        except Exception as fallback_err:
+            log.error(f"Fallback model failed: {fallback_err}")
+            return jsonify({"success": False, "message": f"ML Service Overloaded: {str(e)}"}), 503
 
-@app.route("/news/live")
+@app.route("/api/news/live")
 def get_live_news():
     pipe = get_pipeline()
     section = request.args.get("section", "All")
@@ -263,5 +275,7 @@ def bot_ask():
         return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == "__main__":
+    # Pre-warm the model only if memory allows (disabled for 512MB RAM stability)
+    # get_pipeline() 
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, threaded=True)

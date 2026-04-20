@@ -66,7 +66,7 @@ class NewsApiService {
   }) async {
     final baseUrl = await ApiConfig.mlServiceUrl;
     final uri = Uri.parse(
-      '$baseUrl/news/live?limit=$limit'
+      '$baseUrl/api/news/live?limit=$limit'
       '&section=${Uri.encodeQueryComponent(section)}&lang=$lang',
     );
     // Render free tier cold-starts can take 50+ seconds
@@ -87,7 +87,7 @@ class NewsApiService {
     required String text,
   }) async {
     final baseUrl = await ApiConfig.mlServiceUrl;
-    final uri = Uri.parse('$baseUrl/predict');
+    final uri = Uri.parse('$baseUrl/api/predict');
     final res = await http.post(
       uri,
       headers: {'Content-Type': 'application/json'},
