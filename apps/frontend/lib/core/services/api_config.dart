@@ -6,17 +6,21 @@ import 'api_constants.dart';
 class ApiConfig {
   ApiConfig._();
 
-  /// Returns the production backend base URL synchronously.
-  static Future<String> get baseUrl async => kBaseUrl;
+  /// Change this to 'true' to use the local Laravel & ML servers (10.0.2.2)
+  /// Change this to 'false' to use the production Render servers.
+  static const bool useLocal = false; 
+
+  /// Returns the backend base URL.
+  static Future<String> get baseUrl async => useLocal ? kLocalBaseUrl : kProdBaseUrl;
 
   /// Synchronous access — use this instead of await where possible.
-  static String get baseUrlSync => kBaseUrl;
+  static String get baseUrlSync => useLocal ? kLocalBaseUrl : kProdBaseUrl;
 
-  /// Returns the production ML service URL synchronously.
-  static Future<String> get mlServiceUrl async => kMlServiceUrl;
+  /// Returns the ML service URL.
+  static Future<String> get mlServiceUrl async => useLocal ? kLocalMlUrl : kProdMlUrl;
 
   /// Synchronous ML URL access.
-  static String get mlServiceUrlSync => kMlServiceUrl;
+  static String get mlServiceUrlSync => useLocal ? kLocalMlUrl : kProdMlUrl;
 
   /// No-op — kept for compatibility.
   static void invalidate() {}

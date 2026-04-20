@@ -87,7 +87,7 @@ Future<AuthResult> register({
           'password_confirmation': password,
         }),
       )
-      .timeout(const Duration(seconds: 15));
+      .timeout(const Duration(seconds: 60));
   return _parseAuthResponse(response);
 }
 
@@ -102,7 +102,7 @@ Future<AuthResult> login({
         headers: _jsonHeaders,
         body: jsonEncode({'email': email, 'password': password}),
       )
-      .timeout(const Duration(seconds: 15));
+      .timeout(const Duration(seconds: 60));
   return _parseAuthResponse(response);
 }
 
@@ -114,7 +114,7 @@ Future<void> logout(String token) async {
           Uri.parse('$base/logout'),
           headers: _authHeaders(token),
         )
-        .timeout(const Duration(seconds: 10));
+        .timeout(const Duration(seconds: 30));
   } catch (_) {}
   await clearToken();
 }
@@ -150,7 +150,7 @@ Future<Map<String, dynamic>> updateProfile({
         headers: _authHeaders(token),
         body: jsonEncode(payload),
       )
-      .timeout(const Duration(seconds: 15));
+      .timeout(const Duration(seconds: 60));
 
   final body = jsonDecode(response.body) as Map<String, dynamic>;
   if (response.statusCode == 200 && body['success'] == true) {
@@ -172,7 +172,7 @@ Future<void> upgradeToPremium(String token) async {
         headers: _authHeaders(token),
         body: jsonEncode({}),
       )
-      .timeout(const Duration(seconds: 15));
+      .timeout(const Duration(seconds: 60));
   final body = jsonDecode(response.body) as Map<String, dynamic>;
   if (response.statusCode != 200 || body['success'] != true) {
     throw AuthException(
@@ -189,7 +189,7 @@ Future<void> cancelPremium(String token) async {
         headers: _authHeaders(token),
         body: jsonEncode({}),
       )
-      .timeout(const Duration(seconds: 15));
+      .timeout(const Duration(seconds: 60));
   final body = jsonDecode(response.body) as Map<String, dynamic>;
   if (response.statusCode != 200 || body['success'] != true) {
     throw AuthException(
@@ -219,7 +219,7 @@ Future<List<Map<String, dynamic>>> fetchBookmarks(String token) async {
         Uri.parse('$base/bookmarks'),
         headers: _authHeaders(token),
       )
-      .timeout(const Duration(seconds: 15));
+      .timeout(const Duration(seconds: 60));
   final body = jsonDecode(response.body) as Map<String, dynamic>;
   if (response.statusCode == 200 && body['success'] == true) {
     return (body['data'] as List).cast<Map<String, dynamic>>();
@@ -248,7 +248,7 @@ Future<void> saveBookmark({
           'raw_data': rawData,
         }),
       )
-      .timeout(const Duration(seconds: 15));
+      .timeout(const Duration(seconds: 60));
 }
 
 Future<void> removeBookmark(String token, int articleId) async {

@@ -92,7 +92,7 @@ class NewsApiService {
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'title': title, 'text': text}),
-    ).timeout(const Duration(seconds: 15));
+    ).timeout(const Duration(seconds: 60));
     if (res.statusCode != 200)
       throw Exception('ML service error: ${res.statusCode}');
     return jsonDecode(res.body) as Map<String, dynamic>;

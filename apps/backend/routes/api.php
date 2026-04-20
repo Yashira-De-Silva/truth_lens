@@ -63,6 +63,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/health-check', function () {
     return response()->json(['status' => 'ok', 'timestamp' => now()]);
 });
+Route::get('/debug-auth', function () {
+    return response()->json([
+        'app_key_set'    => !empty(config('app.key')),
+        'jwt_secret_set' => !empty(config('jwt.secret')),
+        'jwt_ttl'        => config('jwt.ttl'),
+        'env'            => app()->environment(),
+    ]);
+});
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
 
