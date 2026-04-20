@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ChessGame;
 use App\Models\Follow;
 use App\Models\User;
+use App\Models\Conversation;
+use App\Models\Message;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -79,8 +81,33 @@ class ChessController extends Controller
             'white_player_id' => $me,
             'black_player_id' => $userId,
             'status'          => 'waiting',
+            'fen'             => 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
             'moves'           => [],
         ]);
+
+        // ── Send automatic chat notification ──
+        try {
+            // Find or create conversation (canonical user1 < user2)
+            [$u1, $u2] = $me < $userId ? [$me, $userId] : [$userId, $me];
+            $conversation = Conversation::firstOrCreate([
+                'user1_id' => $u1,
+                'user2_id' => $u2
+            ]);
+
+            Message::create([
+                'conversation_id' => $conversation->id,
+                'customer_id'     => $me,
+                'content'         => "♟ I have challenged you to a game of Chess! Check your profile to accept.",
+                'type'            => 'text',
+            ]);
+            
+            // Update conversation timestamp
+            $conversation->touch();
+        } catch (\Exception $e) {
+            // Log error but don't fail the challenge
+            \Log::error("Failed to send chess chat notification: " . $e->getMessage());
+        }
+
         $game->load('whitePlayer', 'blackPlayer');
 
         return response()->json([
