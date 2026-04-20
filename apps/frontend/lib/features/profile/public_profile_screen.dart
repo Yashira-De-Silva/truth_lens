@@ -21,6 +21,7 @@ import '../chess/chess_service.dart' as chess;
 import '../social/follow_provider.dart';
 import 'edit_profile_screen.dart';
 import 'profile_provider.dart';
+import '../social/follows_list_screen.dart';
 
 class PublicProfileScreen extends ConsumerStatefulWidget {
   final int? userId;
@@ -668,8 +669,28 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceAround,
                                       children: [
-                                        _statItem('$followers', 'Followers'),
-                                        _statItem('$following', 'Following'),
+                                        _statItem('$followers', 'Followers', onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => const FollowsListScreen(
+                                                type: FollowListType.followers,
+                                                title: 'Followers',
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                        _statItem('$following', 'Following', onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => const FollowsListScreen(
+                                                type: FollowListType.following,
+                                                title: 'Following',
+                                              ),
+                                            ),
+                                          );
+                                        }),
                                         _statItem(
                                           stats['Articles']!,
                                           'Articles',
@@ -697,9 +718,29 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                _statItem('${profile.articlesReadCount}', 'Articles Read'),
-                                _statItem('${profile.commentsCount}', 'Comments'),
-                                _statItem('${profile.bookmarksCount}', 'Bookmarks'),
+                                _statItem('${profile.followersCount}', 'Followers', onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const FollowsListScreen(
+                                        type: FollowListType.followers,
+                                        title: 'Followers',
+                                      ),
+                                    ),
+                                  );
+                                }),
+                                _statItem('${profile.followingCount}', 'Following', onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const FollowsListScreen(
+                                        type: FollowListType.following,
+                                        title: 'Following',
+                                      ),
+                                    ),
+                                  );
+                                }),
+                                _statItem('${profile.articlesReadCount}', 'Articles'),
                               ],
                             ),
                           ),
@@ -1039,26 +1080,29 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
     }
   }
 
-  Widget _statItem(String value, String label) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppColors.secondary,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+  Widget _statItem(String value, String label, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.secondary,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.6),
-            fontSize: 12,
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.6),
+              fontSize: 12,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

@@ -22,6 +22,8 @@ import 'help_support_screen.dart';
 import 'about_screen.dart';
 import '../auth/auth_provider.dart';
 import '../auth/login_screen.dart';
+import '../social/follows_list_screen.dart';
+import '../social/follow_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -246,6 +248,51 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           Icons.edit,
                           color: Colors.white.withValues(alpha: 0.6),
                           size: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildSocialStatCard(
+                          'Followers',
+                          '${ref.watch(profileProvider).followersCount}',
+                          Icons.people_outline,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const FollowsListScreen(
+                                  type: FollowListType.followers,
+                                  title: 'Followers',
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSocialStatCard(
+                          'Following',
+                          '${ref.watch(profileProvider).followingCount}',
+                          Icons.person_add_outlined,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const FollowsListScreen(
+                                  type: FollowListType.following,
+                                  title: 'Following',
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -793,6 +840,47 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           activeTrackColor: AppColors.secondary.withValues(alpha: 0.5),
         ),
       ],
+    );
+  }
+
+  Widget _buildSocialStatCard(
+    String label,
+    String count,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0B1220).withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: AppColors.secondary, size: 20),
+            const SizedBox(height: 8),
+            Text(
+              count,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

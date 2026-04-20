@@ -53,6 +53,8 @@ class User extends Authenticatable implements JWTSubject
         'articles_read_count',
         'comments_count',
         'bookmarks_count',
+        'followers_count',
+        'following_count',
     ];
 
     // ── Relationships ────────────────────────────────────────────────────────
@@ -72,6 +74,16 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(ArticleComment::class);
     }
 
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'following_id', 'follower_id');
+    }
+
+    public function followings()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'following_id');
+    }
+
     // ── Accessors ────────────────────────────────────────────────────────────
 
     public function getArticlesReadCountAttribute(): int
@@ -87,6 +99,16 @@ class User extends Authenticatable implements JWTSubject
     public function getBookmarksCountAttribute(): int
     {
         return $this->bookmarks()->count();
+    }
+
+    public function getFollowersCountAttribute(): int
+    {
+        return $this->followers()->count();
+    }
+
+    public function getFollowingCountAttribute(): int
+    {
+        return $this->followings()->count();
     }
 
     // ── JWTSubject ──────────────────────────────────────────────────────────
