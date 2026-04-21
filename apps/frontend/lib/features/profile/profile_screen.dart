@@ -187,13 +187,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              ref.watch(profileProvider).email,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.7),
-                                fontSize: 14,
-                              ),
-                            ),
                             if (ref.watch(profileProvider).bio.isNotEmpty) ...[
                               const SizedBox(height: 8),
                               Text(
