@@ -21,7 +21,8 @@ class NewsController extends Controller
             $query->where('is_fake', (bool)$isFake);
         }
 
-        $articles = $query->orderBy('created_at', 'desc')->paginate($limit);
+        // Use inRandomOrder() when showing "All" Dataset news to ensure mix of REAL/FAKE
+        $articles = $query->inRandomOrder()->paginate($limit);
 
         // Map to the format the Flutter app expects
         $formatted = collect($articles->items())->map(function ($article) {
