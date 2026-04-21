@@ -58,7 +58,14 @@ class AuthController extends Controller
             'api_key'  => $this->generateApiKey(),
         ]);
 
-        $token = JWTAuth::fromUser($user);
+        try {
+            $token = JWTAuth::fromUser($user);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token creation failed: ' . $e->getMessage(),
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,
@@ -104,10 +111,10 @@ class AuthController extends Controller
                     'message' => 'Invalid email or password',
                 ], 401);
             }
-        } catch (JWTException $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Could not create token',
+                'message' => 'Authentication failed: ' . $e->getMessage(),
             ], 500);
         }
 
@@ -137,10 +144,10 @@ class AuthController extends Controller
     {
         try {
             JWTAuth::invalidate(JWTAuth::getToken());
-        } catch (JWTException $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to logout',
+                'message' => 'Failed to logout: ' . $e->getMessage(),
             ], 500);
         }
 

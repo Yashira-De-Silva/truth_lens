@@ -66,7 +66,7 @@ class NewsApiService {
   }) async {
     final baseUrl = await ApiConfig.mlServiceUrl;
     final uri = Uri.parse(
-      '$baseUrl/news/live?limit=$limit'
+      '$baseUrl/api/news/live?limit=$limit'
       '&section=${Uri.encodeQueryComponent(section)}&lang=$lang',
     );
     // Render free tier cold-starts can take 50+ seconds
@@ -87,12 +87,12 @@ class NewsApiService {
     required String text,
   }) async {
     final baseUrl = await ApiConfig.mlServiceUrl;
-    final uri = Uri.parse('$baseUrl/predict');
+    final uri = Uri.parse('$baseUrl/api/predict');
     final res = await http.post(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'title': title, 'text': text}),
-    ).timeout(const Duration(seconds: 15));
+    ).timeout(const Duration(seconds: 90));
     if (res.statusCode != 200)
       throw Exception('ML service error: ${res.statusCode}');
     return jsonDecode(res.body) as Map<String, dynamic>;
@@ -107,6 +107,23 @@ class NewsApiService {
       throw Exception('Backend error: ${res.statusCode}');
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     return Article.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  /// Request a 3-bullet-point AI summary from the ML service.
+  Future<String> summarizeArticle(String text) async {
+    final baseUrl = await ApiConfig.mlServiceUrl;
+    final uri = Uri.parse('$baseUrl/api/summarize');
+    final res = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'text': text}),
+    ).timeout(const Duration(seconds: 60));
+    
+    if (res.statusCode != 200)
+      throw Exception('Summarization failed: ${res.statusCode}');
+    
+    final body = jsonDecode(res.body) as Map<String, dynamic>;
+    return body['summary'] ?? 'Summary could not be generated.';
   }
 }
 

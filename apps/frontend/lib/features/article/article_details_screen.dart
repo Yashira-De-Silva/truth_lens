@@ -8,6 +8,7 @@ import 'comment_model.dart';
 import 'comment_provider.dart';
 import '../profile/profile_provider.dart';
 import '../auth/auth_service.dart' as svc;
+import '../news/news_providers.dart';
 
 class ArticleDetailsScreen extends ConsumerStatefulWidget {
   final Article? article;
@@ -20,6 +21,8 @@ class ArticleDetailsScreen extends ConsumerStatefulWidget {
 
 class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
   bool showSummary = true;
+  String? _aiSummary;
+  bool _isSummarizing = false;
 
   final TextEditingController _commentController = TextEditingController();
   final FocusNode _commentFocusNode = FocusNode();
@@ -29,6 +32,8 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    _aiSummary = widget.article?.summary;
+    
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(commentsProvider(_articleId).notifier).load();
       
@@ -40,8 +45,37 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
           // Refresh profile stats after reading
           ref.read(profileProvider.notifier).refreshFromBackend();
         }
+
+        // Start dynamic summarization if it's a long article
+        if (widget.article!.fullText != null && widget.article!.fullText!.length > 500) {
+          _fetchAiSummary();
+        }
       }
     });
+  }
+
+  Future<void> _fetchAiSummary() async {
+    if (widget.article == null || widget.article!.fullText == null) return;
+    
+    setState(() {
+      _isSummarizing = true;
+    });
+
+    try {
+      final summary = await ref.read(newsApiProvider).summarizeArticle(widget.article!.fullText!);
+      if (mounted) {
+        setState(() {
+          _aiSummary = summary;
+          _isSummarizing = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSummarizing = false;
+        });
+      }
+    }
   }
 
   @override
@@ -96,9 +130,14 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
     if (widget.article == null) {
       fakeProbability = 0.18;
     } else {
-      fakeProbability = widget.article!.label == 'FAKE'
-          ? widget.article!.confidence
-          : (1.0 - widget.article!.confidence);
+      // Standardize confidence mapping for display
+      if (widget.article!.label == 'FAKE') {
+        fakeProbability = widget.article!.confidence;
+      } else if (widget.article!.label == 'REAL') {
+        fakeProbability = 1.0 - widget.article!.confidence;
+      } else {
+        fakeProbability = 0.5; // Verifying state
+      }
     }
 
     final isVerified = fakeProbability < 0.3;
@@ -334,26 +373,53 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
                           borderRadius: BorderRadius.circular(16),
                           child: BackdropFilter(
                             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Text(
-                              showSummary
-                                  ? (widget.article?.summary ??
-                                        'No summary available.')
-                                  : (widget.article?.fullText != null &&
-                                                widget
-                                                    .article!
-                                                    .fullText!
-                                                    .isNotEmpty
-                                            ? widget.article!.fullText!
-                                            : (widget.article?.summary ??
-                                                  'No content available.')) +
-                                        (widget.article?.url != null
-                                            ? '\n\nOriginal article is available at:\n${widget.article!.url}'
-                                            : ''),
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: 15,
-                                height: 1.6,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _isSummarizing 
+                                  ? Row(
+                                      children: [
+                                        const SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: AppColors.secondary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Text(
+                                          'AI is summarizing...',
+                                          style: TextStyle(
+                                            color: Colors.white.withValues(alpha: 0.7),
+                                            fontSize: 14,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Text(
+                                      showSummary
+                                          ? (_aiSummary ??
+                                                'No summary available.')
+                                          : (widget.article?.fullText != null &&
+                                                        widget
+                                                            .article!
+                                                            .fullText!
+                                                            .isNotEmpty
+                                                    ? widget.article!.fullText!
+                                                    : (widget.article?.summary ??
+                                                          'No content available.')) +
+                                                (widget.article?.url != null
+                                                    ? '\n\nOriginal article is available at:\n${widget.article!.url}'
+                                                    : ''),
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.9),
+                                        fontSize: 15,
+                                        height: 1.6,
+                                      ),
+                                    ),
+                              ],
                             ),
                           ),
                         ),

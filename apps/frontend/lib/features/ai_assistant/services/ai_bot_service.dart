@@ -11,7 +11,7 @@ class AiBotService {
         uri,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'message': message}),
-      ).timeout(const Duration(seconds: 60));
+      ).timeout(const Duration(seconds: 90));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

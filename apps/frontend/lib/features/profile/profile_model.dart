@@ -9,6 +9,8 @@ class UserProfile {
   final int articlesReadCount;
   final int commentsCount;
   final int bookmarksCount;
+  final int followersCount;
+  final int followingCount;
   final List<Activity> activities;
 
   UserProfile({
@@ -22,6 +24,8 @@ class UserProfile {
     this.articlesReadCount = 0,
     this.commentsCount = 0,
     this.bookmarksCount = 0,
+    this.followersCount = 0,
+    this.followingCount = 0,
     this.activities = const [],
   });
 
@@ -36,6 +40,8 @@ class UserProfile {
     int? articlesReadCount,
     int? commentsCount,
     int? bookmarksCount,
+    int? followersCount,
+    int? followingCount,
     List<Activity>? activities,
   }) {
     return UserProfile(
@@ -49,6 +55,8 @@ class UserProfile {
       articlesReadCount: articlesReadCount ?? this.articlesReadCount,
       commentsCount: commentsCount ?? this.commentsCount,
       bookmarksCount: bookmarksCount ?? this.bookmarksCount,
+      followersCount: followersCount ?? this.followersCount,
+      followingCount: followingCount ?? this.followingCount,
       activities: activities ?? this.activities,
     );
   }
@@ -65,6 +73,8 @@ class UserProfile {
       'articles_read_count': articlesReadCount,
       'comments_count': commentsCount,
       'bookmarks_count': bookmarksCount,
+      'followers_count': followersCount,
+      'following_count': followingCount,
       'activities': activities.map((a) => a.toJson()).toList(),
     };
   }
@@ -81,6 +91,8 @@ class UserProfile {
       articlesReadCount: json['articles_read_count'] ?? 0,
       commentsCount: json['comments_count'] ?? 0,
       bookmarksCount: json['bookmarks_count'] ?? 0,
+      followersCount: json['followers_count'] ?? 0,
+      followingCount: json['following_count'] ?? 0,
       activities: (json['activities'] as List?)
               ?.map((a) => Activity.fromJson(a))
               .toList() ??
