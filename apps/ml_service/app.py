@@ -57,6 +57,7 @@ def get_pipeline():
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route("/")
+@app.route("/api/")
 def home():
     return jsonify({
         "status": "online", 
@@ -65,6 +66,7 @@ def home():
     })
 
 @app.route("/health")
+@app.route("/api/health")
 def health():
     try:
         import psutil
@@ -206,7 +208,10 @@ def get_live_news():
 
         if r.status_code != 200:
             log.error(f"Guardian API error: {r.status_code} — {r.text[:200]}")
-            return jsonify({"success": False, "data": [], "error": f"Guardian API returned {r.status_code}"}), 502
+            err_msg = f"Guardian API error {r.status_code}"
+            if r.status_code == 403:
+                err_msg = "Guardian API Key Invalid or Forbidden (403)"
+            return jsonify({"success": False, "data": [], "error": err_msg}), r.status_code
 
         guardian_body = r.json()
         resp = guardian_body.get("response", {})
