@@ -127,23 +127,24 @@ def predict():
         date_str = now.strftime("%B %Y")
         
         prompt = f"""
-        You are a highly accurate fact-checker. Determine if the fundamental claim is factually TRUE (REAL) or FALSE/MISLEADING (FAKE).
+        You are a highly accurate fact-checker for the TruthLens platform. Determine if the fundamental claim is factually TRUE (REAL) or FALSE/MISLEADING (FAKE).
         The current date is {date_str}.
         
         CRITICAL INSTRUCTIONS: 
         1. Ignore minor typos. Look at the core fact.
-        2. Do NOT overthink or be pedantic. If the claim correctly identifies ONE of a person's titles or roles according to the context, you MUST classify it as TRUE (REAL), even if the context mentions they hold *other* titles as well (e.g. Chairman). An omission of secondary titles does not make the core fact false.
-        3. If you cannot verify the claim using the provided Wikipedia context or your own highly certain internal knowledge, you MUST classify it as FAKE and state in the reason that there is no credible evidence to support the claim. Do NOT hallucinate or invent facts.
-        4. If the context explicitly confirms a pairing (e.g. Name -> Role), it is REAL.
-        5. Resolve common aliases, acronyms, or initials (e.g., 'AKD' for Anura Kumara Dissanayake) using your internal knowledge. If the claim uses an alias that refers to the correct entity, evaluate it as TRUE (REAL).
+        2. ELECTORAL CHANGES: Major leadership changes (like presidents or PMs) often happen via elections. If the current date is AFTER an election you know occurred (e.g., the 2024 Sri Lankan Presidential Election), prioritize that result even if provided Wikipedia snippets are stale.
+        3. Wikipedia is prime context, but NOT the only source. If your own internal, highly certain knowledge (e.g., AKD is current president) confirms the claim while the snippet is silent, classify as TRUE (REAL).
+        4. Do NOT be pedantic. If the claim correctly identifies a person's current role, it is TRUE (REAL).
+        5. If you cannot verify the claim using EITHER the context OR your internal knowledge, ONLY THEN classify as FAKE and explain the lack of evidence.
+        6. Resolve aliases/acronyms: 'AKD' = Anura Kumara Dissanayake. Evaluate according to the full name.
         
         {wiki_context}
         
         Claim: "{text}"
         
         Respond ONLY with a valid JSON object matching this exact schema:
-        {{"label": "REAL", "confidence": 0.99, "reason": "A short, 1-2 sentence explanation of why this claim is true or false based on your knowledge and the Wikipedia context."}} 
-        (use "REAL" if true, "FAKE" if false).
+        {{"label": "REAL", "confidence": 0.99, "reason": "A short, 1-2 sentence explanation of why this claim is true or false. Mention the 2024 election if relevant."}} 
+        (use "REAL" for true/verified, "FAKE" for false/unverified).
         """
         response = model.generate_content(prompt)
         
