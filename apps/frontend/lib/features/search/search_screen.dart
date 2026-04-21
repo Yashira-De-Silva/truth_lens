@@ -707,7 +707,7 @@ class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
