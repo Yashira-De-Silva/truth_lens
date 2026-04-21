@@ -8,6 +8,7 @@ import 'comment_model.dart';
 import 'comment_provider.dart';
 import '../profile/profile_provider.dart';
 import '../auth/auth_service.dart' as svc;
+import '../news/news_providers.dart';
 
 class ArticleDetailsScreen extends ConsumerStatefulWidget {
   final Article? article;
@@ -61,7 +62,7 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
     });
 
     try {
-      final summary = await ref.read(_newsSvcProvider).summarizeArticle(widget.article!.fullText!);
+      final summary = await ref.read(newsApiProvider).summarizeArticle(widget.article!.fullText!);
       if (mounted) {
         setState(() {
           _aiSummary = summary;
