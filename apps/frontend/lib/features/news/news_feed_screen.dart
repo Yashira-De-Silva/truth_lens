@@ -669,17 +669,19 @@ class _ArticleCard extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        _ConfidenceBadge(
-                          text: statusText,
-                          color: statusColor,
-                          percent: confidencePct,
-                        ),
-                        const SizedBox(height: 8),
-                        _MoreMenu(article: article),
-                      ],
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          _ConfidenceBadge(
+                            text: statusText,
+                            color: statusColor,
+                            percent: confidencePct,
+                          ),
+                          const SizedBox(height: 8),
+                          _MoreMenu(article: article),
+                        ],
+                      ),
                     ),
                   ],
                 ),

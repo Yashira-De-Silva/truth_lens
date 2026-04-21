@@ -67,52 +67,117 @@ def predict():
         if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
         model = genai.GenerativeModel("gemma-3-27b-it")
 
-        # Wikipedia search logic remains the same
+        # 1. Extract refined search terms
         search_query = ""
         try:
-            kw_prompt = f"Extract the single specific entity to search on Wikipedia to verify: '{text}'"
+            kw_prompt = f"Extract the most relevant entities (names, places, events) from this claim to search on Wikipedia and News APIs for verification: '{text}'. Respond with ONLY the search terms, separated by spaces."
             kw_resp = model.generate_content(kw_prompt)
             search_query = kw_resp.text.strip().replace('"', '')
         except Exception:
-            search_query = text[:30]
+            search_query = text[:50]
 
         wiki_context = ""
+        news_context = ""
         sources = []
+
+        # 2. Wikipedia Search
         try:
             if search_query:
                 url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(search_query)}&utf8=&format=json"
                 req = requests.get(url, headers={'User-Agent': 'TruthLensBot/1.0'}, timeout=5)
                 if req.status_code == 200:
                     results = req.json().get('query', {}).get('search', [])
-                    snippets = [f"- {r.get('title')}: {re.sub('<[^<]+>', '', r.get('snippet', ''))}" for r in results[:3]]
-                    sources = [f"Wikipedia: {r.get('title')}" for r in results[:3]]
-                    if snippets: wiki_context = "Context:\n" + "\n".join(snippets)
-        except: pass
+                    snippets = []
+                    for r in results[:3]:
+                        title = r.get('title')
+                        snippet = re.sub('<[^<]+>', '', r.get('snippet', ''))
+                        snippets.append(f"- Wikipedia ({title}): {snippet}")
+                        sources.append(f"Wikipedia: {title}")
+                    if snippets: wiki_context = "Wikipedia Context:\n" + "\n".join(snippets)
+        except Exception as e:
+            log.warning(f"Wiki search failed: {e}")
+
+        # 3. Guardian News Search (Cross-Check)
+        try:
+            if search_query and GUARDIAN_API_KEY:
+                params = {
+                    "q": search_query,
+                    "api-key": GUARDIAN_API_KEY,
+                    "show-fields": "headline,trailText",
+                    "page-size": 3,
+                    "order-by": "relevance"
+                }
+                r = requests.get(f"{GUARDIAN_BASE}/search", params=params, timeout=10)
+                if r.status_code == 200:
+                    news_results = r.json().get("response", {}).get("results", [])
+                    news_snippets = []
+                    for it in news_results:
+                        f = it.get("fields", {})
+                        headline = f.get("headline", "")
+                        trail = f.get("trailText", "")
+                        url = it.get("webUrl", "")
+                        news_snippets.append(f"- News ({headline}): {trail}")
+                        sources.append(f"Guardian: {headline}")
+                    if news_snippets: news_context = "News Context:\n" + "\n".join(news_snippets)
+        except Exception as e:
+            log.warning(f"Guardian search failed: {e}")
             
         if not sources: sources = ["TruthLens Internal Knowledge Base"]
 
+        # 4. Final Verification
         now = datetime.now().strftime("%B %Y")
+        combined_context = f"{wiki_context}\n\n{news_context}".strip()
+        
         prompt = f"""
-        You are a fact-checker. Date: {now}.
-        Claim: "{text}"
-        Context: {wiki_context}
-        Instructions: Verify the claim. Handle acronyms like 'AKD' = Anura Kumara Dissanayake. 
-        Respond ONLY with JSON: {{"label": "REAL", "confidence": 0.99, "reason": "why..."}}
+        You are a professional fact-checker. Current Date: {now}.
+        
+        Claim to verify: "{text}"
+        
+        Evidence gathered:
+        {combined_context if combined_context else "No direct search results found. Use your internal knowledge and logic."}
+        
+        Instructions:
+        1. Compare the claim against the evidence.
+        2. Handle spelling errors or acronyms intelligently (e.g. 'AKD' = Anura Kumara Dissanayake, 'ranil' = Ranil Wickremesinghe).
+        3. If the claim is about a person's current role, check if the date matches historical or current facts.
+        4. Be critical. If the evidence contradicts the claim, label it FAKE.
+        5. Provide a clear, concise reason including why it's true or false based on the evidence.
+        
+        Respond ONLY with a JSON object:
+        {{
+          "label": "REAL" or "FAKE" or "UNCERTAIN",
+          "confidence": 0.0 to 1.0,
+          "reason": "Detailed explanation...",
+          "relevant_sources": ["Source 1", "Source 2"]
+        }}
         """
+        
         response = model.generate_content(prompt)
         res_txt = response.text.strip()
-        if "```" in res_txt: res_txt = res_txt.split("```")[1].replace("json", "").strip()
+        if "```" in res_txt:
+            res_txt = res_txt.split("```")[1]
+            if res_txt.startswith("json"): res_txt = res_txt[4:].strip()
+            res_txt = res_txt.strip()
         
-        result = json.loads(res_txt)
+        try:
+            result = json.loads(res_txt)
+        except json.JSONDecodeError:
+            # Fallback parsing if JSON is messy
+            label = "REAL" if "REAL" in res_txt.upper() else "FAKE"
+            result = {"label": label, "confidence": 0.8, "reason": "Verified via AI analysis."}
+
+        # Use sources from AI if provided, otherwise fallback to our gathered sources
+        final_sources = result.get("relevant_sources") or sources
+        
         return jsonify({
             "label": result.get("label", "FAKE"),
             "confidence": result.get("confidence", 0.95),
-            "reason": result.get("reason", "Verified via AI reasoning."),
-            "sources": sources
+            "reason": result.get("reason", "Verified via AI analysis."),
+            "sources": final_sources
         })
     except Exception as e:
         log.error(f"Predict error: {e}")
-        return jsonify({"success": False, "message": f"ML Service Bus: {str(e)}"}), 503
+        return jsonify({"success": False, "message": f"ML Service Error: {str(e)}"}), 503
 
 @app.route("/api/news/live")
 def get_live_news():

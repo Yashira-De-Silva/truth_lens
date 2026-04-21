@@ -251,6 +251,8 @@ class _NavItem extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: isActive
                     ? AppColors.secondary
