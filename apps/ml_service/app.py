@@ -148,6 +148,27 @@ def get_live_news():
         log.error(f"Live news error: {e}")
         return jsonify({"success": True, "data": get_fallback_news()})
 
+@app.route("/api/summarize", methods=["POST"])
+def summarize():
+    data = request.json or {}
+    text = data.get("text", "").strip()
+    if not text: return jsonify({"success": False, "message": "No text"}), 400
+    
+    try:
+        import google.generativeai as genai
+        if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel("gemma-3-27b-it")
+        
+        prompt = f"Summarize this news article in exactly 3 concise bullet points or sentences:\n\n{text}"
+        response = model.generate_content(prompt)
+        return jsonify({
+            "success": True,
+            "summary": response.text.strip()
+        })
+    except Exception as e:
+        log.error(f"Summarize error: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
 def get_fallback_news():
     return [
         {

@@ -108,6 +108,23 @@ class NewsApiService {
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     return Article.fromJson(body['data'] as Map<String, dynamic>);
   }
+
+  /// Request a 3-bullet-point AI summary from the ML service.
+  Future<String> summarizeArticle(String text) async {
+    final baseUrl = await ApiConfig.mlServiceUrl;
+    final uri = Uri.parse('$baseUrl/api/summarize');
+    final res = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'text': text}),
+    ).timeout(const Duration(seconds: 60));
+    
+    if (res.statusCode != 200)
+      throw Exception('Summarization failed: ${res.statusCode}');
+    
+    final body = jsonDecode(res.body) as Map<String, dynamic>;
+    return body['summary'] ?? 'Summary could not be generated.';
+  }
 }
 
 class NewsResponse {
