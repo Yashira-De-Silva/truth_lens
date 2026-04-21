@@ -1,9 +1,7 @@
 flask
 flask-cors
-scikit-learn
 google-generativeai
 deep-translator
-joblib
 psutil
 requests
 gunicorn
