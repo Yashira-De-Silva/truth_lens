@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
@@ -221,7 +222,8 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name'          => 'sometimes|string|max:255',
             'bio'           => 'sometimes|nullable|string|max:500',
-            'profile_image' => 'sometimes|nullable|string|max:2048',
+            'profile_image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'remove_image'  => 'sometimes|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -235,7 +237,31 @@ class AuthController extends Controller
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
-        $user->fill($request->only(['name', 'bio', 'profile_image']));
+        if ($request->has('name')) {
+            $user->name = $request->name;
+        }
+        
+        if ($request->has('bio')) {
+            $user->bio = $request->bio;
+        }
+
+        if ($request->boolean('remove_image')) {
+            if ($user->profile_image) {
+                $oldPath = str_replace(url('storage/'), '', $user->profile_image);
+                Storage::disk('public')->delete($oldPath);
+            }
+            $user->profile_image = null;
+        } elseif ($request->hasFile('profile_image')) {
+            // Delete old image if it exists
+            if ($user->profile_image) {
+                $oldPath = str_replace(url('storage/'), '', $user->profile_image);
+                Storage::disk('public')->delete($oldPath);
+            }
+
+            $path = $request->file('profile_image')->store('profile_images', 'public');
+            $user->profile_image = url('storage/' . $path);
+        }
+
         $user->save();
 
         return response()->json([

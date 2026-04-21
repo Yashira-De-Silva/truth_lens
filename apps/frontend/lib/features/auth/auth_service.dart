@@ -138,19 +138,30 @@ Future<Map<String, dynamic>> updateProfile({
   required String token,
   String? name,
   String? bio,
+  String? avatarPath,
+  bool removeImage = false,
 }) async {
-  final payload = <String, dynamic>{};
-  if (name != null) payload['name'] = name;
-  if (bio != null) payload['bio'] = bio;
-
   final base = await ApiConfig.baseUrl;
-  final response = await http
-      .put(
-        Uri.parse('$base/profile'),
-        headers: _authHeaders(token),
-        body: jsonEncode(payload),
-      )
-      .timeout(const Duration(seconds: 60));
+  final uri = Uri.parse('$base/profile');
+  
+  final request = http.MultipartRequest('POST', uri);
+  request.headers.addAll({
+    'Authorization': 'Bearer $token',
+    'Accept': 'application/json',
+  });
+  
+  if (name != null) request.fields['name'] = name;
+  if (bio != null) request.fields['bio'] = bio;
+  if (removeImage) request.fields['remove_image'] = '1';
+  
+  if (avatarPath != null && !removeImage) {
+    if (!avatarPath.startsWith('http')) {
+      request.files.add(await http.MultipartFile.fromPath('profile_image', avatarPath));
+    }
+  }
+  
+  final streamedResponse = await request.send().timeout(const Duration(seconds: 90));
+  final response = await http.Response.fromStream(streamedResponse);
 
   final body = jsonDecode(response.body) as Map<String, dynamic>;
   if (response.statusCode == 200 && body['success'] == true) {
