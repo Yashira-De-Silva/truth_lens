@@ -251,8 +251,22 @@ def bot_ask():
     try:
         import google.generativeai as genai
         if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemma-3-27b-it")
-        response = model.generate_content(f"Concise TruthLens AI response for: {msg}")
+        
+        # Strict system instruction to ensure bot only discusses news and verification
+        # Prepending instead of using system_instruction parameter due to Gemma model limitations
+        system_instruction = (
+            "SYSTEM INSTRUCTION: You are TruthBot, a professional AI news assistant for TruthLens. "
+            "Your core mission is to provide accurate news, verify information, and fact-check claims. "
+            "DO NOT provide recipes, step-by-step tutorials, or non-news content. "
+            "If asked about a general topic (like 'cake'), respond with news, industry trends, "
+            "or interesting news-worthy facts about that topic, but NEVER provide a baking guide or recipe. "
+            "Stay concise, professional, and strictly news-oriented.\n\n"
+        )
+        
+        model = genai.GenerativeModel(model_name="gemma-3-27b-it")
+        full_prompt = f"{system_instruction}User Question: {msg}"
+        
+        response = model.generate_content(full_prompt)
         return jsonify({"success": True, "reply": response.text})
     except Exception as e:
         log.error(f"Bot error: {e}")
