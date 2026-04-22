@@ -64,9 +64,6 @@ class AuthController extends Controller
             ],
         ], 201);
     }
-
-    // ── Login ─────────────────────────────────────────────────────────────────
-
     /**
      * Authenticate the user and return a JWT.
      *
