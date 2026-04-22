@@ -108,9 +108,6 @@ class AuthController extends Controller
             ],
         ]);
     }
-
-    // ── Logout ────────────────────────────────────────────────────────────────
-
     /**
      * Invalidate the current token (logout).
      *
