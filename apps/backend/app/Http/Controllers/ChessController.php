@@ -85,7 +85,6 @@ class ChessController extends Controller
                 'type'            => 'text',
             ]);
             
-            // Update conversation timestamp
             $conversation->touch();
         } catch (\Exception $e) {
             // Log error but don't fail the challenge
