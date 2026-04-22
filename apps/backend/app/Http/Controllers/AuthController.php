@@ -142,10 +142,7 @@ class AuthController extends Controller
             'expires_in' => config('jwt.ttl') * 60,
         ]);
     }
-
-    // ── Me ────────────────────────────────────────────────────────────────────
-
-    /**
+ /**
      * Return the authenticated user's profile.
      *
      * GET /api/me
