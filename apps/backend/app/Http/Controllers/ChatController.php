@@ -109,10 +109,6 @@ class ChatController extends Controller
             'data'    => $conversations,
         ]);
     }
-    /**
-     * GET /api/chat/conversations/{conversationId}/messages
-     * Returns paginated messages (100 most recent).
-     */
     public function messages(string $conversationId): JsonResponse
     {
         $me   = auth()->id();
