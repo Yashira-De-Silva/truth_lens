@@ -21,12 +21,6 @@ class AuthController extends Controller
 
         return $key;
     }
-    /**
-     * Register a new user.
-     *
-     * POST /api/register
-     * Body: { name, email, password, password_confirmation }
-     */
     public function register(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
