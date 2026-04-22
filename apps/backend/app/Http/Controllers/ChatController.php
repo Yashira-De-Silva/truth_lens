@@ -48,7 +48,6 @@ class ChatController extends Controller
             ], 422);
         }
 
-        // Canonical ordering so (A,B) and (B,A) resolve to the same row
         [$user1Id, $user2Id] = $me < $otherId ? [$me, $otherId] : [$otherId, $me];
 
         $conversation = Conversation::firstOrCreate(
