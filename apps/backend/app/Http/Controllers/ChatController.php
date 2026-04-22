@@ -75,8 +75,6 @@ class ChatController extends Controller
             ->get()
             ->map(function (Conversation $conv) use ($me) {
                 $other = $conv->otherUser($me);
-
-                // Last message visible to this user (not deleted for them)
                 $last = Message::where('conversation_id', $conv->id)
                     ->where('deleted_for_everyone', false)
                     ->where(function ($q) use ($me) {
