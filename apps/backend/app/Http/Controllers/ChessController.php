@@ -208,11 +208,6 @@ class ChessController extends Controller
 
         return response()->json(['success' => true, 'data' => $this->formatGame($game->fresh(), $me)]);
     }
-    /**
-     * POST /api/chess/games/{id}/finish
-     * Body: { "result": "white" | "black" | "draw" }
-     * Called by the client when it detects checkmate or stalemate.
-     */
     public function finish(Request $request, int $gameId): JsonResponse
     {
         $me   = auth()->id();
