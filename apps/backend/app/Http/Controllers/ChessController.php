@@ -13,8 +13,6 @@ use Illuminate\Support\Facades\Validator;
 
 class ChessController extends Controller
 {
-    // ── Helper: format a game for API response ────────────────────────────────
-
     private function formatGame(ChessGame $game, int $myId): array
     {
         return [
