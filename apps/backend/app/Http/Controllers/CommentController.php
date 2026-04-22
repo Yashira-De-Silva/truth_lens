@@ -26,9 +26,6 @@ class CommentController extends Controller
             ],
         ];
     }
-
-    // ── GET /api/articles/{articleId}/comments ────────────────────────────────
-
     /**
      * Return all comments for an article, newest first.
      *
