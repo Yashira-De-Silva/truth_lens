@@ -11,10 +11,6 @@ use Illuminate\Support\Facades\Validator;
 
 class ChatController extends Controller
 {
-    /**
-     * GET /api/chat/users
-     * Returns every registered user except the authenticated user.
-     */
     public function users(): JsonResponse
     {
         $me = auth()->id();
