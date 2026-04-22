@@ -50,10 +50,6 @@ class BookmarkController extends Controller
             'data'    => $bookmark,
         ]);
     }
-
-    /**
-     * Remove a bookmark.
-     */
     public function destroy($article_id): JsonResponse
     {
         $user = auth()->user();
