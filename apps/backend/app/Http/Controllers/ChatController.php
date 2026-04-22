@@ -25,12 +25,6 @@ class ChatController extends Controller
             'data'    => $users,
         ]);
     }
-    /**
-     * POST /api/chat/conversations
-     * Body: { other_user_id }
-     * Finds an existing conversation between the two users, or creates one.
-     * Always stores user1_id < user2_id to avoid duplicates.
-     */
     public function getOrCreateConversation(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
