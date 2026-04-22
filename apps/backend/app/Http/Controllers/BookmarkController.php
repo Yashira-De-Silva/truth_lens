@@ -21,10 +21,6 @@ class BookmarkController extends Controller
             'data'    => $bookmarks,
         ]);
     }
-
-    /**
-     * Store a new bookmark and log the activity.
-     */
     public function store(Request $request): JsonResponse
     {
         $request->validate([
@@ -41,8 +37,6 @@ class BookmarkController extends Controller
             ['user_id' => $user->id, 'article_id' => $request->article_id],
             $request->only(['title', 'source', 'summary', 'raw_data'])
         );
-
-        // Record the activity
         UserActivity::create([
             'user_id'     => $user->id,
             'type'        => 'bookmark',
@@ -56,10 +50,6 @@ class BookmarkController extends Controller
             'data'    => $bookmark,
         ]);
     }
-
-    /**
-     * Remove a bookmark.
-     */
     public function destroy($article_id): JsonResponse
     {
         $user = auth()->user();

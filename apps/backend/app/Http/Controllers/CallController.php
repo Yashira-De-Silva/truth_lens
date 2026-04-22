@@ -17,8 +17,6 @@ class CallController extends Controller
         ]);
 
         $caller = Auth::user();
-        
-        // End any active calls involving these users
         Call::where(function($q) use ($caller, $request) {
             $q->where('caller_id', $caller->id)
               ->orWhere('receiver_id', $caller->id)
@@ -44,8 +42,6 @@ class CallController extends Controller
     public function getActive()
     {
         $user = Auth::user();
-
-        // Check if there is an active call for this user
         $call = Call::where(function($query) use ($user) {
                 $query->where('caller_id', $user->id)
                       ->orWhere('receiver_id', $user->id);
@@ -54,8 +50,6 @@ class CallController extends Controller
             ->with(['caller', 'receiver'])
             ->latest()
             ->first();
-
-        // Also fetch recently ended calls within the last 15 seconds to allow the client to process the disconnect
         if (!$call) {
              $call = Call::where(function($query) use ($user) {
                 $query->where('caller_id', $user->id)
@@ -82,8 +76,6 @@ class CallController extends Controller
 
         $call = Call::findOrFail($id);
         $user = Auth::user();
-
-        // Only participants can update
         if ($call->caller_id !== $user->id && $call->receiver_id !== $user->id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }

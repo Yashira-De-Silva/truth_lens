@@ -11,12 +11,6 @@ use Illuminate\Support\Facades\Validator;
 
 class ChatController extends Controller
 {
-    // ── List all users (excluding self) ───────────────────────────────────────
-
-    /**
-     * GET /api/chat/users
-     * Returns every registered user except the authenticated user.
-     */
     public function users(): JsonResponse
     {
         $me = auth()->id();
@@ -31,15 +25,6 @@ class ChatController extends Controller
             'data'    => $users,
         ]);
     }
-
-    // ── Get or create a conversation ─────────────────────────────────────────
-
-    /**
-     * POST /api/chat/conversations
-     * Body: { other_user_id }
-     * Finds an existing conversation between the two users, or creates one.
-     * Always stores user1_id < user2_id to avoid duplicates.
-     */
     public function getOrCreateConversation(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -63,7 +48,6 @@ class ChatController extends Controller
             ], 422);
         }
 
-        // Canonical ordering so (A,B) and (B,A) resolve to the same row
         [$user1Id, $user2Id] = $me < $otherId ? [$me, $otherId] : [$otherId, $me];
 
         $conversation = Conversation::firstOrCreate(
@@ -81,13 +65,6 @@ class ChatController extends Controller
             ],
         ]);
     }
-
-    // ── List conversations for the authenticated user ─────────────────────────
-
-    /**
-     * GET /api/chat/conversations
-     * Returns all conversations involving the auth user, sorted by last message.
-     */
     public function conversations(): JsonResponse
     {
         $me = auth()->id();
@@ -98,8 +75,6 @@ class ChatController extends Controller
             ->get()
             ->map(function (Conversation $conv) use ($me) {
                 $other = $conv->otherUser($me);
-
-                // Last message visible to this user (not deleted for them)
                 $last = Message::where('conversation_id', $conv->id)
                     ->where('deleted_for_everyone', false)
                     ->where(function ($q) use ($me) {
@@ -108,9 +83,6 @@ class ChatController extends Controller
                     })
                     ->orderByDesc('created_at')
                     ->first();
-
-                // Unread count: messages NOT sent by me, not deleted for everyone,
-                // not deleted for me, and not yet read (no read receipt in metadata)
                 $unread = Message::where('conversation_id', $conv->id)
                     ->where('customer_id', '!=', $me)
                     ->where('deleted_for_everyone', false)
@@ -137,13 +109,6 @@ class ChatController extends Controller
             'data'    => $conversations,
         ]);
     }
-
-    // ── Get messages for a conversation ───────────────────────────────────────
-
-    /**
-     * GET /api/chat/conversations/{conversationId}/messages
-     * Returns paginated messages (100 most recent).
-     */
     public function messages(string $conversationId): JsonResponse
     {
         $me   = auth()->id();
@@ -164,7 +129,6 @@ class ChatController extends Controller
             ->get()
             ->map(fn($m) => $this->formatMessage($m, $me));
 
-        // Mark all unread messages from the other person as read via metadata
         Message::where('conversation_id', $conv->id)
             ->where('customer_id', '!=', $me)
             ->whereRaw("(metadata IS NULL OR JSON_EXTRACT(metadata, '$.read_by_{$me}') IS NULL)")
