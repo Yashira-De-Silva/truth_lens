@@ -87,7 +87,6 @@ class ChessController extends Controller
             
             $conversation->touch();
         } catch (\Exception $e) {
-            // Log error but don't fail the challenge
             \Log::error("Failed to send chess chat notification: " . $e->getMessage());
         }
 
