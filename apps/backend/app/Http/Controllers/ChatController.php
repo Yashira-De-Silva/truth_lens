@@ -129,7 +129,6 @@ class ChatController extends Controller
             ->get()
             ->map(fn($m) => $this->formatMessage($m, $me));
 
-        // Mark all unread messages from the other person as read via metadata
         Message::where('conversation_id', $conv->id)
             ->where('customer_id', '!=', $me)
             ->whereRaw("(metadata IS NULL OR JSON_EXTRACT(metadata, '$.read_by_{$me}') IS NULL)")
