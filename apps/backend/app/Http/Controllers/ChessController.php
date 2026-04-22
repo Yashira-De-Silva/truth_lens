@@ -98,10 +98,6 @@ class ChessController extends Controller
             'data'    => $this->formatGame($game, $me),
         ], 201);
     }
-    /**
-     * POST /api/chess/games/{id}/accept
-     * Black player accepts the pending challenge.
-     */
     public function accept(int $gameId): JsonResponse
     {
         $me   = auth()->id();
