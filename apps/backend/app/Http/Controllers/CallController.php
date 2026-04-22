@@ -17,8 +17,6 @@ class CallController extends Controller
         ]);
 
         $caller = Auth::user();
-        
-        // End any active calls involving these users
         Call::where(function($q) use ($caller, $request) {
             $q->where('caller_id', $caller->id)
               ->orWhere('receiver_id', $caller->id)
