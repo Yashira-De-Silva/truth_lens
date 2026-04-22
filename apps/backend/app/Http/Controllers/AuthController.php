@@ -156,13 +156,6 @@ class AuthController extends Controller
             'data'    => $user,
         ]);
     }
-    /**
-     * Update name, bio, and/or profile_image for the authenticated user.
-     *
-     * PUT /api/profile
-     * Header: Authorization: Bearer <token>
-     * Body: { name?, bio?, profile_image? }
-     */
     public function updateProfile(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
