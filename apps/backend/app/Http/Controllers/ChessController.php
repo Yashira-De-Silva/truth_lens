@@ -114,10 +114,6 @@ class ChessController extends Controller
 
         return response()->json(['success' => true, 'data' => $this->formatGame($game->fresh(), $me)]);
     }
-
-    /**
-     * POST /api/chess/games/{id}/decline
-     */
     public function decline(int $gameId): JsonResponse
     {
         $me   = auth()->id();
