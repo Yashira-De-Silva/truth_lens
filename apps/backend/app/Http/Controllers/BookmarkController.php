@@ -37,8 +37,6 @@ class BookmarkController extends Controller
             ['user_id' => $user->id, 'article_id' => $request->article_id],
             $request->only(['title', 'source', 'summary', 'raw_data'])
         );
-
-        // Record the activity
         UserActivity::create([
             'user_id'     => $user->id,
             'type'        => 'bookmark',
