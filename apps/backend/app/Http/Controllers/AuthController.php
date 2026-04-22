@@ -142,12 +142,6 @@ class AuthController extends Controller
             'expires_in' => config('jwt.ttl') * 60,
         ]);
     }
- /**
-     * Return the authenticated user's profile.
-     *
-     * GET /api/me
-     * Header: Authorization: Bearer <token>
-     */
     public function me(): JsonResponse
     {
         $user = auth()->user();
