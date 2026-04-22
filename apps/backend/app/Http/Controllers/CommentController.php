@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\Validator;
 
 class CommentController extends Controller
 {
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
     /**
      * Format a comment for the API response.
      * Appends `is_liked` based on the authenticated user.
