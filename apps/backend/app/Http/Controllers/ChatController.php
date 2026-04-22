@@ -143,10 +143,6 @@ class ChatController extends Controller
             'data'    => $messages,
         ]);
     }
-    /**
-     * POST /api/chat/conversations/{conversationId}/messages
-     * Body: { body, reply_to_id? }
-     */
     public function sendMessage(Request $request, string $conversationId): JsonResponse
     {
         $me   = auth()->id();
