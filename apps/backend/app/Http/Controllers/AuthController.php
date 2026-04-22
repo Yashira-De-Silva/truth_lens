@@ -21,9 +21,6 @@ class AuthController extends Controller
 
         return $key;
     }
-
-    // ── Register ─────────────────────────────────────────────────────────────
-
     /**
      * Register a new user.
      *
