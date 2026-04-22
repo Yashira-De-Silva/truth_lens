@@ -164,13 +164,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             ],
           ),
           child: Center(
-            child: Text(
-              'TL',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
+            child: Image.asset(
+              'assets/logo/truthlenslogo.png',
+              width: 52,
+              height: 52,
+              fit: BoxFit.contain,
             ),
           ),
         ),

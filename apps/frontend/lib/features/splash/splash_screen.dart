@@ -83,12 +83,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   ],
                 ),
                 child: Center(
-                  child: Text(
-                    'TL',
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineLarge
-                        ?.copyWith(color: AppColors.primary),
+                  child: Image.asset(
+                    'assets/logo/truthlenslogo.png',
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),

@@ -152,13 +152,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             ],
           ),
           child: Center(
-            child: Text(
-              'TL',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
+            child: Image.asset(
+              'assets/logo/truthlenslogo.png',
+              width: 48,
+              height: 48,
+              fit: BoxFit.contain,
             ),
           ),
         ),
