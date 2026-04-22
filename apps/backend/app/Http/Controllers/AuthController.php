@@ -156,9 +156,6 @@ class AuthController extends Controller
             'data'    => $user,
         ]);
     }
-
-    // ── Update Profile ────────────────────────────────────────────────────────
-
     /**
      * Update name, bio, and/or profile_image for the authenticated user.
      *
