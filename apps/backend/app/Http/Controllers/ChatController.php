@@ -176,9 +176,6 @@ class ChatController extends Controller
             'data'    => $this->formatMessage($message->load('replyTo'), $me),
         ], 201);
     }
-
-    // ── Delete a message ─────────────────────────────────────────────────────
-
     /**
      * DELETE /api/chat/messages/{messageId}
      * Body: { scope } — "me" | "everyone"
