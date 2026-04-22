@@ -157,9 +157,6 @@ class ChessController extends Controller
 
         return response()->json(['success' => true, 'data' => $this->formatGame($game, $me)]);
     }
-
-    // ── Make a move ───────────────────────────────────────────────────────────
-
     /**
      * POST /api/chess/games/{id}/move
      * Body: { "from": "e2", "to": "e4", "fen": "<new FEN string>" }
