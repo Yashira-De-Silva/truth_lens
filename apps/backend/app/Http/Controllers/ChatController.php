@@ -176,11 +176,6 @@ class ChatController extends Controller
             'data'    => $this->formatMessage($message->load('replyTo'), $me),
         ], 201);
     }
-    /**
-     * DELETE /api/chat/messages/{messageId}
-     * Body: { scope } — "me" | "everyone"
-     * "everyone" only allowed within 2 hours and only by sender.
-     */
     public function deleteMessage(Request $request, int $messageId): JsonResponse
     {
         $me      = auth()->id();
