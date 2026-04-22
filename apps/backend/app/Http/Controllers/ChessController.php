@@ -141,11 +141,6 @@ class ChessController extends Controller
         return response()->json(['success' => true, 'data' => $formatted]);
     }
 
-    // ── Get a single game ─────────────────────────────────────────────────────
-
-    /**
-     * GET /api/chess/games/{id}
-     */
     public function show(int $gameId): JsonResponse
     {
         $me   = auth()->id();
