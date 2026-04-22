@@ -124,9 +124,6 @@ class AuthController extends Controller
             'message' => 'Logged out successfully',
         ]);
     }
-
-    // ── Refresh Token ─────────────────────────────────────────────────────────
-
     /**
      * Refresh the current JWT.
      *
