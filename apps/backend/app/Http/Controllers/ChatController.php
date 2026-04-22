@@ -231,9 +231,6 @@ class ChatController extends Controller
 
         return response()->json(['success' => true]);
     }
-
-    // ── Internal helpers ──────────────────────────────────────────────────────
-
     private function findConversationForUser(string $conversationUuid, int $userId): ?Conversation
     {
         return Conversation::where('conversation_id', $conversationUuid)
