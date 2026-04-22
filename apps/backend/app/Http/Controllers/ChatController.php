@@ -211,9 +211,6 @@ class ChatController extends Controller
 
         return response()->json(['success' => true]);
     }
-    /**
-     * POST /api/chat/conversations/{conversationId}/read
-     */
     public function markRead(string $conversationId): JsonResponse
     {
         $me   = auth()->id();
