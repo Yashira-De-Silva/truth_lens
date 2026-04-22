@@ -23,6 +23,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _bioController;
   final ImagePicker _imagePicker = ImagePicker();
   String? _selectedImagePath;
+  bool _removeImage = false;
 
   @override
   void initState() {
@@ -52,6 +53,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             email: _emailController.text,
             bio: _bioController.text,
             avatarPath: _selectedImagePath,
+            removeImage: _removeImage,
           );
 
       AppSnackbar.showSuccess(context, l10n.profileUpdated);
@@ -162,6 +164,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     } else if (result == 'remove') {
       setState(() {
         _selectedImagePath = null;
+        _removeImage = true;
       });
     }
   }
@@ -342,7 +345,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 ),
                                 image: _selectedImagePath != null
                                   ? DecorationImage(
-                                      image: FileImage(File(_selectedImagePath!)),
+                                      image: _selectedImagePath!.startsWith('http')
+                                          ? NetworkImage(_selectedImagePath!) as ImageProvider
+                                          : FileImage(File(_selectedImagePath!)),
                                       fit: BoxFit.cover,
                                     )
                                   : null,
@@ -355,6 +360,33 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                   )
                                 : null,
                             ),
+                            if (_selectedImagePath != null)
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedImagePath = null;
+                                      _removeImage = true;
+                                    });
+                                  },
+                                  child: Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error.withValues(alpha: 0.9),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 2),
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             Positioned(
                               bottom: 0,
                               right: 0,

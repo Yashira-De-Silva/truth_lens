@@ -51,12 +51,13 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
     String? email,
     String? bio,
     String? avatarPath,
+    bool removeImage = false,
   }) async {
     state = state.copyWith(
       name: name,
       email: email,
       bio: bio,
-      avatarPath: avatarPath,
+      avatarPath: removeImage ? null : avatarPath,
     );
     await _save();
 
@@ -67,11 +68,15 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
           token: token,
           name: name ?? state.name,
           bio: bio ?? state.bio,
+          avatarPath: avatarPath,
+          removeImage: removeImage,
         );
+        
         state = state.copyWith(
           name: updated['name'] as String?,
           bio: updated['bio'] as String? ?? '',
           apiKey: updated['api_key'] as String?,
+          avatarPath: updated['profile_image'] as String?,
         );
         await _save();
       } catch (_) {

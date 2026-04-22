@@ -8,6 +8,7 @@ import '../social/follow_provider.dart';
 import 'chess_provider.dart';
 import 'chess_screen.dart';
 import 'chess_service.dart' as chess;
+import '../game/chess_lobby_screen.dart' as offline_lobby;
 
 class ChessLobbyScreen extends ConsumerWidget {
   const ChessLobbyScreen({super.key});
@@ -105,6 +106,48 @@ class ChessLobbyScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // ── Solo Modes ───────────────────────────────
+                      _sectionHeader('Solo Play'),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _SoloModeCard(
+                              title: 'Play vs AI',
+                              subtitle: 'Challenge the CPU',
+                              icon: '🤖',
+                              color: const Color(0xFF6366F1),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const offline_lobby.ChessLobbyScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _SoloModeCard(
+                              title: 'Local 2P',
+                              subtitle: 'Pass & Play',
+                              icon: '🤝',
+                              color: const Color(0xFF34D399),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const offline_lobby.ChessLobbyScreen(initialMode: 1),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
                       // ── Active / Pending Games ─────────────────────
                       if (gamesState.isLoading) ...[
                         const Center(
@@ -233,6 +276,82 @@ class ChessLobbyScreen extends ConsumerWidget {
         AppSnackbar.showError(context, err);
       }
     }
+  }
+}
+
+// ── Solo Mode Card ────────────────────────────────────────────────────────────
+
+class _SoloModeCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _SoloModeCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0B1220).withValues(alpha: 0.7),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: color.withValues(alpha: 0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                icon,
+                style: const TextStyle(fontSize: 20),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
