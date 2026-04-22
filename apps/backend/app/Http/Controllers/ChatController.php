@@ -65,9 +65,6 @@ class ChatController extends Controller
             ],
         ]);
     }
-
-    // ── List conversations for the authenticated user ─────────────────────────
-
     /**
      * GET /api/chat/conversations
      * Returns all conversations involving the auth user, sorted by last message.
