@@ -40,9 +40,6 @@ class CommentController extends Controller
             'data'    => $comments->map(fn($c) => $this->formatComment($c, $userId)),
         ]);
     }
-
-    // ── POST /api/articles/{articleId}/comments ───────────────────────────────
-
     /**
      * Add a new comment to an article.
      *
