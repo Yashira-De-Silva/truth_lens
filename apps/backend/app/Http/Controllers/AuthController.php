@@ -13,11 +13,6 @@ use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
-
-    /**
-     * Generate a unique 6-character uppercase alphanumeric API key.
-     * Retries until the generated key is not already taken.
-     */
     private function generateApiKey(): string
     {
         do {
