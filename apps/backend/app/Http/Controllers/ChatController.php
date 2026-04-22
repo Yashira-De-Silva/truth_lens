@@ -185,7 +185,6 @@ class ChatController extends Controller
             return response()->json(['success' => false, 'message' => 'Message not found'], 404);
         }
 
-        // Verify user is part of this conversation
         $conv = Conversation::find($message->conversation_id);
         if (!$conv || ($conv->user1_id !== $me && $conv->user2_id !== $me)) {
             return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
