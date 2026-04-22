@@ -127,9 +127,6 @@ class ChessController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Game declined.']);
     }
-
-    // ── List my games ─────────────────────────────────────────────────────────
-
     /**
      * GET /api/chess/games
      * Active, waiting, and recently finished games involving me.
