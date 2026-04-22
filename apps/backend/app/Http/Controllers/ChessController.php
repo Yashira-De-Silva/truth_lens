@@ -49,8 +49,6 @@ class ChessController extends Controller
                 'message' => 'You must follow this user to challenge them.',
             ], 403);
         }
-
-        // Prevent duplicate active challenges
         $existing = ChessGame::where(function ($q) use ($me, $userId) {
             $q->where('white_player_id', $me)->where('black_player_id', $userId);
         })->orWhere(function ($q) use ($me, $userId) {
