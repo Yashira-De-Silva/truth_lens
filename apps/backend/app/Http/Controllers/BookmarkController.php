@@ -9,9 +9,6 @@ use Illuminate\Http\Request;
 
 class BookmarkController extends Controller
 {
-    /**
-     * List all bookmarks for the authenticated user.
-     */
     public function index(): JsonResponse
     {
         $user = auth()->user();
