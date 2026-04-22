@@ -222,9 +222,6 @@ class AuthController extends Controller
             'data'    => $user->fresh(),
         ]);
     }
-
-    // ── Cancel Premium ────────────────────────────────────────────────────────
-
     /**
      * Downgrade the authenticated user to a basic account.
      *
