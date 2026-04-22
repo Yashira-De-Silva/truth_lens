@@ -208,9 +208,6 @@ class AuthController extends Controller
             'data'    => $user->fresh(),
         ]);
     }
-
-    // ── Upgrade Premium ───────────────────────────────────────────────────────
-
     /**
      * Upgrade the authenticated user to a premium account.
      *
