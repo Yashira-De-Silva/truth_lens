@@ -64,12 +64,6 @@ class AuthController extends Controller
             ],
         ], 201);
     }
-    /**
-     * Authenticate the user and return a JWT.
-     *
-     * POST /api/login
-     * Body: { email, password }
-     */
     public function login(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
