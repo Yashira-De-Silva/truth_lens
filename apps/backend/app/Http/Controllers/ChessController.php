@@ -217,7 +217,7 @@ class ChessController extends Controller
             return response()->json(['success' => false, 'message' => 'Not your game.'], 403);
         }
 
-        $result   = $request->result; // 'white', 'black', 'draw'
+        $result   = $request->result;
         $winnerId = null;
         if ($result === 'white')      $winnerId = $game->white_player_id;
         elseif ($result === 'black')  $winnerId = $game->black_player_id;
