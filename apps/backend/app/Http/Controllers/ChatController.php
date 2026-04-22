@@ -83,7 +83,6 @@ class ChatController extends Controller
                     })
                     ->orderByDesc('created_at')
                     ->first();
-// not deleted for me, and not yet read (no read receipt in metadata)
                 $unread = Message::where('conversation_id', $conv->id)
                     ->where('customer_id', '!=', $me)
                     ->where('deleted_for_everyone', false)
