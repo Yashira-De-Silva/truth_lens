@@ -12,7 +12,8 @@ import 'chess_game_screen.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class ChessLobbyScreen extends StatefulWidget {
-  const ChessLobbyScreen({super.key});
+  final int initialMode;
+  const ChessLobbyScreen({super.key, this.initialMode = 0});
 
   @override
   State<ChessLobbyScreen> createState() => _ChessLobbyScreenState();
@@ -21,7 +22,7 @@ class ChessLobbyScreen extends StatefulWidget {
 class _ChessLobbyScreenState extends State<ChessLobbyScreen>
     with SingleTickerProviderStateMixin {
 
-  int _modeIndex = 0;                         // 0=vs AI, 1=multiplayer
+  late int _modeIndex;                         // 0=vs AI, 1=multiplayer
   AiDifficulty _difficulty = AiDifficulty.beginner;
   bool _playAsWhite = true;                   // colour choice (vs AI)
 
@@ -31,6 +32,7 @@ class _ChessLobbyScreenState extends State<ChessLobbyScreen>
   @override
   void initState() {
     super.initState();
+    _modeIndex = widget.initialMode;
     _animCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 420));
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
