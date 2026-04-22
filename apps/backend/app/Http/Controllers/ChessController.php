@@ -35,11 +35,6 @@ class ChessController extends Controller
         $u = User::select('id', 'name', 'profile_image')->find($userId);
         return $u ? $u->toArray() : ['id' => $userId, 'name' => 'Unknown', 'profile_image' => null];
     }
-    /**
-     * POST /api/chess/challenge/{userId}
-     * Creates a new game where I am white and the challenged player is black.
-     * Requires that I follow the opponent (one-way is enough to challenge).
-     */
     public function challenge(int $userId): JsonResponse
     {
         $me = auth()->id();
