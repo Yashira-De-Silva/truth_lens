@@ -143,9 +143,6 @@ class ChatController extends Controller
             'data'    => $messages,
         ]);
     }
-
-    // ── Send a message ────────────────────────────────────────────────────────
-
     /**
      * POST /api/chat/conversations/{conversationId}/messages
      * Body: { body, reply_to_id? }
