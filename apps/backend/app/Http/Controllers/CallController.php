@@ -42,8 +42,6 @@ class CallController extends Controller
     public function getActive()
     {
         $user = Auth::user();
-
-        // Check if there is an active call for this user
         $call = Call::where(function($query) use ($user) {
                 $query->where('caller_id', $user->id)
                       ->orWhere('receiver_id', $user->id);
