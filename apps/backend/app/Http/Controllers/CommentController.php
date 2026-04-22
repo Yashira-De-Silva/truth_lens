@@ -26,11 +26,6 @@ class CommentController extends Controller
             ],
         ];
     }
-    /**
-     * Return all comments for an article, newest first.
-     *
-     * GET /api/articles/{articleId}/comments
-     */
     public function index(int $articleId): JsonResponse
     {
         $userId = auth()->id();
