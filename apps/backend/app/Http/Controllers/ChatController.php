@@ -204,7 +204,6 @@ class ChatController extends Controller
                 'deleted_for_everyone_at' => now(),
             ]);
         } else {
-            // Delete for me only — append user ID to deleted_by_users JSON array
             $deletedBy   = $message->deleted_by_users ?? [];
             $deletedBy[] = $me;
             $message->update(['deleted_by_users' => array_values(array_unique($deletedBy))]);
