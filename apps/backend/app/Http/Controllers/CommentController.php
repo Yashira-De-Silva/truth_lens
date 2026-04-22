@@ -9,10 +9,6 @@ use Illuminate\Support\Facades\Validator;
 
 class CommentController extends Controller
 {
-    /**
-     * Format a comment for the API response.
-     * Appends `is_liked` based on the authenticated user.
-     */
     private function formatComment(ArticleComment $comment, int $userId): array
     {
         return [
