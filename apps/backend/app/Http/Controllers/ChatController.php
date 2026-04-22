@@ -211,9 +211,6 @@ class ChatController extends Controller
 
         return response()->json(['success' => true]);
     }
-
-    // ── Mark conversation as read ─────────────────────────────────────────────
-
     /**
      * POST /api/chat/conversations/{conversationId}/read
      */
