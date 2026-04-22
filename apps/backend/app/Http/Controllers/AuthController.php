@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**
      * Generate a unique 6-character uppercase alphanumeric API key.
