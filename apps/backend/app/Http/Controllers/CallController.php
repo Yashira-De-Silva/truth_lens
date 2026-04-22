@@ -50,9 +50,7 @@ class CallController extends Controller
             ->with(['caller', 'receiver'])
             ->latest()
             ->first();
-
-        // Also fetch recently ended calls within the last 15 seconds to allow the client to process the disconnect
-        if (!$call) {
+            if (!$call) {
              $call = Call::where(function($query) use ($user) {
                 $query->where('caller_id', $user->id)
                       ->orWhere('receiver_id', $user->id);
