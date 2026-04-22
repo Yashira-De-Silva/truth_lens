@@ -185,8 +185,6 @@ class ChessController extends Controller
         return response()->json(['success' => true, 'data' => $this->formatGame($game->fresh(), $me)]);
     }
 
-    // ── Resign ────────────────────────────────────────────────────────────────
-
     /**
      * POST /api/chess/games/{id}/resign
      */
