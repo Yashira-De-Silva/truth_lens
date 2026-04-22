@@ -21,10 +21,6 @@ class BookmarkController extends Controller
             'data'    => $bookmarks,
         ]);
     }
-
-    /**
-     * Store a new bookmark and log the activity.
-     */
     public function store(Request $request): JsonResponse
     {
         $request->validate([
