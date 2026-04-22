@@ -40,12 +40,6 @@ class CommentController extends Controller
             'data'    => $comments->map(fn($c) => $this->formatComment($c, $userId)),
         ]);
     }
-    /**
-     * Add a new comment to an article.
-     *
-     * POST /api/articles/{articleId}/comments
-     * Body: { body }
-     */
     public function store(Request $request, int $articleId): JsonResponse
     {
         $validator = Validator::make($request->all(), [
