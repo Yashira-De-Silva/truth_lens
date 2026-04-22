@@ -124,12 +124,6 @@ class AuthController extends Controller
             'message' => 'Logged out successfully',
         ]);
     }
-    /**
-     * Refresh the current JWT.
-     *
-     * POST /api/refresh
-     * Header: Authorization: Bearer <token>
-     */
     public function refresh(): JsonResponse
     {
         try {
