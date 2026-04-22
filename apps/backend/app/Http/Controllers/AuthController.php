@@ -108,12 +108,6 @@ class AuthController extends Controller
             ],
         ]);
     }
-    /**
-     * Invalidate the current token (logout).
-     *
-     * POST /api/logout
-     * Header: Authorization: Bearer <token>
-     */
     public function logout(): JsonResponse
     {
         try {
