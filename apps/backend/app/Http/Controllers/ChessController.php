@@ -71,9 +71,7 @@ class ChessController extends Controller
             'moves'           => [],
         ]);
 
-        // ── Send automatic chat notification ──
         try {
-            // Find or create conversation (canonical user1 < user2)
             [$u1, $u2] = $me < $userId ? [$me, $userId] : [$userId, $me];
             $conversation = Conversation::firstOrCreate([
                 'user1_id' => $u1,
