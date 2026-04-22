@@ -11,8 +11,6 @@ use Illuminate\Support\Facades\Validator;
 
 class ChatController extends Controller
 {
-    // ── List all users (excluding self) ───────────────────────────────────────
-
     /**
      * GET /api/chat/users
      * Returns every registered user except the authenticated user.
