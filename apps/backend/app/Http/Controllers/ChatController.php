@@ -169,7 +169,6 @@ class ChatController extends Controller
             'reply_to_message_id'=> $request->reply_to_id,
         ]);
 
-        // Touch conversation updated_at so list re-sorts
         $conv->touch();
 
         return response()->json([
