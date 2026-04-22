@@ -65,10 +65,6 @@ class ChatController extends Controller
             ],
         ]);
     }
-    /**
-     * GET /api/chat/conversations
-     * Returns all conversations involving the auth user, sorted by last message.
-     */
     public function conversations(): JsonResponse
     {
         $me = auth()->id();
