@@ -25,9 +25,6 @@ class ChatController extends Controller
             'data'    => $users,
         ]);
     }
-
-    // ── Get or create a conversation ─────────────────────────────────────────
-
     /**
      * POST /api/chat/conversations
      * Body: { other_user_id }
