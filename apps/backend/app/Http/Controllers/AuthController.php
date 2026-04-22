@@ -208,12 +208,6 @@ class AuthController extends Controller
             'data'    => $user->fresh(),
         ]);
     }
-    /**
-     * Upgrade the authenticated user to a premium account.
-     *
-     * POST /api/upgrade-premium
-     * Header: Authorization: Bearer <token>
-     */
     public function upgradeToPremium(Request $request): JsonResponse
     {
         /** @var \App\Models\User $user */
