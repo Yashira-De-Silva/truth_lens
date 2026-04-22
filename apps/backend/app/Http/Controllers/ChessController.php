@@ -42,8 +42,6 @@ class ChessController extends Controller
         if ($me === $userId) {
             return response()->json(['success' => false, 'message' => 'You cannot challenge yourself.'], 422);
         }
-
-        // Must follow them to challenge
         $iFollow = Follow::where('follower_id', $me)->where('following_id', $userId)->exists();
         if (!$iFollow) {
             return response()->json([
