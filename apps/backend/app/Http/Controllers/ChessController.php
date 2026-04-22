@@ -208,9 +208,6 @@ class ChessController extends Controller
 
         return response()->json(['success' => true, 'data' => $this->formatGame($game->fresh(), $me)]);
     }
-
-    // ── Mark game as finished (checkmate / draw) ──────────────────────────────
-
     /**
      * POST /api/chess/games/{id}/finish
      * Body: { "result": "white" | "black" | "draw" }
