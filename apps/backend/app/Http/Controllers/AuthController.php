@@ -222,12 +222,6 @@ class AuthController extends Controller
             'data'    => $user->fresh(),
         ]);
     }
-    /**
-     * Downgrade the authenticated user to a basic account.
-     *
-     * POST /api/cancel-premium
-     * Header: Authorization: Bearer <token>
-     */
     public function cancelPremium(Request $request): JsonResponse
     {
         /** @var \App\Models\User $user */
