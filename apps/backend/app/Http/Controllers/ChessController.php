@@ -157,11 +157,6 @@ class ChessController extends Controller
 
         return response()->json(['success' => true, 'data' => $this->formatGame($game, $me)]);
     }
-    /**
-     * POST /api/chess/games/{id}/move
-     * Body: { "from": "e2", "to": "e4", "fen": "<new FEN string>" }
-     * The client (Flutter) validates the move locally and sends the new FEN.
-     */
     public function move(Request $request, int $gameId): JsonResponse
     {
         $me   = auth()->id();
