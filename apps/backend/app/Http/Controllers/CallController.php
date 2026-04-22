@@ -50,7 +50,7 @@ class CallController extends Controller
             ->with(['caller', 'receiver'])
             ->latest()
             ->first();
-            if (!$call) {
+        if (!$call) {
              $call = Call::where(function($query) use ($user) {
                 $query->where('caller_id', $user->id)
                       ->orWhere('receiver_id', $user->id);
@@ -76,8 +76,6 @@ class CallController extends Controller
 
         $call = Call::findOrFail($id);
         $user = Auth::user();
-
-        // Only participants can update
         if ($call->caller_id !== $user->id && $call->receiver_id !== $user->id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
