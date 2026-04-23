@@ -53,10 +53,6 @@ class FollowController extends Controller
             'is_mutual'    => false,
         ]);
     }
-    /**
-     * GET /api/follow/status/{userId}
-     * Returns whether I follow them AND whether they follow me back.
-     */
     public function status(int $userId): JsonResponse
     {
         $me = auth('api')->id();
