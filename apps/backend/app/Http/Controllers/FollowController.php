@@ -78,12 +78,6 @@ class FollowController extends Controller
         return response()->json(['success' => true, 'data' => $followers]);
     }
 
-    // ── Who I follow ──────────────────────────────────────────────────────────
-
-    /**
-     * GET /api/following
-     * Users the authenticated user follows.
-     */
     public function following(): JsonResponse
     {
         $me = auth()->id();
