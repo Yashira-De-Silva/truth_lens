@@ -100,15 +100,6 @@ class CommentController extends Controller
             'message' => 'Comment deleted',
         ]);
     }
-
-    // ── POST /api/comments/{commentId}/like ───────────────────────────────────
-
-    /**
-     * Toggle like/unlike on a comment.
-     *
-     * POST /api/comments/{commentId}/like
-     * Returns updated like count and the new `is_liked` state.
-     */
     public function toggleLike(int $commentId): JsonResponse
     {
         $comment = ArticleComment::find($commentId);
