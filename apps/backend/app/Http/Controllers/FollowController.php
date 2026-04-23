@@ -90,12 +90,6 @@ class FollowController extends Controller
         return response()->json(['success' => true, 'data' => $following]);
     }
 
-    // ── Public profile ────────────────────────────────────────────────────────
-
-    /**
-     * GET /api/users/{userId}/profile
-     * Returns a user's public profile including follower counts and follow status.
-     */
     public function publicProfile(int $userId): JsonResponse
     {
         $user = User::select('id', 'name', 'email', 'bio', 'profile_image')->find($userId);
