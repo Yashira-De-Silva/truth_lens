@@ -38,10 +38,6 @@ class FollowController extends Controller
         ]);
     }
 
-    /**
-     * DELETE /api/follow/{userId}
-     * Authenticated user unfollows the given user.
-     */
     public function unfollow(int $userId): JsonResponse
     {
         $me = auth()->id();
