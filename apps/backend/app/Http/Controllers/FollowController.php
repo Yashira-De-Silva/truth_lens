@@ -102,7 +102,6 @@ class FollowController extends Controller
         $followersCount = Follow::where('following_id', $userId)->count();
         $followingCount = Follow::where('follower_id', $userId)->count();
         
-        // Handle guest users — if not logged in, they follow no one and no one follows them back in this context
         $iFollow        = $me ? Follow::where('follower_id', $me)->where('following_id', $userId)->exists() : false;
         $theyFollow     = $me ? Follow::where('follower_id', $userId)->where('following_id', $me)->exists() : false;
 
