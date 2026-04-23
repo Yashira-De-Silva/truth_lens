@@ -53,9 +53,6 @@ class FollowController extends Controller
             'is_mutual'    => false,
         ]);
     }
-
-    // ── Follow status ─────────────────────────────────────────────────────────
-
     /**
      * GET /api/follow/status/{userId}
      * Returns whether I follow them AND whether they follow me back.
