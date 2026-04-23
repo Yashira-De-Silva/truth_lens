@@ -9,12 +9,6 @@ use Illuminate\Http\Request;
 
 class FollowController extends Controller
 {
-    // ── Follow a user ─────────────────────────────────────────────────────────
-
-    /**
-     * POST /api/follow/{userId}
-     * Authenticated user follows the given user.
-     */
     public function follow(int $userId): JsonResponse
     {
         $me = auth()->id();
