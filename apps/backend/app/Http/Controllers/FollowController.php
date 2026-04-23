@@ -66,10 +66,6 @@ class FollowController extends Controller
             'is_mutual'    => $iFollow && $theyFollow,
         ]);
     }
-    /**
-     * GET /api/followers
-     * Users who follow the authenticated user.
-     */
     public function followers(): JsonResponse
     {
         $me = auth()->id();
