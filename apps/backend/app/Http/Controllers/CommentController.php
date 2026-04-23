@@ -59,8 +59,6 @@ class CommentController extends Controller
             'user_id'    => auth()->id(),
             'body'       => $request->body,
         ]);
-
-        // Record the activity
         \App\Models\UserActivity::create([
             'user_id'     => auth()->id(),
             'type'        => 'comment',
@@ -77,14 +75,6 @@ class CommentController extends Controller
             'data'    => $this->formatComment($comment, auth()->id()),
         ], 201);
     }
-
-    // ── DELETE /api/comments/{commentId} ─────────────────────────────────────
-
-    /**
-     * Delete own comment.
-     *
-     * DELETE /api/comments/{commentId}
-     */
     public function destroy(int $commentId): JsonResponse
     {
         $comment = ArticleComment::find($commentId);
