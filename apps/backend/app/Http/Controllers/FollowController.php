@@ -38,8 +38,6 @@ class FollowController extends Controller
         ]);
     }
 
-    // ── Unfollow a user ───────────────────────────────────────────────────────
-
     /**
      * DELETE /api/follow/{userId}
      * Authenticated user unfollows the given user.
