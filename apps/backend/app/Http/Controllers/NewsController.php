@@ -99,9 +99,6 @@ class NewsController extends Controller
 
         return response()->json(['success' => True, 'data' => $formatted]);
     }
-    /**
-     * Get a single news article by ID.
-     */
     public function show($id)
     {
         $article = NewsArticle::find($id);
@@ -125,9 +122,6 @@ class NewsController extends Controller
         ]);
     }
 
-    /**
-     * Log that a user has read an article.
-     */
     public function logRead(Request $request, $id)
     {
         $user = auth()->user();
