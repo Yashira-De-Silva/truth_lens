@@ -42,9 +42,6 @@ class NewsController extends Controller
         ]);
     }
 
-    /**
-     * Fetch a digest of news articles.
-     */
     public function digest()
     {
         $articles = NewsArticle::inRandomOrder()->limit(3)->get();
