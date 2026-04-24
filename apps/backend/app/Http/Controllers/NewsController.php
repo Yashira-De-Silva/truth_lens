@@ -132,7 +132,6 @@ class NewsController extends Controller
         $article = NewsArticle::find($id);
         $title = $article ? $article->title : "article #$id";
 
-        // Record the activity
         \App\Models\UserActivity::updateOrCreate(
             [
                 'user_id' => $user->id,
