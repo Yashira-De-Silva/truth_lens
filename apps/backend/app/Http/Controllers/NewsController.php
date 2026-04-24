@@ -7,9 +7,6 @@ use Illuminate\Http\Request;
 
 class NewsController extends Controller
 {
-    /**
-     * Get paginated news articles from TiDB.
-     */
     public function index(Request $request)
     {
         $limit = $request->query('limit', 20);
