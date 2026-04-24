@@ -149,7 +149,6 @@ class FollowController extends Controller
 
         $users = $query->limit(20)->get(['id', 'name', 'email', 'profile_image', 'bio']);
 
-        // Format to include computed counts and follow status
         $data = $users->map(function ($u) use ($me) {
             $followsYou = $me ? Follow::where('follower_id', $u->id)->where('following_id', $me)->exists() : false;
             return [
