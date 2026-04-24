@@ -126,10 +126,6 @@ class FollowController extends Controller
         ]);
     }
 
-    /**
-     * GET /api/users/search
-     * Search for users by name or email.
-     */
     public function search(Request $request): JsonResponse
     {
         $q = $request->query('q', '');
