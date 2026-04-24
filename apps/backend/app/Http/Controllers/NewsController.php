@@ -60,9 +60,6 @@ class NewsController extends Controller
         return response()->json(['success' => True, 'data' => $formatted]);
     }
 
-    /**
-     * Search news articles by keyword.
-     */
     public function search(Request $request)
     {
         $q = $request->query('q', '');
