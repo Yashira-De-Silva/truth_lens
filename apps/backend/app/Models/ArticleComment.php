@@ -26,7 +26,6 @@ class ArticleComment extends Model
         return $this->belongsTo(User::class);
     }
 
-    /** Users who liked this comment (pivot: comment_likes). */
     public function likedBy(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'comment_likes', 'comment_id', 'user_id')
