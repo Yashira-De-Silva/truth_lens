@@ -61,7 +61,6 @@ class CallNotifier extends StateNotifier<CallState> {
           state = state.copyWith(clearCall: true);
         }
       } else {
-        // Simplistic check by serializing to string, or just update blindly
         final currStr = state.activeCall?.toString();
         final newStr = call.toString();
         if (currStr != newStr) {
