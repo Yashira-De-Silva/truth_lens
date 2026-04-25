@@ -47,7 +47,6 @@ class Message extends Model
         return $this->belongsTo(Message::class, 'reply_to_message_id');
     }
 
-    /** Whether this message was soft-deleted for a specific user ID. */
     public function isDeletedForUser(int $userId): bool
     {
         return in_array($userId, $this->deleted_by_users ?? [], true);
