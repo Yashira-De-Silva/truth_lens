@@ -94,7 +94,6 @@ class _CallScreenState extends ConsumerState<CallScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Top actions
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
