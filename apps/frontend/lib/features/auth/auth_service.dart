@@ -14,8 +14,6 @@ Future<SharedPreferences> get _prefs async {
   return _prefsCache!;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
 Map<String, String> get _jsonHeaders => {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
