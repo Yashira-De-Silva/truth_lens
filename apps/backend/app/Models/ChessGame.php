@@ -31,7 +31,6 @@ class ChessGame extends Model
         return $this->belongsTo(User::class, 'winner_id');
     }
 
-    /** Return true if the given user ID is a participant in this game. */
     public function hasPlayer(int $userId): bool
     {
         return $this->white_player_id === $userId || $this->black_player_id === $userId;
