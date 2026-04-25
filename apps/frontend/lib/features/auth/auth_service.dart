@@ -216,8 +216,6 @@ Future<void> logRead(String token, int articleId) async {
       .timeout(const Duration(seconds: 10));
 }
 
-// ── Server-side Bookmarks ────────────────────────────────────────────────────
-
 Future<List<Map<String, dynamic>>> fetchBookmarks(String token) async {
   final base = await ApiConfig.baseUrl;
   final response = await http
