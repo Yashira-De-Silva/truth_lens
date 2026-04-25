@@ -56,8 +56,6 @@ class CallNotifier extends StateNotifier<CallState> {
 
     try {
       final call = await svc.getActiveCall(token);
-      
-      // If no call OR if the backend tells us the call ended/rejected
       if (call == null || call['status'] == 'ended' || call['status'] == 'rejected') {
         if (state.activeCall != null) {
           state = state.copyWith(clearCall: true);
