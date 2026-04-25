@@ -21,8 +21,6 @@ class ArticleComment extends Model
         'likes' => 'integer',
     ];
 
-    // ── Relationships ─────────────────────────────────────────────────────────
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
