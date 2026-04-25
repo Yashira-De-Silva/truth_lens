@@ -42,7 +42,6 @@ class Conversation extends Model
             ->limit(1);
     }
 
-    /** Return the other participant relative to $userId. */
     public function otherUser(int $userId): User
     {
         return $this->user1_id === $userId ? $this->user2 : $this->user1;
