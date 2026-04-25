@@ -35,8 +35,6 @@ class ChessGame extends Model
     {
         return $this->white_player_id === $userId || $this->black_player_id === $userId;
     }
-
-    /** Return 'white' | 'black' | null for the given player. */
     public function colorFor(int $userId): ?string
     {
         if ($this->white_player_id === $userId) return 'white';
