@@ -109,7 +109,6 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                 ),
               ),
 
-              // Profile and Status
               Column(
                 children: [
                   Container(
@@ -162,8 +161,6 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                   ),
                 ],
               ),
-
-              // Call Controls
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
                 decoration: BoxDecoration(
