@@ -106,8 +106,6 @@ class User extends Authenticatable implements JWTSubject
         return $this->followings()->count();
     }
 
-    // ── JWTSubject ──────────────────────────────────────────────────────────
-
     public function getJWTIdentifier()
     {
         return $this->getKey();
