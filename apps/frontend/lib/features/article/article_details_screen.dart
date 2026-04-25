@@ -41,7 +41,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
         final token = await svc.loadToken();
         if (token != null) {
           await svc.logRead(token, widget.article!.id);
-          // Refresh profile stats after reading
           ref.read(profileProvider.notifier).refreshFromBackend();
         }
 
