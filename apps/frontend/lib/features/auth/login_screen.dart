@@ -61,8 +61,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       final error = next.error!;
       ref.read(authProvider.notifier).clearError();
 
-      // If credentials are wrong, the account likely doesn't exist in production.
-      // Guide the user to register instead.
       final lowerError = error.toLowerCase();
       if (lowerError.contains('invalid') ||
           lowerError.contains('credentials') ||
