@@ -68,7 +68,7 @@ class CallNotifier extends StateNotifier<CallState> {
         }
       }
     } catch (e) {
-      // ignore
+      // ignoreq
     }
   }
 
