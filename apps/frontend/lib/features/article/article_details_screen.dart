@@ -37,7 +37,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(commentsProvider(_articleId).notifier).load();
       
-      // Log read activity
       if (widget.article != null) {
         final token = await svc.loadToken();
         if (token != null) {
