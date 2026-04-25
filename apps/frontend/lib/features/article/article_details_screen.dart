@@ -44,7 +44,6 @@ class _ArticleDetailsScreenState extends ConsumerState<ArticleDetailsScreen> {
           ref.read(profileProvider.notifier).refreshFromBackend();
         }
 
-        // Start dynamic summarization if it's a long article
         if (widget.article!.fullText != null && widget.article!.fullText!.length > 500) {
           _fetchAiSummary();
         }
