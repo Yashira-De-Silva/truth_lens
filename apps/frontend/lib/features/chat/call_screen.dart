@@ -55,8 +55,6 @@ class _CallScreenState extends ConsumerState<CallScreen> {
   Widget build(BuildContext context) {
     final callState = ref.watch(callProvider);
     final activeCall = callState.activeCall;
-
-    // Use current active call status, if ended in background, exit
     String statusStr = 'Connecting...';
     if (activeCall != null && activeCall['id'] == widget.callId) {
       statusStr = activeCall['status'] as String;
