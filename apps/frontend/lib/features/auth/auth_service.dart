@@ -8,7 +8,6 @@ const _userKey = 'auth_user';
 const _loginTimestampKey = 'auth_login_timestamp';
 const _sessionDays = 30;
 
-// Cached SharedPreferences instance — avoids repeated getInstance() disk I/O.
 SharedPreferences? _prefsCache;
 Future<SharedPreferences> get _prefs async {
   _prefsCache ??= await SharedPreferences.getInstance();
