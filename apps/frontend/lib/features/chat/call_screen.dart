@@ -59,7 +59,6 @@ class _CallScreenState extends ConsumerState<CallScreen> {
     if (activeCall != null && activeCall['id'] == widget.callId) {
       statusStr = activeCall['status'] as String;
     } else if (callState.activeCall == null) {
-      // It was ended remotely!
       statusStr = 'ended';
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && Navigator.canPop(context)) {
