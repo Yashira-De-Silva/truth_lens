@@ -206,8 +206,6 @@ Future<void> cancelPremium(String token) async {
   }
 }
 
-// ── User Activity & Statistics ───────────────────────────────────────────────
-
 Future<void> logRead(String token, int articleId) async {
   final base = await ApiConfig.baseUrl;
   await http
