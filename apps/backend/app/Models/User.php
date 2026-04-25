@@ -56,8 +56,6 @@ class User extends Authenticatable implements JWTSubject
         'following_count',
     ];
 
-    // ── Relationships ────────────────────────────────────────────────────────
-
     public function activities()
     {
         return $this->hasMany(UserActivity::class);
