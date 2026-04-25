@@ -26,7 +26,6 @@ class CallNotifier extends StateNotifier<CallState> {
   Timer? _pollTimer;
 
   CallNotifier(this.ref) : super(CallState()) {
-    // Only start polling if we are already authenticated, or when we become authenticated.
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.token != null && _pollTimer == null) {
         _startPolling();
