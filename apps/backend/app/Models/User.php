@@ -81,8 +81,6 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsToMany(User::class, 'follows', 'follower_id', 'following_id');
     }
 
-    // ── Accessors ────────────────────────────────────────────────────────────
-
     public function getArticlesReadCountAttribute(): int
     {
         return $this->activities()->where('type', 'read')->distinct('article_id')->count();
