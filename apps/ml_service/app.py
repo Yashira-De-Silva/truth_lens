@@ -129,21 +129,21 @@ def predict():
         combined_context = f"{wiki_context}\n\n{news_context}".strip()
         
         prompt = f"""
-        You are a professional fact-checker. Current Date: {now}.
-        
+        You are a careful and conservative fact-checker for TruthLens. Current Date: {now}.
+
         Claim to verify: "{text}"
-        
+
         Evidence gathered:
-        {combined_context if combined_context else "No direct search results found. Use your internal knowledge and logic."}
-        
+        {combined_context if combined_context else 'No direct search results found. Use your internal knowledge and logic, but be conservative.'}
+
         Instructions:
         1. Compare the claim against the evidence.
-        2. Handle spelling errors or acronyms intelligently (e.g. 'AKD' = Anura Kumara Dissanayake, 'ranil' = Ranil Wickremesinghe).
-        3. If the claim is about a person's current role, check if the date matches historical or current facts.
-        4. Be critical. If the evidence contradicts the claim, label it FAKE.
-        5. Provide a clear, concise reason including why it's true or false based on the evidence.
-        
-        Respond ONLY with a JSON object:
+        2. If the evidence is weak, incomplete, or missing, respond with UNCERTAIN.
+        3. Do not hallucinate facts or invent sources.
+        4. Use only the evidence from Wikipedia and The Guardian when possible.
+        5. If the claim is about a specific person, role, date, or title, verify the exact claim before labeling REAL.
+        6. If the claim cannot be confirmed by the evidence, label it UNCERTAIN.
+        7. Respond ONLY with a JSON object:
         {{
           "label": "REAL" or "FAKE" or "UNCERTAIN",
           "confidence": 0.0 to 1.0,
@@ -151,28 +151,36 @@ def predict():
           "relevant_sources": ["Source 1", "Source 2"]
         }}
         """
-        
-        response = model.generate_content(prompt)
-        res_txt = response.text.strip()
-        if "```" in res_txt:
-            res_txt = res_txt.split("```")[1]
-            if res_txt.startswith("json"): res_txt = res_txt[4:].strip()
-            res_txt = res_txt.strip()
-        
-        try:
-            result = json.loads(res_txt)
-        except json.JSONDecodeError:
-            # Fallback parsing if JSON is messy
-            label = "REAL" if "REAL" in res_txt.upper() else "FAKE"
-            result = {"label": label, "confidence": 0.8, "reason": "Verified via AI analysis."}
 
-        # Use sources from AI if provided, otherwise fallback to our gathered sources
+        response = model.generate_content(prompt, temperature=0)
+        res_txt = response.text.strip()
+        result = parse_model_json(res_txt)
+
+        label = normalize_label(str(result.get("label", "")).strip())
+        confidence = result.get("confidence")
+        try:
+            confidence = float(confidence)
+        except (TypeError, ValueError):
+            confidence = 0.0
+
+        if confidence < 0.35:
+            label = "UNCERTAIN"
+            confidence = max(confidence, 0.25)
+
+        if not sources and label != "UNCERTAIN":
+            label = "UNCERTAIN"
+            confidence = min(confidence, 0.45)
+
+        if label == "REAL" and not combined_context:
+            label = "UNCERTAIN"
+            confidence = min(confidence, 0.45)
+
         final_sources = result.get("relevant_sources") or sources
-        
+
         return jsonify({
-            "label": result.get("label", "FAKE"),
-            "confidence": result.get("confidence", 0.95),
-            "reason": result.get("reason", "Verified via AI analysis."),
+            "label": label,
+            "confidence": min(max(confidence, 0.0), 1.0),
+            "reason": result.get("reason", "Verified via AI analysis.").strip(),
             "sources": final_sources
         })
     except Exception as e:
@@ -271,6 +279,34 @@ def bot_ask():
     except Exception as e:
         log.error(f"Bot error: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
+
+def normalize_label(value: str) -> str:
+    value = value.strip().upper()
+    if value in {"REAL", "TRUE", "T"}:
+        return "REAL"
+    if value in {"FAKE", "FALSE", "F"}:
+        return "FAKE"
+    return "UNCERTAIN"
+
+
+def parse_model_json(text: str) -> dict:
+    import json
+    if "```" in text:
+        text = text.split("```")[-1]
+    if text.strip().startswith("json"):
+        text = text.strip()[4:].strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        # Try extracting the first JSON object
+        start = text.find("{")
+        end = text.rfind("}")
+        if start != -1 and end != -1:
+            try:
+                return json.loads(text[start:end+1])
+            except json.JSONDecodeError:
+                pass
+    return {}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
