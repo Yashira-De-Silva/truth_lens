@@ -22,7 +22,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _confirmPassCtrl = TextEditingController();
   
   bool _isLoading = false;
-  String? _serverOtp; // For demo purposes
 
   @override
   void dispose() {
@@ -42,13 +41,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final otp = await svc.forgotPassword(email);
-      _serverOtp = otp;
+      await svc.forgotPassword(email);
       AppSnackbar.showSuccess(context, 'Verification code sent to $email');
-      // For demo convenience, if OTP is returned, show it
-      if (otp.isNotEmpty) {
-        AppSnackbar.showInfo(context, 'Demo OTP: $otp');
-      }
       setState(() => _stage = ForgotPasswordStage.otp);
     } catch (e) {
       AppSnackbar.showError(context, e.toString());

@@ -12,6 +12,8 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OtpMail;
 
 class AuthController extends Controller
 {
@@ -264,12 +266,17 @@ class AuthController extends Controller
             ]
         );
 
-        // In a real application, you would send this OTP via email.
-        // For this demo, we'll return it in the response for easy testing.
+        // Send the OTP via email
+        try {
+            Mail::to($email)->send(new OtpMail($otp));
+        } catch (\Exception $e) {
+            // Log error but continue for now, or you can return error
+            \Log::error("Failed to send OTP email: " . $e->getMessage());
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'OTP sent to your email',
-            'otp'     => $otp, // REMOVE THIS IN PRODUCTION
         ]);
     }
 

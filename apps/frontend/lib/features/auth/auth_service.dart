@@ -265,7 +265,7 @@ Future<void> removeBookmark(String token, int articleId) async {
       .timeout(const Duration(seconds: 10));
 }
 
-Future<String> forgotPassword(String email) async {
+Future<void> forgotPassword(String email) async {
   final base = await ApiConfig.baseUrl;
   final response = await http
       .post(
@@ -276,11 +276,9 @@ Future<String> forgotPassword(String email) async {
       .timeout(const Duration(seconds: 30));
   
   final body = jsonDecode(response.body) as Map<String, dynamic>;
-  if (response.statusCode == 200 && body['success'] == true) {
-    // In our demo backend, we return the OTP. In real app, we wouldn't.
-    return body['otp']?.toString() ?? ''; 
+  if (response.statusCode != 200 || body['success'] != true) {
+    throw AuthException(body['message'] as String? ?? 'Failed to send OTP');
   }
-  throw AuthException(body['message'] as String? ?? 'Failed to send OTP');
 }
 
 Future<void> verifyOtp(String email, String otp) async {
