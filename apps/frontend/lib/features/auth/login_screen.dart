@@ -6,6 +6,7 @@ import '../../core/widgets/app_snackbar.dart';
 import '../home/home_screen.dart';
 import 'auth_provider.dart';
 import 'register_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -249,7 +250,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     return Align(
       alignment: Alignment.centerRight,
       child: TextButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+          );
+        },
         style: TextButton.styleFrom(
           foregroundColor: AppColors.secondary,
           padding: EdgeInsets.zero,

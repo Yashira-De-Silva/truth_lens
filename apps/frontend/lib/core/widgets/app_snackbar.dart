@@ -71,6 +71,16 @@ class AppSnackbar {
       duration: const Duration(seconds: 3),
     );
   }
+
+  static void showInfo(BuildContext context, String msg) {
+    _show(
+      context,
+      title: 'Info',
+      message: msg,
+      baseColor: AppColors.secondary,
+      duration: const Duration(seconds: 5),
+    );
+  }
 }class _GlassSnack extends StatelessWidget {
   final String title;
   final String message;
@@ -132,7 +142,11 @@ class AppSnackbar {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      title == 'Error' ? Icons.error_outline : Icons.check_circle_outline,
+                      title == 'Error'
+                          ? Icons.error_outline
+                          : title == 'Info'
+                              ? Icons.info_outline
+                              : Icons.check_circle_outline,
                       color: baseColor,
                       size: 20,
                     ),

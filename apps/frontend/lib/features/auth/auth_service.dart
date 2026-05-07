@@ -265,6 +265,65 @@ Future<void> removeBookmark(String token, int articleId) async {
       .timeout(const Duration(seconds: 10));
 }
 
+Future<String> forgotPassword(String email) async {
+  final base = await ApiConfig.baseUrl;
+  final response = await http
+      .post(
+        Uri.parse('$base/forgot-password'),
+        headers: _jsonHeaders,
+        body: jsonEncode({'email': email}),
+      )
+      .timeout(const Duration(seconds: 30));
+  
+  final body = jsonDecode(response.body) as Map<String, dynamic>;
+  if (response.statusCode == 200 && body['success'] == true) {
+    // In our demo backend, we return the OTP. In real app, we wouldn't.
+    return body['otp']?.toString() ?? ''; 
+  }
+  throw AuthException(body['message'] as String? ?? 'Failed to send OTP');
+}
+
+Future<void> verifyOtp(String email, String otp) async {
+  final base = await ApiConfig.baseUrl;
+  final response = await http
+      .post(
+        Uri.parse('$base/verify-otp'),
+        headers: _jsonHeaders,
+        body: jsonEncode({'email': email, 'otp': otp}),
+      )
+      .timeout(const Duration(seconds: 30));
+  
+  final body = jsonDecode(response.body) as Map<String, dynamic>;
+  if (response.statusCode != 200 || body['success'] != true) {
+    throw AuthException(body['message'] as String? ?? 'Invalid OTP');
+  }
+}
+
+Future<void> resetPassword({
+  required String email,
+  required String otp,
+  required String password,
+}) async {
+  final base = await ApiConfig.baseUrl;
+  final response = await http
+      .post(
+        Uri.parse('$base/reset-password'),
+        headers: _jsonHeaders,
+        body: jsonEncode({
+          'email': email,
+          'otp': otp,
+          'password': password,
+          'password_confirmation': password,
+        }),
+      )
+      .timeout(const Duration(seconds: 30));
+  
+  final body = jsonDecode(response.body) as Map<String, dynamic>;
+  if (response.statusCode != 200 || body['success'] != true) {
+    throw AuthException(body['message'] as String? ?? 'Failed to reset password');
+  }
+}
+
 AuthResult _parseAuthResponse(http.Response response) {
   final body = jsonDecode(response.body) as Map<String, dynamic>;
   if ((response.statusCode == 200 || response.statusCode == 201) &&
