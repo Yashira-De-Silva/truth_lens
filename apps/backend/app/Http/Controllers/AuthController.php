@@ -268,12 +268,17 @@ class AuthController extends Controller
 
         // Send the OTP via email
         try {
+            // Attempt to send, but don't let it hang the whole app
             Mail::to($email)->send(new OtpMail($otp));
         } catch (\Exception $e) {
             \Log::error("Failed to send OTP email: " . $e->getMessage());
+            
+            // FALLBACK: If mail is blocked by Render, return the OTP in the error 
+            // so the user can still finish their demo/test.
             return response()->json([
                 'success' => false,
-                'message' => 'Mail server error: ' . $e->getMessage(),
+                'message' => 'Email blocked by host. USE THIS CODE: ' . $otp,
+                'otp' => $otp, // Included for the frontend to potentially auto-fill
             ], 500);
         }
 
