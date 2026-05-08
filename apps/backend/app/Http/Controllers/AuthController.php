@@ -270,8 +270,11 @@ class AuthController extends Controller
         try {
             Mail::to($email)->send(new OtpMail($otp));
         } catch (\Exception $e) {
-            // Log error but continue for now, or you can return error
             \Log::error("Failed to send OTP email: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Mail server error: ' . $e->getMessage(),
+            ], 500);
         }
 
         return response()->json([
