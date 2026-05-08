@@ -23,7 +23,6 @@ import 'about_screen.dart';
 import '../auth/auth_provider.dart';
 import '../auth/login_screen.dart';
 import '../social/follows_list_screen.dart';
-import '../social/follow_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -137,16 +136,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         height: 80,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: ref.watch(profileProvider).avatarPath == null
-                            ? LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  AppColors.secondary.withValues(alpha: 0.3),
-                                  AppColors.primary.withValues(alpha: 0.3),
-                                ],
-                              )
-                            : null,
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.2),
                             width: 2,
@@ -158,22 +147,49 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               offset: const Offset(0, 4),
                             ),
                           ],
-                          image: ref.watch(profileProvider).avatarPath != null
-                            ? DecorationImage(
-                                image: ref.watch(profileProvider).avatarPath!.startsWith('http')
-                                    ? NetworkImage(ref.watch(profileProvider).avatarPath!) as ImageProvider
-                                    : FileImage(File(ref.watch(profileProvider).avatarPath!)),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
                         ),
-                        child: ref.watch(profileProvider).avatarPath == null
-                          ? const Icon(
-                              Icons.person,
-                              size: 40,
-                              color: Colors.white,
-                            )
-                          : null,
+                        child: Consumer(
+                          builder: (context, ref, _) {
+                            final state = ref.watch(profileProvider);
+                            return FutureBuilder<SharedPreferences>(
+                              future: SharedPreferences.getInstance(),
+                              builder: (context, snapshot) {
+                                final lastKnown = snapshot.data?.getString('last_known_avatar');
+                                final localVault = snapshot.data?.getString('local_avatar_vault');
+                                // Use the provider path if valid, otherwise fallback to our safe zone
+                                final finalPath = (state.avatarPath != null && state.avatarPath!.isNotEmpty && !state.avatarPath!.endsWith('/storage/'))
+                                    ? state.avatarPath
+                                    : (lastKnown != null && lastKnown.isNotEmpty && !lastKnown.endsWith('/storage/') ? lastKnown : localVault);
+
+                                if (finalPath != null) {
+                                  return ClipOval(
+                                    child: Image(
+                                      image: finalPath.startsWith('http')
+                                          ? NetworkImage(finalPath)
+                                          : FileImage(File(finalPath)) as ImageProvider,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        // If the network image fails, try our local vault
+                                        if (localVault != null) {
+                                          return ClipOval(
+                                            child: Image.file(
+                                              File(localVault),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (c, e, s) => const Icon(Icons.person, size: 40, color: Colors.white),
+                                            ),
+                                          );
+                                        }
+                                        return const Icon(Icons.person, size: 40, color: Colors.white);
+                                      },
+                                    ),
+                                  );
+                                }
+
+                                return const Icon(Icons.person, size: 40, color: Colors.white);
+                              },
+                            );
+                          },
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(

@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OtpMail;
 
 class AuthController extends Controller
 {
@@ -153,7 +157,9 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $user,
+            'data'    => $user->fresh()->load(['activities' => function($query) {
+                $query->orderBy('created_at', 'desc')->limit(15);
+            }]),
         ]);
     }
     public function updateProfile(Request $request): JsonResponse
@@ -234,6 +240,126 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Successfully canceled premium subscription',
             'data'    => $user->fresh(),
+        ]);
+    }
+
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email|exists:users,email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $email = $request->email;
+        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $email],
+            [
+                'token' => $otp,
+                'created_at' => Carbon::now()
+            ]
+        );
+
+        // Send the OTP via email
+        try {
+            // Attempt to send, but don't let it hang the whole app
+            Mail::to($email)->send(new OtpMail($otp));
+        } catch (\Exception $e) {
+            \Log::error("Failed to send OTP email: " . $e->getMessage());
+            
+            // FALLBACK: If mail is blocked by Render, return the OTP in the error 
+            // so the user can still finish their demo/test.
+            return response()->json([
+                'success' => false,
+                'message' => 'Email blocked by host. USE THIS CODE: ' . $otp,
+                'otp' => $otp, // Included for the frontend to potentially auto-fill
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP sent to your email',
+        ]);
+    }
+
+    public function verifyOtp(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email|exists:users,email',
+            'otp'   => 'required|string|size:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $reset = DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->where('token', $request->otp)
+            ->first();
+
+        if (!$reset || Carbon::parse($reset->created_at)->addMinutes(15)->isPast()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired OTP',
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP verified successfully',
+        ]);
+    }
+
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'email'    => 'required|string|email|exists:users,email',
+            'otp'      => 'required|string|size:6',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $reset = DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->where('token', $request->otp)
+            ->first();
+
+        if (!$reset || Carbon::parse($reset->created_at)->addMinutes(15)->isPast()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired OTP',
+            ], 400);
+        }
+
+        $user = User::where('email', $request->email)->first();
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password reset successfully',
         ]);
     }
 }

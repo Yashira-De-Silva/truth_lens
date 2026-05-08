@@ -72,7 +72,18 @@ Route::get('/debug-auth', function () {
     ]);
 });
 Route::post('/register', [AuthController::class, 'register']);
+Route::get('/fix-storage', function() {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('storage:link');
+        return response()->json(['success' => true, 'message' => 'Storage link created successfully!']);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()]);
+    }
+});
 Route::post('/login',    [AuthController::class, 'login']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/verify-otp',      [AuthController::class, 'verifyOtp']);
+Route::post('/reset-password',  [AuthController::class, 'resetPassword']);
 
 // ── News Feed (Public - Offloaded from ML Service) ─────────────────────────
 Route::get('/news',        [NewsController::class, 'index']);

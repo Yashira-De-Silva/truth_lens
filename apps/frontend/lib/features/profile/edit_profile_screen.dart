@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_snackbar.dart';
@@ -322,99 +323,108 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       children: [
                         const SizedBox(height: 8),
 
-                        Stack(
-                          children: [
-                            Container(
-                              width: 120,
-                              height: 120,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: _selectedImagePath == null
-                                  ? LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        AppColors.secondary.withValues(alpha: 0.3),
-                                        AppColors.primary.withValues(alpha: 0.3),
-                                      ],
-                                    )
-                                  : null,
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  width: 2,
-                                ),
-                                image: _selectedImagePath != null
-                                  ? DecorationImage(
-                                      image: _selectedImagePath!.startsWith('http')
-                                          ? NetworkImage(_selectedImagePath!) as ImageProvider
-                                          : FileImage(File(_selectedImagePath!)),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null,
-                              ),
-                              child: _selectedImagePath == null
-                                ? const Icon(
-                                    Icons.person,
-                                    size: 60,
-                                    color: Colors.white,
-                                  )
-                                : null,
-                            ),
-                            if (_selectedImagePath != null)
-                              Positioned(
-                                top: 0,
-                                right: 0,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedImagePath = null;
-                                      _removeImage = true;
-                                    });
-                                  },
-                                  child: Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.error.withValues(alpha: 0.9),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2),
+                            FutureBuilder<SharedPreferences>(
+                              future: SharedPreferences.getInstance(),
+                              builder: (context, snapshot) {
+                                final lastKnown = snapshot.data?.getString('last_known_avatar');
+                                final localVault = snapshot.data?.getString('local_avatar_vault');
+                                final finalPath = (_selectedImagePath != null && _selectedImagePath!.isNotEmpty && !_selectedImagePath!.endsWith('/storage/'))
+                                    ? _selectedImagePath
+                                    : (lastKnown != null && lastKnown.isNotEmpty && !lastKnown.endsWith('/storage/') ? lastKnown : localVault);
+
+                                return Stack(
+                                  children: [
+                                    Container(
+                                      width: 120,
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white.withValues(alpha: 0.2),
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: finalPath != null
+                                          ? ClipOval(
+                                              child: Image(
+                                                image: finalPath.startsWith('http')
+                                                    ? NetworkImage(finalPath)
+                                                    : FileImage(File(finalPath)) as ImageProvider,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) {
+                                                  // Fallback to local vault if network fails
+                                                  if (localVault != null) {
+                                                    return ClipOval(
+                                                      child: Image.file(
+                                                        File(localVault),
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder: (c, e, s) => const Icon(Icons.person, size: 60, color: Colors.white),
+                                                      ),
+                                                    );
+                                                  }
+                                                  return const Icon(Icons.person, size: 60, color: Colors.white);
+                                                },
+                                              ),
+                                            )
+                                          : const Icon(Icons.person, size: 60, color: Colors.white),
                                     ),
-                                    child: const Icon(
-                                      Icons.close,
-                                      color: Colors.white,
-                                      size: 16,
+                                if (finalPath != null)
+                                  Positioned(
+                                    top: 0,
+                                    right: 0,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedImagePath = null;
+                                          _removeImage = true;
+                                        });
+                                      },
+                                      child: Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.error.withValues(alpha: 0.9),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: Colors.white, width: 2),
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: _showImageSourceDialog,
+                                    child: Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            AppColors.secondary,
+                                            AppColors.primary,
+                                          ],
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: GestureDetector(
-                                onTap: _showImageSourceDialog,
-                                child: Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        AppColors.secondary,
-                                        AppColors.primary,
-                                      ],
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.camera_alt,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                              ],
+                            );
+                          },
                         ),
 
                         const SizedBox(height: 32),
