@@ -343,7 +343,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                   color: Colors.white.withValues(alpha: 0.2),
                                   width: 2,
                                 ),
-                                image: _selectedImagePath != null
+                                image: (_selectedImagePath != null && _selectedImagePath!.isNotEmpty && !_selectedImagePath!.endsWith('/storage/'))
                                   ? DecorationImage(
                                       image: _selectedImagePath!.startsWith('http')
                                           ? NetworkImage(_selectedImagePath!)
@@ -353,7 +353,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     )
                                   : null,
                               ),
-                              child: _selectedImagePath == null
+                              child: (_selectedImagePath == null || _selectedImagePath!.isEmpty || _selectedImagePath!.endsWith('/storage/'))
                                 ? const Icon(
                                     Icons.person,
                                     size: 60,

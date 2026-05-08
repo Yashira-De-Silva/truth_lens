@@ -157,7 +157,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               offset: const Offset(0, 4),
                             ),
                           ],
-                          image: ref.watch(profileProvider).avatarPath != null
+                          image: (ref.watch(profileProvider).avatarPath != null && ref.watch(profileProvider).avatarPath!.isNotEmpty && !ref.watch(profileProvider).avatarPath!.endsWith('/storage/'))
                             ? DecorationImage(
                                 image: ref.watch(profileProvider).avatarPath!.startsWith('http')
                                     ? NetworkImage(ref.watch(profileProvider).avatarPath!)
@@ -170,7 +170,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               )
                             : null,
                         ),
-                        child: ref.watch(profileProvider).avatarPath == null
+                        child: (ref.watch(profileProvider).avatarPath == null || ref.watch(profileProvider).avatarPath!.isEmpty || ref.watch(profileProvider).avatarPath!.endsWith('/storage/'))
                           ? const Icon(
                               Icons.person,
                               size: 40,

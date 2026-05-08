@@ -42,9 +42,19 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
       
       final prefs = await SharedPreferences.getInstance();
       final lastKnown = prefs.getString('last_known_avatar');
+      
+      print('DEBUG: Backend profile_image: ${newUser.avatarPath}');
+      print('DEBUG: Local safe_zone: $lastKnown');
 
-      // Safety: Use backend image if exists, otherwise fallback to our safe zone
-      final finalAvatar = newUser.avatarPath ?? lastKnown ?? state.avatarPath;
+      // Hardening: Ignore empty strings or paths that are just the base storage URL
+      String? backendAvatar = newUser.avatarPath;
+      if (backendAvatar != null && (backendAvatar.isEmpty || backendAvatar.endsWith('/storage/'))) {
+        backendAvatar = null;
+      }
+
+      // Safety: Use backend image if valid, otherwise fallback to our safe zone
+      final finalAvatar = backendAvatar ?? lastKnown ?? state.avatarPath;
+      print('DEBUG: Final resolved avatar: $finalAvatar');
       
       state = newUser.copyWith(avatarPath: finalAvatar);
       
@@ -61,6 +71,8 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
     // Explicitly save the avatar path to a separate key for extra safety
     if (state.avatarPath != null) {
       await prefs.setString('last_known_avatar', state.avatarPath!);
+    } else {
+      await prefs.remove('last_known_avatar');
     }
     await prefs.setString(_key, jsonEncode(state.toJson()));
   }
@@ -91,12 +103,22 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
           removeImage: removeImage,
         );
         
+        if (removeImage) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('last_known_avatar');
+        }
+
         final newAvatar = updated['profile_image'] as String?;
+        String? validatedAvatar = newAvatar;
+        if (validatedAvatar != null && (validatedAvatar.isEmpty || validatedAvatar.endsWith('/storage/'))) {
+          validatedAvatar = null;
+        }
+
         state = state.copyWith(
           name: updated['name'] as String?,
           bio: updated['bio'] as String? ?? '',
           apiKey: updated['api_key'] as String?,
-          avatarPath: newAvatar ?? state.avatarPath, // Keep existing if backend returns null
+          avatarPath: validatedAvatar,
         );
         await _save();
       } catch (_) {
