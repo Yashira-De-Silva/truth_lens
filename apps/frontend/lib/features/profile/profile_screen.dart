@@ -23,7 +23,6 @@ import 'about_screen.dart';
 import '../auth/auth_provider.dart';
 import '../auth/login_screen.dart';
 import '../social/follows_list_screen.dart';
-import '../social/follow_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});

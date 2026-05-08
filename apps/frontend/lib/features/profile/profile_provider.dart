@@ -16,7 +16,15 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_key);
     if (raw != null) {
-      state = UserProfile.fromJson(jsonDecode(raw));
+      var loadedProfile = UserProfile.fromJson(jsonDecode(raw));
+      // Fallback to safe zone if needed
+      if (loadedProfile.avatarPath == null) {
+        final lastKnown = prefs.getString('last_known_avatar');
+        if (lastKnown != null) {
+          loadedProfile = loadedProfile.copyWith(avatarPath: lastKnown);
+        }
+      }
+      state = loadedProfile;
     }
     await refreshFromBackend();
   }
@@ -32,16 +40,15 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
       final data = await svc.me(token);
       final newUser = UserProfile.fromJson(data);
       
-      // Safety: If we have a local avatar path and the backend returns null,
-      // keep the local one for now (might be a sync delay or ephemeral storage issue)
-      if (newUser.avatarPath == null && state.avatarPath != null) {
-        state = newUser.copyWith(avatarPath: state.avatarPath);
-      } else {
-        state = newUser;
-      }
+      final prefs = await SharedPreferences.getInstance();
+      final lastKnown = prefs.getString('last_known_avatar');
+
+      // Safety: Use backend image if exists, otherwise fallback to our safe zone
+      final finalAvatar = newUser.avatarPath ?? lastKnown ?? state.avatarPath;
+      
+      state = newUser.copyWith(avatarPath: finalAvatar);
       
       final isPremium = data['is_premium'] == 1 || data['is_premium'] == true;
-      final prefs = await SharedPreferences.getInstance();
       await prefs.setString('subscription_plan', isPremium ? 'premium' : 'basic');
 
       await _save();
@@ -51,6 +58,10 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
 
   Future<void> _save() async {
     final prefs = await SharedPreferences.getInstance();
+    // Explicitly save the avatar path to a separate key for extra safety
+    if (state.avatarPath != null) {
+      await prefs.setString('last_known_avatar', state.avatarPath!);
+    }
     await prefs.setString(_key, jsonEncode(state.toJson()));
   }
 
