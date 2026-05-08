@@ -161,9 +161,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           image: ref.watch(profileProvider).avatarPath != null
                             ? DecorationImage(
                                 image: ref.watch(profileProvider).avatarPath!.startsWith('http')
-                                    ? NetworkImage(ref.watch(profileProvider).avatarPath!) as ImageProvider
-                                    : FileImage(File(ref.watch(profileProvider).avatarPath!)),
+                                    ? NetworkImage(ref.watch(profileProvider).avatarPath!)
+                                    : FileImage(File(ref.watch(profileProvider).avatarPath!)) as ImageProvider,
                                 fit: BoxFit.cover,
+                                onError: (exception, stackTrace) {
+                                  // This will trigger the fallback icon if the network image fails to load
+                                  debugPrint('Image load error: $exception');
+                                },
                               )
                             : null,
                         ),

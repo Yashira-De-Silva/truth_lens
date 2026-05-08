@@ -346,9 +346,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 image: _selectedImagePath != null
                                   ? DecorationImage(
                                       image: _selectedImagePath!.startsWith('http')
-                                          ? NetworkImage(_selectedImagePath!) as ImageProvider
-                                          : FileImage(File(_selectedImagePath!)),
+                                          ? NetworkImage(_selectedImagePath!)
+                                          : FileImage(File(_selectedImagePath!)) as ImageProvider,
                                       fit: BoxFit.cover,
+                                      onError: (e, s) => debugPrint('Image load error: $e'),
                                     )
                                   : null,
                               ),

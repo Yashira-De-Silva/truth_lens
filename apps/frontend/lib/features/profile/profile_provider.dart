@@ -30,7 +30,15 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
     if (expired) return;
     try {
       final data = await svc.me(token);
-      state = UserProfile.fromJson(data);
+      final newUser = UserProfile.fromJson(data);
+      
+      // Safety: If we have a local avatar path and the backend returns null,
+      // keep the local one for now (might be a sync delay or ephemeral storage issue)
+      if (newUser.avatarPath == null && state.avatarPath != null) {
+        state = newUser.copyWith(avatarPath: state.avatarPath);
+      } else {
+        state = newUser;
+      }
       
       final isPremium = data['is_premium'] == 1 || data['is_premium'] == true;
       final prefs = await SharedPreferences.getInstance();
@@ -72,11 +80,12 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
           removeImage: removeImage,
         );
         
+        final newAvatar = updated['profile_image'] as String?;
         state = state.copyWith(
           name: updated['name'] as String?,
           bio: updated['bio'] as String? ?? '',
           apiKey: updated['api_key'] as String?,
-          avatarPath: updated['profile_image'] as String?,
+          avatarPath: newAvatar ?? state.avatarPath, // Keep existing if backend returns null
         );
         await _save();
       } catch (_) {

@@ -380,61 +380,55 @@ class _PublicProfileScreenState extends ConsumerState<PublicProfileScreen> {
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                               child: Column(
                                 children: [
-                                    Consumer(
-                                      builder: (context, ref, _) {
-                                        final profile = widget.isOwnProfile ? ref.watch(profileProvider) : null;
-                                        final avatarPath = widget.isOwnProfile
-                                            ? profile?.avatarPath
-                                            : null;
+                                      Consumer(
+                                        builder: (context, ref, _) {
+                                          final profile = widget.isOwnProfile ? ref.watch(profileProvider) : null;
+                                          final avatarPath = widget.isOwnProfile
+                                              ? profile?.avatarPath
+                                              : null; // TODO: Fetch other user's avatar if needed
 
-                                      if (avatarPath != null &&
-                                          avatarPath.isNotEmpty &&
-                                          File(avatarPath).existsSync()) {
-                                        return Container(
-                                          width: 100,
-                                          height: 100,
-                                          decoration: const BoxDecoration(
-                                            shape: BoxShape.circle,
-                                          ),
-                                          clipBehavior: Clip.antiAlias,
-                                          child: CircleAvatar(
-                                            radius: 50,
-                                            backgroundImage: FileImage(
-                                              File(avatarPath),
-                                            ),
-                                          ),
-                                        );
-                                      }
-
-                                      return Container(
-                                        width: 100,
-                                        height: 100,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              AppColors.secondary,
-                                              AppColors.secondary.withValues(
-                                                alpha: 0.6,
+                                          if (avatarPath != null && avatarPath.isNotEmpty) {
+                                            return Container(
+                                              width: 100,
+                                              height: 100,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                image: DecorationImage(
+                                                  image: avatarPath.startsWith('http')
+                                                      ? NetworkImage(avatarPath)
+                                                      : FileImage(File(avatarPath)) as ImageProvider,
+                                                  fit: BoxFit.cover,
+                                                  onError: (e, s) => debugPrint('Public profile image load error: $e'),
+                                                ),
                                               ),
-                                            ],
-                                          ),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            displayName.isNotEmpty
-                                                ? displayName[0].toUpperCase()
-                                                : 'U',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 48,
-                                              fontWeight: FontWeight.bold,
+                                            );
+                                          }
+
+                                          return Container(
+                                            width: 100,
+                                            height: 100,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  AppColors.secondary,
+                                                  AppColors.secondary.withValues(alpha: 0.6),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
+                                            child: Center(
+                                              child: Text(
+                                                displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 48,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                   const SizedBox(height: 16),
                                   Text(
                                     displayName,

@@ -157,7 +157,9 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $user,
+            'data'    => $user->fresh()->load(['activities' => function($query) {
+                $query->orderBy('created_at', 'desc')->limit(15);
+            }]),
         ]);
     }
     public function updateProfile(Request $request): JsonResponse
