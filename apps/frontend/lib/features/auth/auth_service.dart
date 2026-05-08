@@ -273,7 +273,7 @@ Future<void> forgotPassword(String email) async {
         headers: _jsonHeaders,
         body: jsonEncode({'email': email}),
       )
-      .timeout(const Duration(seconds: 30));
+      .timeout(const Duration(seconds: 60));
   
   final body = jsonDecode(response.body) as Map<String, dynamic>;
   if (response.statusCode != 200 || body['success'] != true) {
@@ -289,7 +289,7 @@ Future<void> verifyOtp(String email, String otp) async {
         headers: _jsonHeaders,
         body: jsonEncode({'email': email, 'otp': otp}),
       )
-      .timeout(const Duration(seconds: 30));
+      .timeout(const Duration(seconds: 60));
   
   final body = jsonDecode(response.body) as Map<String, dynamic>;
   if (response.statusCode != 200 || body['success'] != true) {
@@ -314,7 +314,7 @@ Future<void> resetPassword({
           'password_confirmation': password,
         }),
       )
-      .timeout(const Duration(seconds: 30));
+      .timeout(const Duration(seconds: 60));
   
   final body = jsonDecode(response.body) as Map<String, dynamic>;
   if (response.statusCode != 200 || body['success'] != true) {
