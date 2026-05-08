@@ -351,6 +351,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                                 : FileImage(File(finalPath)) as ImageProvider,
                                             fit: BoxFit.cover,
                                             errorBuilder: (context, error, stackTrace) {
+                                              // Fallback to local image if network fails
+                                              if (lastKnown != null && !lastKnown.startsWith('http')) {
+                                                return ClipOval(
+                                                  child: Image.file(
+                                                    File(lastKnown),
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (c, e, s) => const Icon(Icons.person, size: 60, color: Colors.white),
+                                                  ),
+                                                );
+                                              }
                                               return const Icon(Icons.person, size: 60, color: Colors.white);
                                             },
                                           ),

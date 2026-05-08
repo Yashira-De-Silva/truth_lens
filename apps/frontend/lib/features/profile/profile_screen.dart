@@ -168,6 +168,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                           : FileImage(File(finalPath)) as ImageProvider,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) {
+                                        // If the network image fails, try to see if we have a local one
+                                        if (lastKnown != null && !lastKnown.startsWith('http')) {
+                                          return ClipOval(
+                                            child: Image.file(
+                                              File(lastKnown),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (c, e, s) => const Icon(Icons.person, size: 40, color: Colors.white),
+                                            ),
+                                          );
+                                        }
                                         return const Icon(Icons.person, size: 40, color: Colors.white);
                                       },
                                     ),
