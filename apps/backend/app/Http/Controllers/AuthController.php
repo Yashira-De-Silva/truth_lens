@@ -266,9 +266,9 @@ class AuthController extends Controller
             ]
         );
 
-        // Send the OTP via email in the background (Async)
+        // Send the OTP via email
         try {
-            Mail::to($email)->queue(new OtpMail($otp));
+            Mail::to($email)->send(new OtpMail($otp));
         } catch (\Exception $e) {
             // Log error but continue for now, or you can return error
             \Log::error("Failed to send OTP email: " . $e->getMessage());
