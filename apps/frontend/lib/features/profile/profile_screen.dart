@@ -136,16 +136,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         height: 80,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: ref.watch(profileProvider).avatarPath == null
-                            ? LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  AppColors.secondary.withValues(alpha: 0.3),
-                                  AppColors.primary.withValues(alpha: 0.3),
-                                ],
-                              )
-                            : null,
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.2),
                             width: 2,
@@ -157,26 +147,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               offset: const Offset(0, 4),
                             ),
                           ],
-                          image: (ref.watch(profileProvider).avatarPath != null && ref.watch(profileProvider).avatarPath!.isNotEmpty && !ref.watch(profileProvider).avatarPath!.endsWith('/storage/'))
-                            ? DecorationImage(
-                                image: ref.watch(profileProvider).avatarPath!.startsWith('http')
-                                    ? NetworkImage(ref.watch(profileProvider).avatarPath!)
-                                    : FileImage(File(ref.watch(profileProvider).avatarPath!)) as ImageProvider,
-                                fit: BoxFit.cover,
-                                onError: (exception, stackTrace) {
-                                  // This will trigger the fallback icon if the network image fails to load
-                                  debugPrint('Image load error: $exception');
-                                },
-                              )
-                            : null,
                         ),
-                        child: (ref.watch(profileProvider).avatarPath == null || ref.watch(profileProvider).avatarPath!.isEmpty || ref.watch(profileProvider).avatarPath!.endsWith('/storage/'))
-                          ? const Icon(
-                              Icons.person,
-                              size: 40,
-                              color: Colors.white,
-                            )
-                          : null,
+                        child: Consumer(
+                          builder: (context, ref, _) {
+                            final state = ref.watch(profileProvider);
+                            return FutureBuilder<SharedPreferences>(
+                              future: SharedPreferences.getInstance(),
+                              builder: (context, snapshot) {
+                                final lastKnown = snapshot.data?.getString('last_known_avatar');
+                                // Use the provider path if valid, otherwise fallback to our safe zone
+                                final finalPath = (state.avatarPath != null && state.avatarPath!.isNotEmpty && !state.avatarPath!.endsWith('/storage/'))
+                                    ? state.avatarPath
+                                    : (lastKnown != null && lastKnown.isNotEmpty && !lastKnown.endsWith('/storage/') ? lastKnown : null);
+
+                                if (finalPath != null) {
+                                  return ClipOval(
+                                    child: Image(
+                                      image: finalPath.startsWith('http')
+                                          ? NetworkImage(finalPath)
+                                          : FileImage(File(finalPath)) as ImageProvider,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return const Icon(Icons.person, size: 40, color: Colors.white);
+                                      },
+                                    ),
+                                  );
+                                }
+
+                                return const Icon(Icons.person, size: 40, color: Colors.white);
+                              },
+                            );
+                          },
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(

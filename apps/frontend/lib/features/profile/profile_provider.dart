@@ -46,15 +46,25 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
       print('DEBUG: Backend profile_image: ${newUser.avatarPath}');
       print('DEBUG: Local safe_zone: $lastKnown');
 
-      // Hardening: Ignore empty strings or paths that are just the base storage URL
+      // 1. Validate the Backend Avatar
       String? backendAvatar = newUser.avatarPath;
-      if (backendAvatar != null && (backendAvatar.isEmpty || backendAvatar.endsWith('/storage/'))) {
-        backendAvatar = null;
-      }
+      bool isBackendValid = backendAvatar != null && 
+                           backendAvatar.isNotEmpty && 
+                           !backendAvatar.endsWith('/storage/') &&
+                           backendAvatar.contains('.'); // Must have a file extension
 
-      // Safety: Use backend image if valid, otherwise fallback to our safe zone
-      final finalAvatar = backendAvatar ?? lastKnown ?? state.avatarPath;
-      print('DEBUG: Final resolved avatar: $finalAvatar');
+      // 2. Resolve the final avatar path (Stubborn Logic)
+      String? finalAvatar;
+      
+      if (isBackendValid) {
+        finalAvatar = backendAvatar;
+      } else if (lastKnown != null && lastKnown.isNotEmpty) {
+        finalAvatar = lastKnown;
+      } else {
+        finalAvatar = state.avatarPath;
+      }
+      
+      print('DEBUG: Resolved finalAvatar: $finalAvatar');
       
       state = newUser.copyWith(avatarPath: finalAvatar);
       
@@ -68,11 +78,10 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
 
   Future<void> _save() async {
     final prefs = await SharedPreferences.getInstance();
-    // Explicitly save the avatar path to a separate key for extra safety
-    if (state.avatarPath != null) {
+    // Only update the last known avatar if we have a valid path
+    // DO NOT remove it here, as it might be an accidental null from a broken server sync
+    if (state.avatarPath != null && state.avatarPath!.isNotEmpty && !state.avatarPath!.endsWith('/storage/')) {
       await prefs.setString('last_known_avatar', state.avatarPath!);
-    } else {
-      await prefs.remove('last_known_avatar');
     }
     await prefs.setString(_key, jsonEncode(state.toJson()));
   }
@@ -109,16 +118,16 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
         }
 
         final newAvatar = updated['profile_image'] as String?;
-        String? validatedAvatar = newAvatar;
-        if (validatedAvatar != null && (validatedAvatar.isEmpty || validatedAvatar.endsWith('/storage/'))) {
-          validatedAvatar = null;
-        }
+        bool isNewAvatarValid = newAvatar != null && 
+                               newAvatar.isNotEmpty && 
+                               !newAvatar.endsWith('/storage/') &&
+                               newAvatar.contains('.');
 
         state = state.copyWith(
           name: updated['name'] as String?,
           bio: updated['bio'] as String? ?? '',
           apiKey: updated['api_key'] as String?,
-          avatarPath: validatedAvatar,
+          avatarPath: removeImage ? null : (isNewAvatarValid ? newAvatar : state.avatarPath),
         );
         await _save();
       } catch (_) {
