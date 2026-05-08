@@ -155,10 +155,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               future: SharedPreferences.getInstance(),
                               builder: (context, snapshot) {
                                 final lastKnown = snapshot.data?.getString('last_known_avatar');
+                                final localVault = snapshot.data?.getString('local_avatar_vault');
                                 // Use the provider path if valid, otherwise fallback to our safe zone
                                 final finalPath = (state.avatarPath != null && state.avatarPath!.isNotEmpty && !state.avatarPath!.endsWith('/storage/'))
                                     ? state.avatarPath
-                                    : (lastKnown != null && lastKnown.isNotEmpty && !lastKnown.endsWith('/storage/') ? lastKnown : null);
+                                    : (lastKnown != null && lastKnown.isNotEmpty && !lastKnown.endsWith('/storage/') ? lastKnown : localVault);
 
                                 if (finalPath != null) {
                                   return ClipOval(
@@ -168,11 +169,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                           : FileImage(File(finalPath)) as ImageProvider,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) {
-                                        // If the network image fails, try to see if we have a local one
-                                        if (lastKnown != null && !lastKnown.startsWith('http')) {
+                                        // If the network image fails, try our local vault
+                                        if (localVault != null) {
                                           return ClipOval(
                                             child: Image.file(
-                                              File(lastKnown),
+                                              File(localVault),
                                               fit: BoxFit.cover,
                                               errorBuilder: (c, e, s) => const Icon(Icons.person, size: 40, color: Colors.white),
                                             ),

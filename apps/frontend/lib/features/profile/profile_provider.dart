@@ -79,9 +79,12 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
   Future<void> _save() async {
     final prefs = await SharedPreferences.getInstance();
     // Only update the last known avatar if we have a valid path
-    // DO NOT remove it here, as it might be an accidental null from a broken server sync
     if (state.avatarPath != null && state.avatarPath!.isNotEmpty && !state.avatarPath!.endsWith('/storage/')) {
       await prefs.setString('last_known_avatar', state.avatarPath!);
+      // If it's a local file, save it to the permanent vault
+      if (!state.avatarPath!.startsWith('http')) {
+        await prefs.setString('local_avatar_vault', state.avatarPath!);
+      }
     }
     await prefs.setString(_key, jsonEncode(state.toJson()));
   }
