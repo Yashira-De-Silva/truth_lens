@@ -65,7 +65,7 @@ def predict():
         from datetime import datetime
         
         if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemma-3-27b-it")
+        model = genai.GenerativeModel("gemini-2.5-flash")
 
         # 1. Extract refined search terms
         search_query = ""
@@ -230,7 +230,7 @@ def summarize():
     try:
         import google.generativeai as genai
         if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemma-3-27b-it")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         
         prompt = f"Summarize this news article in exactly 3 concise bullet points or sentences:\n\n{text}"
         response = model.generate_content(prompt)
@@ -271,7 +271,7 @@ def bot_ask():
             "Stay concise, professional, and strictly news-oriented.\n\n"
         )
         
-        model = genai.GenerativeModel(model_name="gemma-3-27b-it")
+        model = genai.GenerativeModel(model_name="gemini-2.5-flash")
         full_prompt = f"{system_instruction}User Question: {msg}"
         
         response = model.generate_content(full_prompt)
