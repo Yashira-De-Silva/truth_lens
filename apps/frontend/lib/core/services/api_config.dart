@@ -8,7 +8,7 @@ class ApiConfig {
 
   /// Change this to 'true' to use the local Laravel & ML servers (10.0.2.2)
   /// Change this to 'false' to use the production Render servers.
-  static const bool useLocal = false; 
+  static const bool useLocal = true; 
 
   /// Returns the backend base URL.
   static Future<String> get baseUrl async => useLocal ? kLocalBaseUrl : kProdBaseUrl;
