@@ -152,7 +152,7 @@ def predict():
         }}
         """
 
-        response = model.generate_content(prompt, temperature=0)
+        response = model.generate_content(prompt, generation_config={"temperature": 0})
         res_txt = response.text.strip()
         result = parse_model_json(res_txt)
 
