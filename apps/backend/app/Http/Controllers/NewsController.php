@@ -12,17 +12,82 @@ class NewsController extends Controller
         $limit = $request->query('limit', 20);
         $isFake = $request->query('is_fake');
 
-        $query = NewsArticle::query();
+    // Mix ratio (FAKE share) for the public dataset feed.
+    // Example: 0.30 means ~30% FAKE, ~70% REAL per page.
+    $fakeRatio = (float) $request->query('fake_ratio', 0.30);
+    if ($fakeRatio < 0.0) $fakeRatio = 0.0;
+    if ($fakeRatio > 1.0) $fakeRatio = 1.0;
 
+        // When the client explicitly filters is_fake, keep old behavior.
         if ($isFake !== null) {
-            $query->where('is_fake', (bool)$isFake);
+            $query = NewsArticle::query()->where('is_fake', (bool) $isFake);
+            $articles = $query->latest()->paginate($limit);
+
+            $formatted = collect($articles->items())->map(function ($article) {
+                return [
+                    'id' => $article->id,
+                    'title' => $article->title,
+                    'summary' => mb_substr($article->text, 0, 300) . (strlen($article->text) > 300 ? '...' : ''),
+                    'full_text' => $article->text,
+                    'label' => $article->is_fake ? 'FAKE' : 'REAL',
+                    'confidence' => (92 + ($article->id % 8)) / 100,
+                    'source' => $article->subject ?? 'Dataset',
+                    'published' => $article->date,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $formatted,
+                'total' => $articles->total(),
+                'current_page' => $articles->currentPage(),
+                'last_page' => $articles->lastPage(),
+            ]);
         }
 
-        // OPTIMIZATION: inRandomOrder() is extremely slow on large datasets (ORDER BY RAND()).
-        // Using latest() (ORDER BY created_at DESC) utilizes indexes and is much faster.
-        $articles = $query->latest()->paginate($limit);
+        // Mixed feed: two fast queries + interleave.
+        $limit = max(1, (int) $limit);
+        $fakeCount = (int) round($limit * $fakeRatio);
+        $realCount = $limit - $fakeCount;
 
-        $formatted = collect($articles->items())->map(function ($article) {
+        $fakeItems = NewsArticle::query()
+            ->where('is_fake', true)
+            ->latest()
+            ->limit($fakeCount)
+            ->get();
+
+        $realItems = NewsArticle::query()
+            ->where('is_fake', false)
+            ->latest()
+            ->limit($realCount)
+            ->get();
+
+        $mixed = [];
+        $i = 0;
+        $j = 0;
+        while (count($mixed) < $limit && ($i < $realItems->count() || $j < $fakeItems->count())) {
+            if ($i < $realItems->count()) {
+                $mixed[] = $realItems[$i];
+                $i++;
+            }
+            if (count($mixed) >= $limit) break;
+            if ($j < $fakeItems->count()) {
+                $mixed[] = $fakeItems[$j];
+                $j++;
+            }
+        }
+
+        // If one side is missing, top up with whatever exists.
+        if (count($mixed) < $limit) {
+            $need = $limit - count($mixed);
+            $topUp = NewsArticle::query()->latest()->limit($need)->get();
+            foreach ($topUp as $t) {
+                if (count($mixed) >= $limit) break;
+                $mixed[] = $t;
+            }
+        }
+
+        $formatted = collect($mixed)->map(function ($article) {
             return [
                 'id' => $article->id,
                 'title' => $article->title,
@@ -35,12 +100,14 @@ class NewsController extends Controller
             ];
         });
 
+        // total is still the real dataset size.
+        $total = NewsArticle::query()->count();
         return response()->json([
-            'success' => True,
+            'success' => true,
             'data' => $formatted,
-            'total' => $articles->total(),
-            'current_page' => $articles->currentPage(),
-            'last_page' => $articles->lastPage(),
+            'total' => $total,
+            'current_page' => 1,
+            'last_page' => (int) ceil($total / $limit),
         ]);
     }
 

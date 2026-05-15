@@ -521,6 +521,7 @@ class _ArticleCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
 
     final isReal = article.label == 'REAL';
+  final isFake = article.label == 'FAKE';
     final highConf = article.confidence >= 0.75;
 
     Color statusColor;
@@ -528,9 +529,9 @@ class _ArticleCard extends ConsumerWidget {
     if (isReal && highConf) {
       statusColor = AppColors.success;
       statusText = l10n.verified;
-    } else if (!isReal && highConf) {
+    } else if (isFake && highConf) {
       statusColor = AppColors.error;
-      statusText = l10n.possiblyFake;
+      statusText = 'Fake';
     } else {
       statusColor = AppColors.accent;
       statusText = l10n.biased;
