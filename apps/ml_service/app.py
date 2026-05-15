@@ -373,12 +373,45 @@ def bot_ask():
     try:
         import re, urllib.parse
 
-        # ── 1. Fetch related news from Guardian & Wikipedia in parallel ──────
+        # ── 1. Sri Lanka Local News (Ada Derana RSS — always first) ──────────
         related_news = []
+        sl_keywords = {'sri lanka', 'srilanka', 'colombo', 'nsbm', 'kandy', 'galle', 'colombo', 'sl', 'lk'}
+        is_sl_query = any(kw in msg.lower() for kw in sl_keywords)
 
-        # Guardian news search
+        # Ada Derana RSS feed (primary Sri Lanka source)
         try:
-            if GUARDIAN_API_KEY:
+            rss_url = "https://www.adaderana.lk/rss.php"
+            rss_resp = http_requests.get(rss_url, headers={'User-Agent': 'TruthLensBot/1.0'}, timeout=6)
+            if rss_resp.status_code == 200:
+                import xml.etree.ElementTree as ET
+                root = ET.fromstring(rss_resp.content)
+                msg_words = set(re.findall(r'\w+', msg.lower()))
+                for item in root.iter('item'):
+                    title_el = item.find('title')
+                    desc_el  = item.find('description')
+                    link_el  = item.find('link')
+                    if title_el is None: continue
+                    title = title_el.text or ''
+                    desc  = re.sub(r'<[^>]*>', '', desc_el.text or '') if desc_el is not None else ''
+                    link  = link_el.text or '' if link_el is not None else ''
+                    # Include if query words match or it's a Sri Lanka query
+                    title_words = set(re.findall(r'\w+', title.lower()))
+                    if is_sl_query or msg_words & title_words:
+                        related_news.append({
+                            "title": title,
+                            "description": desc[:200],
+                            "url": link,
+                            "source": "Ada Derana",
+                            "thumbnail": ""
+                        })
+                    if len(related_news) >= 5:
+                        break
+        except Exception as e:
+            log.warning(f"Ada Derana RSS failed: {e}")
+
+        # Guardian news search (international coverage)
+        try:
+            if GUARDIAN_API_KEY and len(related_news) < 5:
                 params = {
                     "q": msg,
                     "api-key": GUARDIAN_API_KEY,
@@ -400,7 +433,7 @@ def bot_ask():
         except Exception as e:
             log.warning(f"Bot Guardian search failed: {e}")
 
-        # Wikipedia snippets (up to 3 extra if Guardian returned few results)
+        # Wikipedia snippets (fill gaps if less than 3 results)
         try:
             if len(related_news) < 3:
                 wiki_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(msg)}&utf8=&format=json"

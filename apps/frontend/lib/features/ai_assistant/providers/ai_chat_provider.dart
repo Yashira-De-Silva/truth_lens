@@ -39,9 +39,12 @@ class AiChatNotifier extends StateNotifier<AiChatState> {
       isLoading: true,
     );
 
-    final replyText = await _aiBotService.askBot(text);
-    
-    final botMsg = AiMessage.bot(replyText);
+    final response = await _aiBotService.askBot(text);
+
+    final botMsg = AiMessage.bot(
+      response.reply,
+      relatedNews: response.relatedNews,
+    );
     state = state.copyWith(
       messages: [...state.messages, botMsg],
       isLoading: false,
