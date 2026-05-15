@@ -138,12 +138,10 @@ def predict():
 
         Instructions:
         1. Compare the claim against the provided evidence.
-        2. Consider common knowledge and temporal logic (e.g., if someone won an election in late 2024, they are likely still in office in 2025/2026).
-        3. Be decisive but accurate. 
-        4. If the evidence strongly supports the claim, label it REAL.
-        5. If the evidence directly contradicts the claim, label it FAKE.
-        6. Only use UNCERTAIN if the evidence is truly ambiguous or non-existent for a non-obvious claim.
-        7. Respond ONLY with a JSON object:
+        2. Recognize current world leaders and sitting office holders. If someone won an election in late 2024, they are the president in 2025/2026 unless there is news of their removal.
+        3. BE DECISIVE. Only use UNCERTAIN if the claim is truly ambiguous or lacks any evidence.
+        4. If the claim matches well-known current events or provided snippets, label it REAL.
+        5. Respond ONLY with a JSON object:
         {{
           "label": "REAL" or "FAKE" or "UNCERTAIN",
           "confidence": 0.0 to 1.0,
@@ -163,17 +161,10 @@ def predict():
         except (TypeError, ValueError):
             confidence = 0.0
 
-        if confidence < 0.25:
+        # LOWER THRESHOLD: Be more decisive.
+        if confidence < 0.15:
             label = "UNCERTAIN"
-            confidence = max(confidence, 0.20)
-
-        if not sources and label != "UNCERTAIN":
-            label = "UNCERTAIN"
-            confidence = min(confidence, 0.45)
-
-        if label == "REAL" and not combined_context:
-            label = "UNCERTAIN"
-            confidence = min(confidence, 0.45)
+            confidence = max(confidence, 0.15)
 
         final_sources = result.get("relevant_sources") or sources
 
