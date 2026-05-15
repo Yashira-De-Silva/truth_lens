@@ -137,11 +137,11 @@ def predict():
         {combined_context if combined_context else 'No direct search results found. Use your internal knowledge.'}
 
         FACT-CHECKING RULES:
-        1. Compare the claim against the evidence.
-        2. Recognize current world leaders and sitting office holders. 
-        3. MANDATORY: You must choose either REAL or FAKE. Do not use UNCERTAIN.
-        4. If the claim is mostly true or matches current events, label it REAL.
-        5. Always provide a clear, concise REASON.
+        1. TEMPORAL ACCURACY IS CRITICAL: Check the specific YEAR mentioned in the claim. If the claim mentions "2020", verify if it was true IN 2020, not just now.
+        2. Recognize historical vs current data. For example, if someone is president in 2025 but wasn't in 2020, a claim about 2020 is FAKE.
+        3. MANDATORY: Choose either REAL or FAKE.
+        4. Cross-reference the claim's date with the evidence or your internal knowledge of historical timelines.
+        5. Always provide a clear, concise REASON explaining the date discrepancy if it exists.
 
         RESPOND ONLY WITH THIS JSON:
         {{
