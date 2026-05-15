@@ -148,8 +148,11 @@ class AuthController extends Controller
     }
     public function me(): JsonResponse
     {
+        /** @var \App\Models\User $user */
         $user = auth()->user();
+        
         if ($user) {
+            // Loading relations directly on the authenticated user is faster than fresh()
             $user->load(['activities' => function($query) {
                 $query->orderBy('created_at', 'desc')->limit(15);
             }]);
@@ -157,9 +160,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $user->fresh()->load(['activities' => function($query) {
-                $query->orderBy('created_at', 'desc')->limit(15);
-            }]),
+            'data'    => $user,
         ]);
     }
     public function updateProfile(Request $request): JsonResponse

@@ -74,6 +74,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         if (await file.exists()) {
           setState(() {
             _selectedImagePath = image.path;
+            _removeImage = false;
           });
           if (mounted) {
             AppSnackbar.showSuccess(context, 'Image selected successfully');
@@ -182,6 +183,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         if (await file.exists()) {
           setState(() {
             _selectedImagePath = image.path;
+            _removeImage = false;
           });
           if (mounted) {
             AppSnackbar.showSuccess(context, 'Photo taken successfully');
@@ -323,52 +325,37 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       children: [
                         const SizedBox(height: 8),
 
-                            FutureBuilder<SharedPreferences>(
-                              future: SharedPreferences.getInstance(),
-                              builder: (context, snapshot) {
-                                final lastKnown = snapshot.data?.getString('last_known_avatar');
-                                final localVault = snapshot.data?.getString('local_avatar_vault');
-                                final finalPath = (_selectedImagePath != null && _selectedImagePath!.isNotEmpty && !_selectedImagePath!.endsWith('/storage/'))
-                                    ? _selectedImagePath
-                                    : (lastKnown != null && lastKnown.isNotEmpty && !lastKnown.endsWith('/storage/') ? lastKnown : localVault);
+                        Builder(
+                          builder: (context) {
+                            final hasImage = !_removeImage && _selectedImagePath != null && _selectedImagePath!.isNotEmpty && !_selectedImagePath!.endsWith('/storage/');
 
-                                return Stack(
-                                  children: [
-                                    Container(
-                                      width: 120,
-                                      height: 120,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white.withValues(alpha: 0.2),
-                                          width: 2,
-                                        ),
-                                      ),
-                                      child: finalPath != null
-                                          ? ClipOval(
-                                              child: Image(
-                                                image: finalPath.startsWith('http')
-                                                    ? NetworkImage(finalPath)
-                                                    : FileImage(File(finalPath)) as ImageProvider,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) {
-                                                  // Fallback to local vault if network fails
-                                                  if (localVault != null) {
-                                                    return ClipOval(
-                                                      child: Image.file(
-                                                        File(localVault),
-                                                        fit: BoxFit.cover,
-                                                        errorBuilder: (c, e, s) => const Icon(Icons.person, size: 60, color: Colors.white),
-                                                      ),
-                                                    );
-                                                  }
-                                                  return const Icon(Icons.person, size: 60, color: Colors.white);
-                                                },
-                                              ),
-                                            )
-                                          : const Icon(Icons.person, size: 60, color: Colors.white),
+                            return Stack(
+                              children: [
+                                Container(
+                                  width: 120,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.2),
+                                      width: 2,
                                     ),
-                                if (finalPath != null)
+                                  ),
+                                  child: hasImage
+                                      ? ClipOval(
+                                          child: Image(
+                                            image: _selectedImagePath!.startsWith('http')
+                                                ? NetworkImage(_selectedImagePath!)
+                                                : FileImage(File(_selectedImagePath!)) as ImageProvider,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return const Icon(Icons.person, size: 60, color: Colors.white);
+                                            },
+                                          ),
+                                        )
+                                      : const Icon(Icons.person, size: 60, color: Colors.white),
+                                ),
+                                if (hasImage)
                                   Positioned(
                                     top: 0,
                                     right: 0,

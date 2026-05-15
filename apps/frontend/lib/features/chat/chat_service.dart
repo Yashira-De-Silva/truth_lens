@@ -120,7 +120,7 @@ class BackendReplyTo {
       );
 }
 Future<List<BackendUser>> getUsers(String token) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final res = await http
       .get(Uri.parse('$base/chat/users'), headers: _authHeaders(token))
       .timeout(const Duration(seconds: 15));
@@ -134,7 +134,7 @@ Future<List<BackendUser>> getUsers(String token) async {
 }
 Future<BackendConversation> getOrCreateConversation(
     String token, int otherUserId) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final res = await http
       .post(
         Uri.parse('$base/chat/conversations'),
@@ -155,7 +155,7 @@ Future<BackendConversation> getOrCreateConversation(
   throw Exception(body['message'] ?? 'Failed to get conversation');
 }
 Future<List<BackendConversation>> getConversations(String token) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final res = await http
       .get(Uri.parse('$base/chat/conversations'), headers: _authHeaders(token))
       .timeout(const Duration(seconds: 15));
@@ -169,7 +169,7 @@ Future<List<BackendConversation>> getConversations(String token) async {
 }
 Future<List<BackendMessage>> getMessages(
     String token, String conversationId) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final res = await http
       .get(
         Uri.parse('$base/chat/conversations/$conversationId/messages'),
@@ -192,7 +192,7 @@ Future<BackendMessage> sendMessage(
 }) async {
   final payload = <String, dynamic>{'body': messageBody};
   if (replyToId != null) payload['reply_to_id'] = replyToId;
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final res = await http
       .post(
         Uri.parse('$base/chat/conversations/$conversationId/messages'),
@@ -211,7 +211,7 @@ Future<BackendMessage> sendMessage(
 /// Delete a message. [scope] = "me" or "everyone".
 Future<void> deleteMessage(
     String token, int messageId, String scope) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   await http
       .delete(
         Uri.parse('$base/chat/messages/$messageId'),
@@ -222,7 +222,7 @@ Future<void> deleteMessage(
 }
 Future<void> markConversationRead(
     String token, String conversationId) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   await http
       .post(
         Uri.parse('$base/chat/conversations/$conversationId/read'),
@@ -233,7 +233,7 @@ Future<void> markConversationRead(
 
 // ── Call Signaling ────────────────────────────────────────────────────────
 Future<Map<String, dynamic>> initiateCall(String token, int receiverId, {bool isVideo = false}) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final res = await http.post(
     Uri.parse('$base/chat/calls/initiate'),
     headers: _authHeaders(token),
@@ -251,7 +251,7 @@ Future<Map<String, dynamic>> initiateCall(String token, int receiverId, {bool is
 }
 
 Future<Map<String, dynamic>?> getActiveCall(String token) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final res = await http.get(
     Uri.parse('$base/chat/calls/active'),
     headers: _authHeaders(token),
@@ -265,7 +265,7 @@ Future<Map<String, dynamic>?> getActiveCall(String token) async {
 }
 
 Future<void> updateCallStatus(String token, int callId, String status) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final res = await http.put(
     Uri.parse('$base/chat/calls/$callId/status'),
     headers: _authHeaders(token),

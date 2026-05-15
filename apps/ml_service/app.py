@@ -2,8 +2,8 @@
 TruthLens — Python ML Service (RAM Stable Mode)
 ==============================================
 Fully optimized for Render Free Tier (512MB RAM).
-Uses Google Gemini (Gemma-3) for all classification tasks.
-Removed scikit-learn to prevent OOM (Out of Memory) crashes.
+Uses Groq (Llama 3 / Mixtral) as the sole AI provider.
+Fallback: Wikipedia + Guardian search analysis.
 """
 
 import os
@@ -24,7 +24,36 @@ CORS(app)
 # ── Config ────────────────────────────────────────────────────────────────────
 GUARDIAN_API_KEY = os.environ.get("GUARDIAN_API_KEY", "c6d32650-a403-4157-8569-4e39624a022d")
 GUARDIAN_BASE    = "https://content.guardianapis.com"
-GEMINI_API_KEY   = os.environ.get("GEMINI_API_KEY", "AIzaSyBLj3XLZMQSqSDAi0gpb1tWu5avKFTYowk")
+
+# Groq — sole AI provider (14,400 free req/day)
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
+GROQ_BASE    = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODELS  = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "llama3-70b-8192"]
+
+
+def call_ai(prompt: str, temperature: float = 0.2) -> str:
+    """Call Groq. Raises if unavailable — caller handles fallback."""
+    if not GROQ_API_KEY:
+        raise Exception("GROQ_API_KEY not set. Please add it in Render Environment.")
+    for model in GROQ_MODELS:
+        try:
+            resp = http_requests.post(
+                GROQ_BASE,
+                headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": temperature,
+                    "max_tokens": 1024,
+                },
+                timeout=30,
+            )
+            if resp.status_code == 200:
+                return resp.json()["choices"][0]["message"]["content"].strip()
+            log.warning(f"Groq model {model} returned {resp.status_code}: {resp.text[:200]}")
+        except Exception as e:
+            log.warning(f"Groq model {model} failed: {e}")
+    raise Exception("All Groq models failed")
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -41,10 +70,10 @@ def home():
 @app.route("/api/health")
 def health():
     try:
-        import psutil
+        import psutil  # type: ignore
         process = psutil.Process(os.getpid())
         ram_usage = process.memory_info().rss / 1024 / 1024
-    except:
+    except Exception:
         ram_usage = 0
     return jsonify({
         "status": "ok", 
@@ -59,20 +88,19 @@ def predict():
     if not text: return jsonify({"success": False, "message": "No input"}), 400
     
     try:
-        import google.generativeai as genai
         import json
         import requests, urllib.parse, re
         from datetime import datetime
         
-        if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        # Using Groq (call_ai) for robust AI-powered search
 
-        # 1. Extract refined search terms
+        # 1. Extract search terms locally to save API quota (Halves usage!)
         search_query = ""
         try:
-            kw_prompt = f"Extract the most relevant entities (names, places, events) from this claim to search on Wikipedia and News APIs for verification: '{text}'. Respond with ONLY the search terms, separated by spaces."
-            kw_resp = model.generate_content(kw_prompt)
-            search_query = kw_resp.text.strip().replace('"', '')
+            # Simple extraction: remove common words and take first 5-7 words
+            stop_words = {'a', 'an', 'the', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is'}
+            words = [w for w in re.findall(r'\w+', text.lower()) if w not in stop_words]
+            search_query = " ".join(words[:6])
         except Exception:
             search_query = text[:50]
 
@@ -80,106 +108,195 @@ def predict():
         news_context = ""
         sources = []
 
-        # 2. Wikipedia Search
+        # 2. Wikipedia Search (Expanded)
         try:
             if search_query:
-                url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(search_query)}&utf8=&format=json"
-                req = requests.get(url, headers={'User-Agent': 'TruthLensBot/1.0'}, timeout=5)
-                if req.status_code == 200:
-                    results = req.json().get('query', {}).get('search', [])
-                    snippets = []
-                    for r in results[:3]:
-                        title = r.get('title')
-                        snippet = re.sub('<[^<]+>', '', r.get('snippet', ''))
-                        snippets.append(f"- Wikipedia ({title}): {snippet}")
-                        sources.append(f"Wikipedia: {title}")
-                    if snippets: wiki_context = "Wikipedia Context:\n" + "\n".join(snippets)
+                # DUAL QUERY: Search claim AND historical fact (if year mentioned)
+                year_match = re.search(r'\b(19|20)\d{2}\b', text)
+                queries = [search_query]
+                if year_match:
+                    queries.append(f"who was the president of sri lanka in {year_match.group(0)}")
+                
+                for q in queries:
+                    url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(q)}&utf8=&format=json"
+                    req = requests.get(url, headers={'User-Agent': 'TruthLensBot/1.0'}, timeout=5)
+                    if req.status_code == 200:
+                        results = req.json().get('query', {}).get('search', [])
+                        for r in results[:5]: # More snippets for better coverage
+                            title = r.get('title')
+                            snippet = re.sub('<[^<]+>', '', r.get('snippet', ''))
+                            wiki_context += f"\n- Wikipedia ({title}): {snippet}"
+                            sources.append(f"Wikipedia: {title}")
         except Exception as e:
             log.warning(f"Wiki search failed: {e}")
 
-        # 3. Guardian News Search (Cross-Check)
+        # 3. Guardian News Search (Expanded)
         try:
             if search_query and GUARDIAN_API_KEY:
                 params = {
                     "q": search_query,
                     "api-key": GUARDIAN_API_KEY,
                     "show-fields": "headline,trailText",
-                    "page-size": 3,
+                    "page-size": 10, # More results for better accuracy
                     "order-by": "relevance"
                 }
                 r = requests.get(f"{GUARDIAN_BASE}/search", params=params, timeout=10)
                 if r.status_code == 200:
                     news_results = r.json().get("response", {}).get("results", [])
-                    news_snippets = []
                     for it in news_results:
                         f = it.get("fields", {})
                         headline = f.get("headline", "")
                         trail = f.get("trailText", "")
-                        url = it.get("webUrl", "")
-                        news_snippets.append(f"- News ({headline}): {trail}")
+                        news_context += f"\n- Guardian: {headline} - {trail}"
                         sources.append(f"Guardian: {headline}")
-                    if news_snippets: news_context = "News Context:\n" + "\n".join(news_snippets)
         except Exception as e:
-            log.warning(f"Guardian search failed: {e}")
+            log.warning(f"News search failed: {e}")
             
-        if not sources: sources = ["TruthLens Internal Knowledge Base"]
+        # De-dupe sources while preserving order
+        if sources:
+            sources = list(dict.fromkeys(sources))
+        else:
+            sources = ["TruthLens Internal Knowledge Base"]
 
         # 4. Final Verification
-        now = datetime.now().strftime("%B %Y")
-        combined_context = f"{wiki_context}\n\n{news_context}".strip()
+        combined_context = (wiki_context + "\n\n" + news_context).strip()
         
         prompt = f"""
-        You are a careful and conservative fact-checker for TruthLens. Current Date: {now}.
+        VERIFY THIS NEWS CLAIM:
+        Claim: {text}
+        Current Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-        Claim to verify: "{text}"
+        EVIDENCE GATHERED:
+        {combined_context if combined_context else 'No direct search results found. Use your internal knowledge.'}
 
-        Evidence gathered:
-        {combined_context if combined_context else 'No direct search results found. Use your internal knowledge and logic, but be conservative.'}
+        FACT-CHECKING RULES:
+        1. TEMPORAL ACCURACY IS CRITICAL: Check the specific YEAR mentioned in the claim. If the claim mentions "2020", verify if it was true IN 2020, not just now.
+        2. Recognize historical vs current data. For example, if someone is president in 2025 but wasn't in 2020, a claim about 2020 is FAKE.
+        3. MANDATORY: Choose either REAL or FAKE.
+        4. Cross-reference the claim's date with the evidence or your internal knowledge of historical timelines.
+        5. Always provide a clear, concise REASON explaining the date discrepancy if it exists.
 
-        Instructions:
-        1. Compare the claim against the evidence.
-        2. If the evidence is weak, incomplete, or missing, respond with UNCERTAIN.
-        3. Do not hallucinate facts or invent sources.
-        4. Use only the evidence from Wikipedia and The Guardian when possible.
-        5. If the claim is about a specific person, role, date, or title, verify the exact claim before labeling REAL.
-        6. If the claim cannot be confirmed by the evidence, label it UNCERTAIN.
-        7. Respond ONLY with a JSON object:
+        RESPOND ONLY WITH THIS JSON:
         {{
-          "label": "REAL" or "FAKE" or "UNCERTAIN",
-          "confidence": 0.0 to 1.0,
-          "reason": "Detailed explanation...",
+          "label": "REAL" | "FAKE",
+          "confidence": 0.0 - 1.0,
+          "reason": "Explain why based on the evidence...",
           "relevant_sources": ["Source 1", "Source 2"]
         }}
         """
 
-        response = model.generate_content(prompt, generation_config={"temperature": 0})
-        res_txt = response.text.strip()
-        result = parse_model_json(res_txt)
+        try:
+            res_txt = call_ai(prompt, temperature=0)
+            result = parse_model_json(res_txt)
+        except Exception as e:
+            # FALLBACK: Advanced Temporal, Event & Holistic Analysis
+            all_words = [w for w in re.findall(r'\w+', text.lower()) if len(w) > 3]
+            # IMPORTANT: non-capturing group so findall returns full years like '2025'
+            years = re.findall(r'\b(?:19|20)\d{2}\b', text)
+            action_verbs = {'won', 'lost', 'fired', 'died', 'arrested', 'resigned', 'elected', 'appointed', 'destroyed', 'captured'}
+            claim_actions = [w for w in all_words if w in action_verbs]
+            
+            context_l = combined_context.lower()
+
+            # 1. Coverage score (how much of the claim is supported by retrieved snippets)
+            match_count = sum(1 for w in all_words if w in context_l)
+            coverage = (match_count / len(all_words)) if all_words else 0.0
+
+            # Base assumption: if we can't confirm, we should not mark REAL.
+            fake_likelihood = 1.0 - coverage
+
+            # 2. Action-Verb Check: The specific action MUST be confirmed in sources
+            if claim_actions:
+                action_confirmed = any(a in combined_context.lower() for a in claim_actions)
+                if not action_confirmed:
+                    fake_likelihood = max(fake_likelihood, 0.75)  # Strong FAKE signal
+
+            # 3. Year-Event Mismatch: Check if the event (e.g. "world cup") happened in the claimed year
+            if years:
+                for year in years:
+                    relevant_snippets = [s for s in combined_context.split('\n') if year in s]
+                    
+                    # If the year appears in context, check if the specific action is near it
+                    if relevant_snippets and claim_actions:
+                        action_near_year = any(
+                            a in s.lower() for a in claim_actions for s in relevant_snippets
+                        )
+                        if not action_near_year:
+                            fake_likelihood = max(fake_likelihood, 0.8)
+                    
+                    # If the year is NOT in context at all, it's likely a future/invented claim
+                    if not relevant_snippets and years:
+                        fake_likelihood = max(fake_likelihood, 0.7)
+
+                    # Strict Name Linking
+                    if relevant_snippets:
+                        names = [w for w in all_words if w not in {'president', 'minister', 'lanka', 'india', 'government', 'world', 'cricket', 'team'}]
+                        name_match = sum(1 for n in names if any(n in s.lower() for s in relevant_snippets))
+                        if name_match == 0:
+                            fake_likelihood = max(fake_likelihood, 0.7)
+
+            # Final conservative decisioning:
+            # - FAKE if strong signals exist
+            # - UNCERTAIN if we don't have enough evidence
+            # - REAL is only possible from the Gemini JSON path
+            if fake_likelihood >= 0.7:
+                label = "FAKE"
+                confidence = min(max(fake_likelihood, 0.0), 1.0)
+            else:
+                label = "UNCERTAIN"
+                confidence = 0.5
+
+            # Keep sources relevant: only include those that share key tokens with the claim
+            key_tokens = [w for w in all_words if w not in {'news', 'claim', 'said', 'says', 'team'}]
+            filtered_sources = []
+            for s in sources:
+                s_l = s.lower()
+                if any(t in s_l for t in key_tokens[:8]):
+                    filtered_sources.append(s)
+            filtered_sources = list(dict.fromkeys(filtered_sources))
+            if not filtered_sources:
+                filtered_sources = sources[:10]
+
+            return jsonify({
+                "label": label,
+                "confidence": confidence,
+                "reason": (
+                    "Fallback verification (AI limit reached): fetched evidence doesn't confirm this claim "
+                    "(or indicates a likely time/event mismatch)."
+                ),
+                "sources": filtered_sources[:12]
+            })
 
         label = normalize_label(str(result.get("label", "")).strip())
-        confidence = result.get("confidence")
+        # Don't assume high confidence when the model doesn't provide it.
+        confidence = result.get("confidence", None)
         try:
-            confidence = float(confidence)
+            confidence = float(confidence) if confidence is not None else None
         except (TypeError, ValueError):
-            confidence = 0.0
+            confidence = None
 
-        if confidence < 0.35:
-            label = "UNCERTAIN"
-            confidence = max(confidence, 0.25)
+        # If the model couldn't produce a valid label, don't force REAL.
+        if label == "UNCERTAIN":
+            return jsonify({
+                "label": "UNCERTAIN",
+                "confidence": 0.5,
+                "reason": (
+                    (result.get("reason") or "The AI couldn't provide a definitive verdict for this claim.")
+                    .strip()
+                ),
+                "sources": sources
+            })
 
-        if not sources and label != "UNCERTAIN":
-            label = "UNCERTAIN"
-            confidence = min(confidence, 0.45)
-
-        if label == "REAL" and not combined_context:
-            label = "UNCERTAIN"
-            confidence = min(confidence, 0.45)
-
+        # Prefer model-provided relevant sources but still de-dupe and cap
         final_sources = result.get("relevant_sources") or sources
+        if isinstance(final_sources, list):
+            final_sources = list(dict.fromkeys([str(x) for x in final_sources]))[:12]
+        else:
+            final_sources = sources[:12]
 
         return jsonify({
             "label": label,
-            "confidence": min(max(confidence, 0.0), 1.0),
+            "confidence": min(max(confidence if confidence is not None else 0.6, 0.0), 1.0),
             "reason": result.get("reason", "Verified via AI analysis.").strip(),
             "sources": final_sources
         })
@@ -228,15 +345,12 @@ def summarize():
     if not text: return jsonify({"success": False, "message": "No text"}), 400
     
     try:
-        import google.generativeai as genai
-        if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        
-        prompt = f"Summarize this news article in exactly 3 concise bullet points or sentences:\n\n{text}"
-        response = model.generate_content(prompt)
+        summary = call_ai(
+            f"Summarize this news article in exactly 3 concise bullet points or sentences:\n\n{text}",
+        )
         return jsonify({
             "success": True,
-            "summary": response.text.strip()
+            "summary": summary
         })
     except Exception as e:
         log.error(f"Summarize error: {e}")
@@ -257,25 +371,122 @@ def bot_ask():
     msg = request.json.get("message", "").strip()
     if not msg: return jsonify({"success": False}), 400
     try:
-        import google.generativeai as genai
-        if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
-        
-        # Strict system instruction to ensure bot only discusses news and verification
-        # Prepending instead of using system_instruction parameter due to Gemma model limitations
+        import re, urllib.parse
+
+        # ── 1. Sri Lanka Local News (Ada Derana RSS — always first) ──────────
+        related_news = []
+        sl_keywords = {'sri lanka', 'srilanka', 'colombo', 'nsbm', 'kandy', 'galle', 'colombo', 'sl', 'lk'}
+        is_sl_query = any(kw in msg.lower() for kw in sl_keywords)
+
+        # Ada Derana RSS feed (primary Sri Lanka source)
+        try:
+            rss_url = "https://www.adaderana.lk/rss.php"
+            rss_resp = http_requests.get(rss_url, headers={'User-Agent': 'TruthLensBot/1.0'}, timeout=6)
+            if rss_resp.status_code == 200:
+                import xml.etree.ElementTree as ET
+                root = ET.fromstring(rss_resp.content)
+                msg_words = set(re.findall(r'\w+', msg.lower()))
+                for item in root.iter('item'):
+                    title_el = item.find('title')
+                    desc_el  = item.find('description')
+                    link_el  = item.find('link')
+                    if title_el is None: continue
+                    title = title_el.text or ''
+                    desc  = re.sub(r'<[^>]*>', '', desc_el.text or '') if desc_el is not None else ''
+                    link  = link_el.text or '' if link_el is not None else ''
+                    # Include if query words match or it's a Sri Lanka query
+                    title_words = set(re.findall(r'\w+', title.lower()))
+                    if is_sl_query or msg_words & title_words:
+                        related_news.append({
+                            "title": title,
+                            "description": desc[:200],
+                            "url": link,
+                            "source": "Ada Derana",
+                            "thumbnail": ""
+                        })
+                    if len(related_news) >= 5:
+                        break
+        except Exception as e:
+            log.warning(f"Ada Derana RSS failed: {e}")
+
+        # Guardian news search (international coverage)
+        try:
+            if GUARDIAN_API_KEY and len(related_news) < 5:
+                params = {
+                    "q": msg,
+                    "api-key": GUARDIAN_API_KEY,
+                    "show-fields": "headline,trailText,thumbnail",
+                    "page-size": 5,
+                    "order-by": "relevance"
+                }
+                r = http_requests.get(f"{GUARDIAN_BASE}/search", params=params, timeout=8)
+                if r.status_code == 200:
+                    for item in r.json().get("response", {}).get("results", []):
+                        fields = item.get("fields", {})
+                        related_news.append({
+                            "title": fields.get("headline") or item.get("webTitle", ""),
+                            "description": fields.get("trailText", ""),
+                            "url": item.get("webUrl", ""),
+                            "source": "The Guardian",
+                            "thumbnail": fields.get("thumbnail", "")
+                        })
+        except Exception as e:
+            log.warning(f"Bot Guardian search failed: {e}")
+
+        # Wikipedia snippets (fill gaps if less than 3 results)
+        try:
+            if len(related_news) < 3:
+                wiki_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(msg)}&utf8=&format=json"
+                wiki_resp = http_requests.get(wiki_url, timeout=5).json()
+                for item in wiki_resp.get("query", {}).get("search", [])[:3]:
+                    title = item.get("title", "")
+                    snippet = re.sub(r'<[^>]*>', '', item.get("snippet", ""))
+                    related_news.append({
+                        "title": title,
+                        "description": snippet,
+                        "url": f"https://en.wikipedia.org/wiki/{urllib.parse.quote(title.replace(' ', '_'))}",
+                        "source": "Wikipedia",
+                        "thumbnail": ""
+                    })
+        except Exception as e:
+            log.warning(f"Bot Wikipedia search failed: {e}")
+
+        # ── 2. Build enriched prompt with the fetched news context ───────────
+        news_context = ""
+        if related_news:
+            snippets = "\n".join([f"- {n['title']}: {n['description'][:120]}" for n in related_news[:5]])
+            news_context = f"\n\nRELATED NEWS CONTEXT:\n{snippets}"
+
         system_instruction = (
             "SYSTEM INSTRUCTION: You are TruthBot, a professional AI news assistant for TruthLens. "
             "Your core mission is to provide accurate news, verify information, and fact-check claims. "
             "DO NOT provide recipes, step-by-step tutorials, or non-news content. "
-            "If asked about a general topic (like 'cake'), respond with news, industry trends, "
-            "or interesting news-worthy facts about that topic, but NEVER provide a baking guide or recipe. "
+            "Use the RELATED NEWS CONTEXT provided to give an informed, accurate answer. "
             "Stay concise, professional, and strictly news-oriented.\n\n"
         )
-        
-        model = genai.GenerativeModel(model_name="gemini-2.5-flash")
-        full_prompt = f"{system_instruction}User Question: {msg}"
-        
-        response = model.generate_content(full_prompt)
-        return jsonify({"success": True, "reply": response.text})
+        full_prompt = f"{system_instruction}User Question: {msg}{news_context}"
+
+        # ── 3. Call AI ────────────────────────────────────────────────────────
+        try:
+            reply = call_ai(full_prompt, temperature=0.3)
+            return jsonify({
+                "success": True,
+                "reply": reply,
+                "related_news": related_news[:5]
+            })
+        except Exception as e:
+            # FALLBACK: Return Wikipedia snippet if AI fails
+            if related_news:
+                return jsonify({
+                    "success": True,
+                    "reply": f"Here is what I found about '{msg}': {related_news[0]['description']}...",
+                    "related_news": related_news[:5]
+                })
+            return jsonify({
+                "success": True,
+                "reply": "I'm currently at my usage limit, but I'll be back shortly! You can still use the 'Verify News' tool in the meantime.",
+                "related_news": []
+            })
     except Exception as e:
         log.error(f"Bot error: {e}")
         return jsonify({"success": False, "message": str(e)}), 500

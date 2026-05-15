@@ -22,7 +22,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1200));
+        vsync: this, duration: const Duration(milliseconds: 800));
     _animation =
         CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _controller.forward();

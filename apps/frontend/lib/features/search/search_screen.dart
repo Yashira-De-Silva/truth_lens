@@ -804,9 +804,17 @@ class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
     final sources = sourcesList?.map((e) => e.toString()).toList();
     
     final isReal = label == 'REAL';
-    final color = isReal ? AppColors.success : AppColors.error;
-    final text = isReal ? 'True' : 'Fake';
-    final icon = isReal ? Icons.check_circle : Icons.warning_rounded;
+    final isUncertain = label == 'UNCERTAIN';
+    
+    final color = isReal 
+        ? AppColors.success 
+        : (isUncertain ? AppColors.accent : AppColors.error);
+    final text = isReal 
+        ? 'True' 
+        : (isUncertain ? 'Uncertain' : 'Fake');
+    final icon = isReal 
+        ? Icons.check_circle 
+        : (isUncertain ? Icons.help_outline : Icons.warning_rounded);
 
     return Container(
       padding: const EdgeInsets.all(16),

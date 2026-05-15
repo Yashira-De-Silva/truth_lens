@@ -72,7 +72,7 @@ Future<AuthResult> register({
   required String email,
   required String password,
 }) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final response = await http
       .post(
         Uri.parse('$base/register'),
@@ -92,7 +92,7 @@ Future<AuthResult> login({
   required String email,
   required String password,
 }) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final response = await http
       .post(
         Uri.parse('$base/login'),
@@ -105,7 +105,7 @@ Future<AuthResult> login({
 
 Future<void> logout(String token) async {
   try {
-    final base = await ApiConfig.baseUrl;
+    final base = ApiConfig.baseUrl;
     await http
         .post(
           Uri.parse('$base/logout'),
@@ -117,7 +117,7 @@ Future<void> logout(String token) async {
 }
 
 Future<Map<String, dynamic>> me(String token) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final response = await http
       .get(
         Uri.parse('$base/me'),
@@ -138,7 +138,7 @@ Future<Map<String, dynamic>> updateProfile({
   String? avatarPath,
   bool removeImage = false,
 }) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final uri = Uri.parse('$base/profile');
   
   final request = http.MultipartRequest('POST', uri);
@@ -173,7 +173,7 @@ Future<Map<String, dynamic>> updateProfile({
 }
 
 Future<void> upgradeToPremium(String token) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final response = await http
       .post(
         Uri.parse('$base/upgrade-premium'),
@@ -190,7 +190,7 @@ Future<void> upgradeToPremium(String token) async {
 }
 
 Future<void> cancelPremium(String token) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final response = await http
       .post(
         Uri.parse('$base/cancel-premium'),
@@ -207,7 +207,7 @@ Future<void> cancelPremium(String token) async {
 }
 
 Future<void> logRead(String token, int articleId) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   await http
       .post(
         Uri.parse('$base/news/$articleId/log-read'),
@@ -217,7 +217,7 @@ Future<void> logRead(String token, int articleId) async {
 }
 
 Future<List<Map<String, dynamic>>> fetchBookmarks(String token) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final response = await http
       .get(
         Uri.parse('$base/bookmarks'),
@@ -239,7 +239,7 @@ Future<void> saveBookmark({
   String? summary,
   Map<String, dynamic>? rawData,
 }) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   await http
       .post(
         Uri.parse('$base/bookmarks'),
@@ -256,7 +256,7 @@ Future<void> saveBookmark({
 }
 
 Future<void> removeBookmark(String token, int articleId) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   await http
       .delete(
         Uri.parse('$base/bookmarks/$articleId'),
@@ -266,7 +266,7 @@ Future<void> removeBookmark(String token, int articleId) async {
 }
 
 Future<void> forgotPassword(String email) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final response = await http
       .post(
         Uri.parse('$base/forgot-password'),
@@ -282,7 +282,7 @@ Future<void> forgotPassword(String email) async {
 }
 
 Future<void> verifyOtp(String email, String otp) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final response = await http
       .post(
         Uri.parse('$base/verify-otp'),
@@ -302,7 +302,7 @@ Future<void> resetPassword({
   required String otp,
   required String password,
 }) async {
-  final base = await ApiConfig.baseUrl;
+  final base = ApiConfig.baseUrl;
   final response = await http
       .post(
         Uri.parse('$base/reset-password'),
