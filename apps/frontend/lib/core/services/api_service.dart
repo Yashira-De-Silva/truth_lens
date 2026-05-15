@@ -10,7 +10,7 @@ class NewsApiService {
 
   /// Fetch N articles from the Laravel backend (TiDB Cloud).
   Future<NewsResponse> fetchNews({int limit = 20, int offset = 0}) async {
-    final baseUrl = await ApiConfig.baseUrl; // Use Laravel
+    final baseUrl = ApiConfig.baseUrl; // Use Laravel
     final uri = Uri.parse('$baseUrl/news?limit=$limit&offset=$offset&lang=$lang');
     final res = await http.get(uri).timeout(const Duration(seconds: 15));
     if (res.statusCode != 200)
@@ -25,7 +25,7 @@ class NewsApiService {
 
   /// Fetch top verified (REAL) articles for the Digest screen from Laravel.
   Future<List<Article>> fetchDigest({int limit = 3}) async {
-    final baseUrl = await ApiConfig.baseUrl; // Use Laravel
+    final baseUrl = ApiConfig.baseUrl; // Use Laravel
     final uri = Uri.parse('$baseUrl/news/digest?limit=$limit&lang=$lang');
     final res = await http.get(uri).timeout(const Duration(seconds: 15));
     if (res.statusCode != 200)
@@ -43,7 +43,7 @@ class NewsApiService {
     String category = 'All',
     int limit = 20,
   }) async {
-    final baseUrl = await ApiConfig.baseUrl; // Use Laravel
+    final baseUrl = ApiConfig.baseUrl; // Use Laravel
     final uri = Uri.parse(
       '$baseUrl/news/search?q=${Uri.encodeQueryComponent(query)}'
       '&category=${Uri.encodeQueryComponent(category)}&limit=$limit&lang=$lang',
@@ -64,7 +64,7 @@ class NewsApiService {
     String section = 'All',
     int limit = 20,
   }) async {
-    final baseUrl = await ApiConfig.mlServiceUrl;
+    final baseUrl = ApiConfig.mlServiceUrl;
     final uri = Uri.parse(
       '$baseUrl/api/news/live?limit=$limit'
       '&section=${Uri.encodeQueryComponent(section)}&lang=$lang',
@@ -86,7 +86,7 @@ class NewsApiService {
     required String title,
     required String text,
   }) async {
-    final baseUrl = await ApiConfig.mlServiceUrl;
+    final baseUrl = ApiConfig.mlServiceUrl;
     final uri = Uri.parse('$baseUrl/api/predict');
     final res = await http.post(
       uri,
@@ -100,7 +100,7 @@ class NewsApiService {
 
   /// Fetch a single article by ID from Laravel.
   Future<Article> fetchArticleById(int id) async {
-    final baseUrl = await ApiConfig.baseUrl;
+    final baseUrl = ApiConfig.baseUrl;
     final uri = Uri.parse('$baseUrl/news/$id');
     final res = await http.get(uri).timeout(const Duration(seconds: 15));
     if (res.statusCode != 200)
@@ -111,7 +111,7 @@ class NewsApiService {
 
   /// Request a 3-bullet-point AI summary from the ML service.
   Future<String> summarizeArticle(String text) async {
-    final baseUrl = await ApiConfig.mlServiceUrl;
+    final baseUrl = ApiConfig.mlServiceUrl;
     final uri = Uri.parse('$baseUrl/api/summarize');
     final res = await http.post(
       uri,

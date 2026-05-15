@@ -70,9 +70,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
         email: email,
         password: password,
       );
-      await svc.saveToken(result.token);
-      await svc.saveUser(result.user);
-      await svc.saveLoginTimestamp();
+      await Future.wait([
+        svc.saveToken(result.token),
+        svc.saveUser(result.user),
+        svc.saveLoginTimestamp(),
+      ]);
       state = state.copyWith(
         status: AuthStatus.authenticated,
         token: result.token,
@@ -95,9 +97,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading, error: null);
     try {
       final result = await svc.login(email: email, password: password);
-      await svc.saveToken(result.token);
-      await svc.saveUser(result.user);
-      await svc.saveLoginTimestamp();
+      await Future.wait([
+        svc.saveToken(result.token),
+        svc.saveUser(result.user),
+        svc.saveLoginTimestamp(),
+      ]);
       state = state.copyWith(
         status: AuthStatus.authenticated,
         token: result.token,

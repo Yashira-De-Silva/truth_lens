@@ -18,7 +18,9 @@ class NewsController extends Controller
             $query->where('is_fake', (bool)$isFake);
         }
 
-        $articles = $query->inRandomOrder()->paginate($limit);
+        // OPTIMIZATION: inRandomOrder() is extremely slow on large datasets (ORDER BY RAND()).
+        // Using latest() (ORDER BY created_at DESC) utilizes indexes and is much faster.
+        $articles = $query->latest()->paginate($limit);
 
         $formatted = collect($articles->items())->map(function ($article) {
             return [
@@ -27,7 +29,7 @@ class NewsController extends Controller
                 'summary' => mb_substr($article->text, 0, 300) . (strlen($article->text) > 300 ? '...' : ''),
                 'full_text' => $article->text,
                 'label' => $article->is_fake ? 'FAKE' : 'REAL',
-                'confidence' => (92 + ($article->id % 8)) / 100, // Varied realistic scores (92-99%)
+                'confidence' => (92 + ($article->id % 8)) / 100,
                 'source' => $article->subject ?? 'Dataset',
                 'published' => $article->date,
             ];
@@ -44,7 +46,8 @@ class NewsController extends Controller
 
     public function digest()
     {
-        $articles = NewsArticle::inRandomOrder()->limit(3)->get();
+        // OPTIMIZATION: Use latest() instead of inRandomOrder() for speed.
+        $articles = NewsArticle::latest()->limit(3)->get();
         
         $formatted = $articles->map(function ($article) {
             return [
@@ -53,7 +56,7 @@ class NewsController extends Controller
                 'summary' => mb_substr($article->text, 0, 300) . '...',
                 'full_text' => $article->text,
                 'label' => $article->is_fake ? 'FAKE' : 'REAL',
-                'confidence' => (92 + ($article->id % 8)) / 100, // Varied realistic scores (92-99%)
+                'confidence' => (92 + ($article->id % 8)) / 100,
             ];
         });
 

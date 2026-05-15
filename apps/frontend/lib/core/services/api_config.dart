@@ -10,17 +10,17 @@ class ApiConfig {
   /// Change this to 'false' to use the production Render servers.
   static const bool useLocal = false; 
 
-  /// Returns the backend base URL.
-  static Future<String> get baseUrl async => useLocal ? kLocalBaseUrl : kProdBaseUrl;
+  /// Returns the backend base URL synchronously.
+  static String get baseUrl => useLocal ? kLocalBaseUrl : kProdBaseUrl;
 
-  /// Synchronous access — use this instead of await where possible.
-  static String get baseUrlSync => useLocal ? kLocalBaseUrl : kProdBaseUrl;
+  /// Synchronous access (legacy alias).
+  static String get baseUrlSync => baseUrl;
 
-  /// Returns the ML service URL.
-  static Future<String> get mlServiceUrl async => useLocal ? kLocalMlUrl : kProdMlUrl;
+  /// Returns the ML service URL synchronously.
+  static String get mlServiceUrl => useLocal ? kLocalMlUrl : kProdMlUrl;
 
-  /// Synchronous ML URL access.
-  static String get mlServiceUrlSync => useLocal ? kLocalMlUrl : kProdMlUrl;
+  /// Synchronous ML URL access (legacy alias).
+  static String get mlServiceUrlSync => mlServiceUrl;
 
   /// No-op — kept for compatibility.
   static void invalidate() {}
