@@ -65,7 +65,7 @@ def predict():
         from datetime import datetime
         
         if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        model = genai.GenerativeModel("gemini-1.5-flash")
 
         # 1. Extract refined search terms
         search_query = ""
@@ -129,25 +129,25 @@ def predict():
         combined_context = f"{wiki_context}\n\n{news_context}".strip()
         
         prompt = f"""
-        You are a careful and conservative fact-checker for TruthLens. Current Date: {now}.
+        You are TruthBot, an advanced fact-checking AI for TruthLens. Current Date: {now}.
+        
+        Claim: "{text}"
 
-        Claim to verify: "{text}"
-
-        Evidence gathered:
-        {combined_context if combined_context else 'No direct search results found. Use your internal knowledge and logic, but be conservative.'}
+        Evidence Gathered:
+        {combined_context if combined_context else 'No direct search results found.'}
 
         Instructions:
-        1. Compare the claim against the evidence.
-        2. If the evidence is weak, incomplete, or missing, respond with UNCERTAIN.
-        3. Do not hallucinate facts or invent sources.
-        4. Use only the evidence from Wikipedia and The Guardian when possible.
-        5. If the claim is about a specific person, role, date, or title, verify the exact claim before labeling REAL.
-        6. If the claim cannot be confirmed by the evidence, label it UNCERTAIN.
+        1. Compare the claim against the provided evidence.
+        2. Consider common knowledge and temporal logic (e.g., if someone won an election in late 2024, they are likely still in office in 2025/2026).
+        3. Be decisive but accurate. 
+        4. If the evidence strongly supports the claim, label it REAL.
+        5. If the evidence directly contradicts the claim, label it FAKE.
+        6. Only use UNCERTAIN if the evidence is truly ambiguous or non-existent for a non-obvious claim.
         7. Respond ONLY with a JSON object:
         {{
           "label": "REAL" or "FAKE" or "UNCERTAIN",
           "confidence": 0.0 to 1.0,
-          "reason": "Detailed explanation...",
+          "reason": "Clear explanation based on evidence...",
           "relevant_sources": ["Source 1", "Source 2"]
         }}
         """
@@ -163,9 +163,9 @@ def predict():
         except (TypeError, ValueError):
             confidence = 0.0
 
-        if confidence < 0.35:
+        if confidence < 0.25:
             label = "UNCERTAIN"
-            confidence = max(confidence, 0.25)
+            confidence = max(confidence, 0.20)
 
         if not sources and label != "UNCERTAIN":
             label = "UNCERTAIN"
@@ -271,7 +271,7 @@ def bot_ask():
             "Stay concise, professional, and strictly news-oriented.\n\n"
         )
         
-        model = genai.GenerativeModel(model_name="gemini-2.5-flash")
+        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
         full_prompt = f"{system_instruction}User Question: {msg}"
         
         response = model.generate_content(full_prompt)
