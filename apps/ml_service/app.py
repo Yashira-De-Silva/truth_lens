@@ -180,25 +180,38 @@ def predict():
             res_txt = call_gemini_with_retry("gemini-2.0-flash", prompt, temperature=0)
             result = parse_model_json(res_txt)
         except Exception as e:
-            # FALLBACK: Holistic Sentence Analysis
+            # FALLBACK: Advanced Temporal & Holistic Analysis
             all_words = [w for w in re.findall(r'\w+', text.lower()) if len(w) > 3]
-            event_keywords = {'fire', 'death', 'dead', 'died', 'won', 'lost', 'arrested', 'on fire'}
+            years = re.findall(r'\b(19|20)\d{2}\b', text)
+            event_keywords = {'fire', 'death', 'dead', 'died', 'won', 'lost', 'arrested', 'on fire', 'president', 'minister'}
             critical_words = [w for w in all_words if w in event_keywords]
             
-            # Check for density: how many claim words appear in the SAME snippet
+            # 1. Base Density Score
             match_count = sum(1 for w in all_words if w in combined_context.lower())
             score = (match_count / len(all_words)) if all_words else 0
             
-            # If critical event words (like 'fire') are missing from the search evidence, it's likely FAKE
+            # 2. Temporal Check (Very strict)
+            # If a year is mentioned, check if other subjects are associated with it in the context
+            if years:
+                for year in years:
+                    # If the year is in context but the main subject words are NOT near it, be skeptical
+                    if year in combined_context:
+                        # Find context snippets containing the year
+                        relevant_snippets = [s for s in combined_context.split('\n') if year in s]
+                        subject_match = sum(1 for w in all_words if any(w in s.lower() for s in relevant_snippets))
+                        if subject_match < 2: # High skepticism if year exists but subject doesn't match
+                            score = min(score, 0.4)
+            
+            # 3. Critical Event Check
             if critical_words:
                 critical_match = sum(1 for w in critical_words if w in combined_context.lower())
                 if critical_match == 0:
-                    score = min(score, 0.4) # Force to FAKE if the main event is missing
+                    score = min(score, 0.4)
             
             return jsonify({
                 "label": "REAL" if score >= 0.5 else "FAKE",
                 "confidence": score,
-                "reason": f"Verified via holistic sentence analysis (AI limits reached). Match density: {round(score*100, 1)}%",
+                "reason": f"Verified via temporal conflict analysis (AI limits reached). Match score: {round(score*100, 1)}%",
                 "sources": sources
             })
 
