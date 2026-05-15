@@ -28,7 +28,7 @@ GUARDIAN_BASE    = "https://content.guardianapis.com"
 # Groq — sole AI provider (14,400 free req/day)
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
 GROQ_BASE    = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODELS  = ["llama3-8b-8192", "mixtral-8x7b-32768", "gemma2-9b-it"]
+GROQ_MODELS  = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "llama3-70b-8192"]
 
 
 def call_ai(prompt: str, temperature: float = 0.2) -> str:
@@ -88,7 +88,6 @@ def predict():
     if not text: return jsonify({"success": False, "message": "No input"}), 400
     
     try:
-        import google.generativeai as genai
         import json
         import requests, urllib.parse, re
         from datetime import datetime
