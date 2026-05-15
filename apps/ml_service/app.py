@@ -182,43 +182,50 @@ def predict():
             res_txt = call_gemini_with_retry("gemini-2.0-flash", prompt, temperature=0)
             result = parse_model_json(res_txt)
         except Exception as e:
-            # FALLBACK: Advanced Temporal & Holistic Analysis
+            # FALLBACK: Advanced Temporal, Event & Holistic Analysis
             all_words = [w for w in re.findall(r'\w+', text.lower()) if len(w) > 3]
             years = re.findall(r'\b(19|20)\d{2}\b', text)
-            event_keywords = {'fire', 'death', 'dead', 'died', 'won', 'lost', 'arrested', 'on fire', 'president', 'minister'}
-            critical_words = [w for w in all_words if w in event_keywords]
+            action_verbs = {'won', 'lost', 'fired', 'died', 'arrested', 'resigned', 'elected', 'appointed', 'destroyed', 'captured'}
+            claim_actions = [w for w in all_words if w in action_verbs]
             
             # 1. Base Density Score
             match_count = sum(1 for w in all_words if w in combined_context.lower())
             score = (match_count / len(all_words)) if all_words else 0
-            
-            # 2. Temporal Check (Stricter Sentence Linking)
+
+            # 2. Action-Verb Check: The specific action MUST be confirmed in sources
+            if claim_actions:
+                action_confirmed = any(a in combined_context.lower() for a in claim_actions)
+                if not action_confirmed:
+                    score = min(score, 0.35)  # Force FAKE if action not confirmed
+
+            # 3. Year-Event Mismatch: Check if the event (e.g. "world cup") happened in the claimed year
             if years:
                 for year in years:
-                    if year in combined_context:
-                        # Scan each sentence/line for the year
-                        relevant_snippets = [s for s in combined_context.split('\n') if year in s]
-                        
-                        # Find unique names in the claim (excluding common context words)
-                        names = [w for w in all_words if w not in {'president', 'minister', 'lanka', 'india', 'goverment'}]
-                        
-                        # A name MUST be found in the SAME sentence as the year to be a match
+                    relevant_snippets = [s for s in combined_context.split('\n') if year in s]
+                    
+                    # If the year appears in context, check if the specific action is near it
+                    if relevant_snippets and claim_actions:
+                        action_near_year = any(
+                            a in s.lower() for a in claim_actions for s in relevant_snippets
+                        )
+                        if not action_near_year:
+                            score = min(score, 0.35)  # Action not linked to that year → FAKE
+                    
+                    # If the year is NOT in context at all, it's likely a future/invented claim
+                    if not relevant_snippets and years:
+                        score = min(score, 0.4)
+
+                    # Strict Name Linking
+                    if relevant_snippets:
+                        names = [w for w in all_words if w not in {'president', 'minister', 'lanka', 'india', 'government', 'world', 'cricket', 'team'}]
                         name_match = sum(1 for n in names if any(n in s.lower() for s in relevant_snippets))
-                        
                         if name_match == 0:
-                            # If the year is found but NONE of the claim names are in the same sentence, it's FAKE
                             score = min(score, 0.4)
-            
-            # 3. Critical Event Check
-            if critical_words:
-                critical_match = sum(1 for w in critical_words if w in combined_context.lower())
-                if critical_match == 0:
-                    score = min(score, 0.4)
             
             return jsonify({
                 "label": "REAL" if score >= 0.5 else "FAKE",
                 "confidence": score,
-                "reason": f"Verified via temporal context validation (AI limits reached). Match score: {round(score*100, 1)}%",
+                "reason": f"Verified via event-year mismatch analysis (AI limits reached). Match score: {round(score*100, 1)}%",
                 "sources": sources
             })
 
