@@ -372,36 +372,87 @@ def bot_ask():
     if not msg: return jsonify({"success": False}), 400
     try:
         import re, urllib.parse
+
+        # ── 1. Fetch related news from Guardian & Wikipedia in parallel ──────
+        related_news = []
+
+        # Guardian news search
+        try:
+            if GUARDIAN_API_KEY:
+                params = {
+                    "q": msg,
+                    "api-key": GUARDIAN_API_KEY,
+                    "show-fields": "headline,trailText,thumbnail",
+                    "page-size": 5,
+                    "order-by": "relevance"
+                }
+                r = http_requests.get(f"{GUARDIAN_BASE}/search", params=params, timeout=8)
+                if r.status_code == 200:
+                    for item in r.json().get("response", {}).get("results", []):
+                        fields = item.get("fields", {})
+                        related_news.append({
+                            "title": fields.get("headline") or item.get("webTitle", ""),
+                            "description": fields.get("trailText", ""),
+                            "url": item.get("webUrl", ""),
+                            "source": "The Guardian",
+                            "thumbnail": fields.get("thumbnail", "")
+                        })
+        except Exception as e:
+            log.warning(f"Bot Guardian search failed: {e}")
+
+        # Wikipedia snippets (up to 3 extra if Guardian returned few results)
+        try:
+            if len(related_news) < 3:
+                wiki_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(msg)}&utf8=&format=json"
+                wiki_resp = http_requests.get(wiki_url, timeout=5).json()
+                for item in wiki_resp.get("query", {}).get("search", [])[:3]:
+                    title = item.get("title", "")
+                    snippet = re.sub(r'<[^>]*>', '', item.get("snippet", ""))
+                    related_news.append({
+                        "title": title,
+                        "description": snippet,
+                        "url": f"https://en.wikipedia.org/wiki/{urllib.parse.quote(title.replace(' ', '_'))}",
+                        "source": "Wikipedia",
+                        "thumbnail": ""
+                    })
+        except Exception as e:
+            log.warning(f"Bot Wikipedia search failed: {e}")
+
+        # ── 2. Build enriched prompt with the fetched news context ───────────
+        news_context = ""
+        if related_news:
+            snippets = "\n".join([f"- {n['title']}: {n['description'][:120]}" for n in related_news[:5]])
+            news_context = f"\n\nRELATED NEWS CONTEXT:\n{snippets}"
+
         system_instruction = (
             "SYSTEM INSTRUCTION: You are TruthBot, a professional AI news assistant for TruthLens. "
             "Your core mission is to provide accurate news, verify information, and fact-check claims. "
             "DO NOT provide recipes, step-by-step tutorials, or non-news content. "
-            "If asked about a general topic (like 'cake'), respond with news, industry trends, "
-            "or interesting news-worthy facts about that topic, but NEVER provide a baking guide or recipe. "
+            "Use the RELATED NEWS CONTEXT provided to give an informed, accurate answer. "
             "Stay concise, professional, and strictly news-oriented.\n\n"
         )
-        full_prompt = f"{system_instruction}User Question: {msg}"
-        
+        full_prompt = f"{system_instruction}User Question: {msg}{news_context}"
+
+        # ── 3. Call AI ────────────────────────────────────────────────────────
         try:
             reply = call_ai(full_prompt, temperature=0.3)
-            return jsonify({"success": True, "reply": reply})
-        except Exception as e:
-            # FALLBACK: Use Wikipedia to get a basic answer if all AI is at limit
-            try:
-                search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(msg)}&utf8=&format=json"
-                wiki_resp = http_requests.get(search_url, timeout=5).json()
-                search_results = wiki_resp.get("query", {}).get("search", [])
-                if search_results:
-                    snippet = re.sub(r'<[^>]*>', '', search_results[0].get("snippet", ""))
-                    return jsonify({
-                        "success": True,
-                        "reply": f"I've reached my AI limit for the moment, but here is what I found on Wikipedia about '{msg}': {snippet}... (Please try again later for a full AI analysis.)"
-                    })
-            except Exception:
-                pass
             return jsonify({
                 "success": True,
-                "reply": "I'm currently at my usage limit, but I'll be back shortly! You can still use the 'Verify News' tool in the meantime."
+                "reply": reply,
+                "related_news": related_news[:5]
+            })
+        except Exception as e:
+            # FALLBACK: Return Wikipedia snippet if AI fails
+            if related_news:
+                return jsonify({
+                    "success": True,
+                    "reply": f"Here is what I found about '{msg}': {related_news[0]['description']}...",
+                    "related_news": related_news[:5]
+                })
+            return jsonify({
+                "success": True,
+                "reply": "I'm currently at my usage limit, but I'll be back shortly! You can still use the 'Verify News' tool in the meantime.",
+                "related_news": []
             })
     except Exception as e:
         log.error(f"Bot error: {e}")
