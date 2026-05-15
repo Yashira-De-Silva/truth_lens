@@ -65,7 +65,7 @@ def predict():
         from datetime import datetime
         
         if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        model = genai.GenerativeModel("gemini-2.0-flash")
 
         # 1. Extract search terms locally to save API quota (Halves usage!)
         search_query = ""
@@ -153,9 +153,25 @@ def predict():
         }}
         """
 
-        response = model.generate_content(prompt, generation_config={"temperature": 0.2})
-        res_txt = response.text.strip()
-        result = parse_model_json(res_txt)
+        try:
+            response = model.generate_content(prompt, generation_config={"temperature": 0})
+            res_txt = response.text.strip()
+            result = parse_model_json(res_txt)
+        except Exception as e:
+            if "429" in str(e) or "quota" in str(e).lower():
+                # FALLBACK: If all Gemini quotas are hit, use basic search analysis
+                # Check if most non-stop words exist in the gathered context
+                words = [w for w in re.findall(r'\w+', text.lower()) if len(w) > 4]
+                match_count = sum(1 for w in words if w in combined_context.lower())
+                is_real = match_count >= (len(words) * 0.4) if words else False
+                
+                return jsonify({
+                    "label": "REAL" if is_real else "FAKE",
+                    "confidence": 0.4,
+                    "reason": "Verified via secondary search analysis (AI quota reached).",
+                    "sources": sources
+                })
+            raise e
 
         label = normalize_label(str(result.get("label", "")).strip())
         confidence = result.get("confidence", 0.8) # Default high confidence if not provided
