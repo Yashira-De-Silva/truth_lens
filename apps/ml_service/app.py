@@ -149,7 +149,11 @@ def predict():
         except Exception as e:
             log.warning(f"News search failed: {e}")
             
-        if not sources: sources = ["TruthLens Internal Knowledge Base"]
+        # De-dupe sources while preserving order
+        if sources:
+            sources = list(dict.fromkeys(sources))
+        else:
+            sources = ["TruthLens Internal Knowledge Base"]
 
         # 4. Final Verification
         combined_context = (wiki_context + "\n\n" + news_context).strip()
@@ -189,15 +193,20 @@ def predict():
             action_verbs = {'won', 'lost', 'fired', 'died', 'arrested', 'resigned', 'elected', 'appointed', 'destroyed', 'captured'}
             claim_actions = [w for w in all_words if w in action_verbs]
             
-            # 1. Base Density Score
-            match_count = sum(1 for w in all_words if w in combined_context.lower())
-            score = (match_count / len(all_words)) if all_words else 0
+            context_l = combined_context.lower()
+
+            # 1. Coverage score (how much of the claim is supported by retrieved snippets)
+            match_count = sum(1 for w in all_words if w in context_l)
+            coverage = (match_count / len(all_words)) if all_words else 0.0
+
+            # Base assumption: if we can't confirm, we should not mark REAL.
+            fake_likelihood = 1.0 - coverage
 
             # 2. Action-Verb Check: The specific action MUST be confirmed in sources
             if claim_actions:
                 action_confirmed = any(a in combined_context.lower() for a in claim_actions)
                 if not action_confirmed:
-                    score = min(score, 0.35)  # Force FAKE if action not confirmed
+                    fake_likelihood = max(fake_likelihood, 0.75)  # Strong FAKE signal
 
             # 3. Year-Event Mismatch: Check if the event (e.g. "world cup") happened in the claimed year
             if years:
@@ -210,24 +219,49 @@ def predict():
                             a in s.lower() for a in claim_actions for s in relevant_snippets
                         )
                         if not action_near_year:
-                            score = min(score, 0.35)  # Action not linked to that year → FAKE
+                            fake_likelihood = max(fake_likelihood, 0.8)
                     
                     # If the year is NOT in context at all, it's likely a future/invented claim
                     if not relevant_snippets and years:
-                        score = min(score, 0.4)
+                        fake_likelihood = max(fake_likelihood, 0.7)
 
                     # Strict Name Linking
                     if relevant_snippets:
                         names = [w for w in all_words if w not in {'president', 'minister', 'lanka', 'india', 'government', 'world', 'cricket', 'team'}]
                         name_match = sum(1 for n in names if any(n in s.lower() for s in relevant_snippets))
                         if name_match == 0:
-                            score = min(score, 0.4)
-            
+                            fake_likelihood = max(fake_likelihood, 0.7)
+
+            # Final conservative decisioning:
+            # - FAKE if strong signals exist
+            # - UNCERTAIN if we don't have enough evidence
+            # - REAL is only possible from the Gemini JSON path
+            if fake_likelihood >= 0.7:
+                label = "FAKE"
+                confidence = min(max(fake_likelihood, 0.0), 1.0)
+            else:
+                label = "UNCERTAIN"
+                confidence = 0.5
+
+            # Keep sources relevant: only include those that share key tokens with the claim
+            key_tokens = [w for w in all_words if w not in {'news', 'claim', 'said', 'says', 'team'}]
+            filtered_sources = []
+            for s in sources:
+                s_l = s.lower()
+                if any(t in s_l for t in key_tokens[:8]):
+                    filtered_sources.append(s)
+            filtered_sources = list(dict.fromkeys(filtered_sources))
+            if not filtered_sources:
+                filtered_sources = sources[:10]
+
             return jsonify({
-                "label": "REAL" if score >= 0.5 else "FAKE",
-                "confidence": score,
-                "reason": f"Verified via event-year mismatch analysis (AI limits reached). Match score: {round(score*100, 1)}%",
-                "sources": sources
+                "label": label,
+                "confidence": confidence,
+                "reason": (
+                    "Fallback verification (AI limit reached): fetched evidence doesn't confirm this claim "
+                    "(or indicates a likely time/event mismatch)."
+                ),
+                "sources": filtered_sources[:12]
             })
 
         label = normalize_label(str(result.get("label", "")).strip())
@@ -250,7 +284,12 @@ def predict():
                 "sources": sources
             })
 
+        # Prefer model-provided relevant sources but still de-dupe and cap
         final_sources = result.get("relevant_sources") or sources
+        if isinstance(final_sources, list):
+            final_sources = list(dict.fromkeys([str(x) for x in final_sources]))[:12]
+        else:
+            final_sources = sources[:12]
 
         return jsonify({
             "label": label,
