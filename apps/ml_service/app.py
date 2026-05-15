@@ -182,12 +182,12 @@ def predict():
             # FALLBACK: If all Gemini quotas are hit, use basic search analysis
             words = [w for w in re.findall(r'\w+', text.lower()) if len(w) > 4]
             match_count = sum(1 for w in words if w in combined_context.lower())
-            is_real = match_count >= (len(words) * 0.5) if words else False
+            score = (match_count / len(words)) if words else 0
             
             return jsonify({
-                "label": "REAL" if is_real else "FAKE",
-                "confidence": 0.4,
-                "reason": "Verified via secondary search analysis (All AI keys hit limits).",
+                "label": "REAL" if score >= 0.5 else "FAKE",
+                "confidence": score,
+                "reason": f"Verified via secondary search analysis (All AI keys hit limits). Match score: {round(score*100, 1)}%",
                 "sources": sources
             })
 
