@@ -65,7 +65,7 @@ def predict():
         from datetime import datetime
         
         if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
 
         # 1. Extract refined search terms
         search_query = ""
@@ -271,7 +271,7 @@ def bot_ask():
             "Stay concise, professional, and strictly news-oriented.\n\n"
         )
         
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+        model = genai.GenerativeModel(model_name="gemini-2.5-flash")
         full_prompt = f"{system_instruction}User Question: {msg}"
         
         response = model.generate_content(full_prompt)
