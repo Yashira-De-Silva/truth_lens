@@ -2,12 +2,13 @@
 TruthLens — Python ML Service (RAM Stable Mode)
 ==============================================
 Fully optimized for Render Free Tier (512MB RAM).
-Uses Google Gemini (Gemma-3) for all classification tasks.
+Uses Groq (primary) + Google Gemini (fallback) for all AI tasks.
 Removed scikit-learn to prevent OOM (Out of Memory) crashes.
 """
 
 import os
 import logging
+import random
 from typing import Optional, Any
 
 from flask import Flask, jsonify, request
@@ -24,32 +25,75 @@ CORS(app)
 # ── Config ────────────────────────────────────────────────────────────────────
 GUARDIAN_API_KEY = os.environ.get("GUARDIAN_API_KEY", "c6d32650-a403-4157-8569-4e39624a022d")
 GUARDIAN_BASE    = "https://content.guardianapis.com"
-import random
-GEMINI_API_KEYS = os.environ.get("GEMINI_API_KEY", "AIzaSyBLj3XLZMQSqSDAi0gpb1tWu5avKFTYowk").split(",")
-GEMINI_API_KEYS = [k.strip() for k in GEMINI_API_KEYS if k.strip()]
 
-def call_gemini_with_retry(model_name, prompt, temperature=0.2):
+# Groq (Primary AI - 14,400 free req/day)
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
+GROQ_BASE    = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODELS  = ["llama3-8b-8192", "mixtral-8x7b-32768", "gemma2-9b-it"]
+
+# Gemini (Secondary fallback)
+GEMINI_API_KEYS_RAW = os.environ.get("GEMINI_API_KEY", "").strip()
+GEMINI_API_KEYS = [k.strip() for k in GEMINI_API_KEYS_RAW.split(",") if k.strip()]
+
+
+def call_groq(prompt: str, temperature: float = 0.2) -> str:
+    """Call Groq API — 14,400 free requests/day."""
+    if not GROQ_API_KEY:
+        raise Exception("GROQ_API_KEY not set")
+    for model in GROQ_MODELS:
+        try:
+            resp = http_requests.post(
+                GROQ_BASE,
+                headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": temperature,
+                    "max_tokens": 1024,
+                },
+                timeout=30,
+            )
+            if resp.status_code == 200:
+                return resp.json()["choices"][0]["message"]["content"].strip()
+            log.warning(f"Groq model {model} returned {resp.status_code}: {resp.text[:200]}")
+        except Exception as e:
+            log.warning(f"Groq model {model} failed: {e}")
+    raise Exception("All Groq models failed")
+
+
+def call_gemini_fallback(prompt: str, temperature: float = 0.2) -> str:
+    """Gemini fallback — only called when Groq is unavailable."""
+    if not GEMINI_API_KEYS:
+        raise Exception("No GEMINI_API_KEY set")
     import google.generativeai as genai
     keys = list(GEMINI_API_KEYS)
     random.shuffle(keys)
     last_error = None
-    
-    # Try the requested model first, then fall back to the high-capacity 8b model
-    for model_to_try in [model_name, "gemini-1.5-flash-8b"]:
+    for model_name in ["gemini-2.0-flash", "gemini-1.5-flash-8b"]:
         for key in keys:
             try:
                 genai.configure(api_key=key)
-                model = genai.GenerativeModel(model_to_try)
-                response = model.generate_content(prompt, generation_config={"temperature": temperature})
-                return response.text.strip()
+                model = genai.GenerativeModel(model_name)
+                resp = model.generate_content(prompt, generation_config={"temperature": temperature})
+                return resp.text.strip()
             except Exception as e:
                 last_error = e
-                err_msg = str(e).lower()
-                if "400" in err_msg or "invalid" in err_msg or "429" in err_msg or "quota" in err_msg:
-                    log.warning(f"Model {model_to_try} failed with key {key[:8]}..., trying next...")
-                    continue
-                break
-    raise last_error if last_error else Exception("No working API keys or models")
+                log.warning(f"Gemini {model_name} key {key[:8]}... failed: {e}")
+    raise last_error if last_error else Exception("All Gemini keys failed")
+
+
+def call_ai(prompt: str, temperature: float = 0.2) -> str:
+    """Primary AI caller: Groq first, Gemini as fallback."""
+    try:
+        return call_groq(prompt, temperature)
+    except Exception as e:
+        log.warning(f"Groq unavailable ({e}), falling back to Gemini...")
+        return call_gemini_fallback(prompt, temperature)
+
+
+def call_gemini(model_name, prompt, temperature=0.2):
+    """Legacy alias used by summarize route — now routes through call_ai."""
+    return call_ai(prompt, temperature)
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -183,7 +227,7 @@ def predict():
         """
 
         try:
-            res_txt = call_gemini_with_retry("gemini-2.0-flash", prompt, temperature=0)
+            res_txt = call_ai(prompt, temperature=0)
             result = parse_model_json(res_txt)
         except Exception as e:
             # FALLBACK: Advanced Temporal, Event & Holistic Analysis
@@ -342,7 +386,10 @@ def summarize():
     if not text: return jsonify({"success": False, "message": "No text"}), 400
     
     try:
-        summary = call_gemini_with_retry("gemini-2.0-flash", f"Summarize this news article in exactly 3 concise bullet points or sentences:\n\n{text}")
+        summary = call_gemini(
+            "gemini-2.0-flash",
+            f"Summarize this news article in exactly 3 concise bullet points or sentences:\n\n{text}",
+        )
         return jsonify({
             "success": True,
             "summary": summary
@@ -366,11 +413,7 @@ def bot_ask():
     msg = request.json.get("message", "").strip()
     if not msg: return jsonify({"success": False}), 400
     try:
-        import google.generativeai as genai
-        # Removed undefined GEMINI_API_KEY check
-        
-        # Strict system instruction to ensure bot only discusses news and verification
-        # Prepending instead of using system_instruction parameter due to Gemma model limitations
+        import re, urllib.parse
         system_instruction = (
             "SYSTEM INSTRUCTION: You are TruthBot, a professional AI news assistant for TruthLens. "
             "Your core mission is to provide accurate news, verify information, and fact-check claims. "
@@ -379,21 +422,14 @@ def bot_ask():
             "or interesting news-worthy facts about that topic, but NEVER provide a baking guide or recipe. "
             "Stay concise, professional, and strictly news-oriented.\n\n"
         )
-        
-        model = genai.GenerativeModel(model_name="gemini-2.0-flash")
         full_prompt = f"{system_instruction}User Question: {msg}"
         
         try:
-            reply = call_gemini_with_retry("gemini-2.0-flash", full_prompt, temperature=0.3)
-            return jsonify({
-                "success": True, 
-                "reply": reply
-            })
+            reply = call_ai(full_prompt, temperature=0.3)
+            return jsonify({"success": True, "reply": reply})
         except Exception as e:
-            # FALLBACK: Use Wikipedia to get a basic answer if AI is at limit
+            # FALLBACK: Use Wikipedia to get a basic answer if all AI is at limit
             try:
-                import urllib.parse
-                import re
                 search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(msg)}&utf8=&format=json"
                 wiki_resp = http_requests.get(search_url, timeout=5).json()
                 search_results = wiki_resp.get("query", {}).get("search", [])
@@ -403,7 +439,7 @@ def bot_ask():
                         "success": True,
                         "reply": f"I've reached my AI limit for the moment, but here is what I found on Wikipedia about '{msg}': {snippet}... (Please try again later for a full AI analysis.)"
                     })
-            except:
+            except Exception:
                 pass
             return jsonify({
                 "success": True,
