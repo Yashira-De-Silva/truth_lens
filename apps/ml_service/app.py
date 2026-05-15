@@ -24,7 +24,30 @@ CORS(app)
 # ── Config ────────────────────────────────────────────────────────────────────
 GUARDIAN_API_KEY = os.environ.get("GUARDIAN_API_KEY", "c6d32650-a403-4157-8569-4e39624a022d")
 GUARDIAN_BASE    = "https://content.guardianapis.com"
-GEMINI_API_KEY   = os.environ.get("GEMINI_API_KEY", "AIzaSyBLj3XLZMQSqSDAi0gpb1tWu5avKFTYowk")
+import random
+GEMINI_API_KEYS = os.environ.get("GEMINI_API_KEY", "AIzaSyBLj3XLZMQSqSDAi0gpb1tWu5avKFTYowk").split(",")
+GEMINI_API_KEYS = [k.strip() for k in GEMINI_API_KEYS if k.strip()]
+
+def call_gemini_with_retry(model_name, prompt, temperature=0.2):
+    import google.generativeai as genai
+    keys = list(GEMINI_API_KEYS)
+    random.shuffle(keys)
+    last_error = None
+    
+    for key in keys:
+        try:
+            genai.configure(api_key=key)
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(prompt, generation_config={"temperature": temperature})
+            return response.text.strip()
+        except Exception as e:
+            last_error = e
+            err_msg = str(e).lower()
+            if "400" in err_msg or "invalid" in err_msg or "429" in err_msg or "quota" in err_msg:
+                log.warning(f"Key issue detected ({key[:8]}...), trying next key...")
+                continue
+            break
+    raise last_error if last_error else Exception("No working API keys")
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -154,24 +177,20 @@ def predict():
         """
 
         try:
-            response = model.generate_content(prompt, generation_config={"temperature": 0})
-            res_txt = response.text.strip()
+            res_txt = call_gemini_with_retry("gemini-2.0-flash", prompt, temperature=0)
             result = parse_model_json(res_txt)
         except Exception as e:
-            if "429" in str(e) or "quota" in str(e).lower():
-                # FALLBACK: If all Gemini quotas are hit, use basic search analysis
-                # Check if most non-stop words exist in the gathered context
-                words = [w for w in re.findall(r'\w+', text.lower()) if len(w) > 4]
-                match_count = sum(1 for w in words if w in combined_context.lower())
-                is_real = match_count >= (len(words) * 0.4) if words else False
-                
-                return jsonify({
-                    "label": "REAL" if is_real else "FAKE",
-                    "confidence": 0.4,
-                    "reason": "Verified via secondary search analysis (AI quota reached).",
-                    "sources": sources
-                })
-            raise e
+            # FALLBACK: If all Gemini quotas are hit, use basic search analysis
+            words = [w for w in re.findall(r'\w+', text.lower()) if len(w) > 4]
+            match_count = sum(1 for w in words if w in combined_context.lower())
+            is_real = match_count >= (len(words) * 0.5) if words else False
+            
+            return jsonify({
+                "label": "REAL" if is_real else "FAKE",
+                "confidence": 0.4,
+                "reason": "Verified via secondary search analysis (All AI keys hit limits).",
+                "sources": sources
+            })
 
         label = normalize_label(str(result.get("label", "")).strip())
         confidence = result.get("confidence", 0.8) # Default high confidence if not provided
@@ -283,31 +302,29 @@ def bot_ask():
         full_prompt = f"{system_instruction}User Question: {msg}"
         
         try:
-            response = model.generate_content(full_prompt)
+            reply = call_gemini_with_retry("gemini-2.0-flash", full_prompt, temperature=0.3)
             return jsonify({
                 "success": True, 
-                "reply": response.text
+                "reply": reply
             })
         except Exception as e:
-            if "429" in str(e) or "quota" in str(e).lower():
-                # FALLBACK: Use Wikipedia to get a basic answer if AI is at limit
-                try:
-                    search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(msg)}&utf8=&format=json"
-                    wiki_resp = requests.get(search_url, timeout=5).json()
-                    search_results = wiki_resp.get("query", {}).get("search", [])
-                    if search_results:
-                        snippet = re.sub(r'<[^>]*>', '', search_results[0].get("snippet", ""))
-                        return jsonify({
-                            "success": True,
-                            "reply": f"I've reached my AI limit for the moment, but here is what I found on Wikipedia about '{msg}': {snippet}... (Please try again later for a full AI analysis.)"
-                        })
-                except:
-                    pass
-                return jsonify({
-                    "success": True,
-                    "reply": "I'm currently at my usage limit, but I'll be back shortly! You can still use the 'Verify News' tool in the meantime."
-                })
-            raise e
+            # FALLBACK: Use Wikipedia to get a basic answer if AI is at limit
+            try:
+                search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(msg)}&utf8=&format=json"
+                wiki_resp = requests.get(search_url, timeout=5).json()
+                search_results = wiki_resp.get("query", {}).get("search", [])
+                if search_results:
+                    snippet = re.sub(r'<[^>]*>', '', search_results[0].get("snippet", ""))
+                    return jsonify({
+                        "success": True,
+                        "reply": f"I've reached my AI limit for the moment, but here is what I found on Wikipedia about '{msg}': {snippet}... (Please try again later for a full AI analysis.)"
+                    })
+            except:
+                pass
+            return jsonify({
+                "success": True,
+                "reply": "I'm currently at my usage limit, but I'll be back shortly! You can still use the 'Verify News' tool in the meantime."
+            })
     except Exception as e:
         log.error(f"Bot error: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
