@@ -67,12 +67,13 @@ def predict():
         if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
         model = genai.GenerativeModel("gemini-2.5-flash")
 
-        # 1. Extract refined search terms
+        # 1. Extract search terms locally to save API quota (Halves usage!)
         search_query = ""
         try:
-            kw_prompt = f"Extract the most relevant entities (names, places, events) from this claim to search on Wikipedia and News APIs for verification: '{text}'. Respond with ONLY the search terms, separated by spaces."
-            kw_resp = model.generate_content(kw_prompt)
-            search_query = kw_resp.text.strip().replace('"', '')
+            # Simple extraction: remove common words and take first 5-7 words
+            stop_words = {'a', 'an', 'the', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+            words = [w for w in re.findall(r'\w+', text.lower()) if w not in stop_words]
+            search_query = " ".join(words[:6])
         except Exception:
             search_query = text[:50]
 
