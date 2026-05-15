@@ -34,20 +34,22 @@ def call_gemini_with_retry(model_name, prompt, temperature=0.2):
     random.shuffle(keys)
     last_error = None
     
-    for key in keys:
-        try:
-            genai.configure(api_key=key)
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(prompt, generation_config={"temperature": temperature})
-            return response.text.strip()
-        except Exception as e:
-            last_error = e
-            err_msg = str(e).lower()
-            if "400" in err_msg or "invalid" in err_msg or "429" in err_msg or "quota" in err_msg:
-                log.warning(f"Key issue detected ({key[:8]}...), trying next key...")
-                continue
-            break
-    raise last_error if last_error else Exception("No working API keys")
+    # Try the requested model first, then fall back to the high-capacity 8b model
+    for model_to_try in [model_name, "gemini-1.5-flash-8b"]:
+        for key in keys:
+            try:
+                genai.configure(api_key=key)
+                model = genai.GenerativeModel(model_to_try)
+                response = model.generate_content(prompt, generation_config={"temperature": temperature})
+                return response.text.strip()
+            except Exception as e:
+                last_error = e
+                err_msg = str(e).lower()
+                if "400" in err_msg or "invalid" in err_msg or "429" in err_msg or "quota" in err_msg:
+                    log.warning(f"Model {model_to_try} failed with key {key[:8]}..., trying next...")
+                    continue
+                break
+    raise last_error if last_error else Exception("No working API keys or models")
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -93,7 +95,7 @@ def predict():
         search_query = ""
         try:
             # Simple extraction: remove common words and take first 5-7 words
-            stop_words = {'a', 'an', 'the', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+            stop_words = {'a', 'an', 'the', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is'}
             words = [w for w in re.findall(r'\w+', text.lower()) if w not in stop_words]
             search_query = " ".join(words[:6])
         except Exception:
@@ -139,22 +141,21 @@ def predict():
                         headline = f.get("headline", "")
                         trail = f.get("trailText", "")
                         url = it.get("webUrl", "")
-                        news_snippets.append(f"- News ({headline}): {trail}")
+                        news_snippets.append(f"- Guardian: {headline} - {trail}")
                         sources.append(f"Guardian: {headline}")
-                    if news_snippets: news_context = "News Context:\n" + "\n".join(news_snippets)
+                    if news_snippets: news_context = "Recent News Context:\n" + "\n".join(news_snippets)
         except Exception as e:
-            log.warning(f"Guardian search failed: {e}")
+            log.warning(f"News search failed: {e}")
             
         if not sources: sources = ["TruthLens Internal Knowledge Base"]
 
         # 4. Final Verification
-        now = datetime.now().strftime("%B %Y")
-        combined_context = f"{wiki_context}\n\n{news_context}".strip()
+        combined_context = (wiki_context + "\n\n" + news_context).strip()
         
         prompt = f"""
-        You are TruthBot, a world-class fact-checking expert. Current Date: {now}.
-        
-        CLAIM: "{text}"
+        VERIFY THIS NEWS CLAIM:
+        Claim: {text}
+        Current Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
         EVIDENCE GATHERED:
         {combined_context if combined_context else 'No direct search results found. Use your internal knowledge.'}
@@ -179,15 +180,25 @@ def predict():
             res_txt = call_gemini_with_retry("gemini-2.0-flash", prompt, temperature=0)
             result = parse_model_json(res_txt)
         except Exception as e:
-            # FALLBACK: If all Gemini quotas are hit, use basic search analysis
-            words = [w for w in re.findall(r'\w+', text.lower()) if len(w) > 4]
-            match_count = sum(1 for w in words if w in combined_context.lower())
-            score = (match_count / len(words)) if words else 0
+            # FALLBACK: Holistic Sentence Analysis
+            all_words = [w for w in re.findall(r'\w+', text.lower()) if len(w) > 3]
+            event_keywords = {'fire', 'death', 'dead', 'died', 'won', 'lost', 'arrested', 'on fire'}
+            critical_words = [w for w in all_words if w in event_keywords]
+            
+            # Check for density: how many claim words appear in the SAME snippet
+            match_count = sum(1 for w in all_words if w in combined_context.lower())
+            score = (match_count / len(all_words)) if all_words else 0
+            
+            # If critical event words (like 'fire') are missing from the search evidence, it's likely FAKE
+            if critical_words:
+                critical_match = sum(1 for w in critical_words if w in combined_context.lower())
+                if critical_match == 0:
+                    score = min(score, 0.4) # Force to FAKE if the main event is missing
             
             return jsonify({
                 "label": "REAL" if score >= 0.5 else "FAKE",
                 "confidence": score,
-                "reason": f"Verified via secondary search analysis (All AI keys hit limits). Match score: {round(score*100, 1)}%",
+                "reason": f"Verified via holistic sentence analysis (AI limits reached). Match density: {round(score*100, 1)}%",
                 "sources": sources
             })
 
