@@ -87,8 +87,7 @@ def predict():
         import requests, urllib.parse, re
         from datetime import datetime
         
-        if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        # Using call_gemini_with_retry below for robust rotation and error handling
 
         # 1. Extract search terms locally to save API quota (Halves usage!)
         search_query = ""
