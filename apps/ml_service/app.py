@@ -2,13 +2,12 @@
 TruthLens — Python ML Service (RAM Stable Mode)
 ==============================================
 Fully optimized for Render Free Tier (512MB RAM).
-Uses Groq (primary) + Google Gemini (fallback) for all AI tasks.
-Removed scikit-learn to prevent OOM (Out of Memory) crashes.
+Uses Groq (Llama 3 / Mixtral) as the sole AI provider.
+Fallback: Wikipedia + Guardian search analysis.
 """
 
 import os
 import logging
-import random
 from typing import Optional, Any
 
 from flask import Flask, jsonify, request
@@ -26,20 +25,16 @@ CORS(app)
 GUARDIAN_API_KEY = os.environ.get("GUARDIAN_API_KEY", "c6d32650-a403-4157-8569-4e39624a022d")
 GUARDIAN_BASE    = "https://content.guardianapis.com"
 
-# Groq (Primary AI - 14,400 free req/day)
+# Groq — sole AI provider (14,400 free req/day)
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
 GROQ_BASE    = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODELS  = ["llama3-8b-8192", "mixtral-8x7b-32768", "gemma2-9b-it"]
 
-# Gemini (Secondary fallback)
-GEMINI_API_KEYS_RAW = os.environ.get("GEMINI_API_KEY", "").strip()
-GEMINI_API_KEYS = [k.strip() for k in GEMINI_API_KEYS_RAW.split(",") if k.strip()]
 
-
-def call_groq(prompt: str, temperature: float = 0.2) -> str:
-    """Call Groq API — 14,400 free requests/day."""
+def call_ai(prompt: str, temperature: float = 0.2) -> str:
+    """Call Groq. Raises if unavailable — caller handles fallback."""
     if not GROQ_API_KEY:
-        raise Exception("GROQ_API_KEY not set")
+        raise Exception("GROQ_API_KEY not set. Please add it in Render Environment.")
     for model in GROQ_MODELS:
         try:
             resp = http_requests.post(
@@ -59,41 +54,6 @@ def call_groq(prompt: str, temperature: float = 0.2) -> str:
         except Exception as e:
             log.warning(f"Groq model {model} failed: {e}")
     raise Exception("All Groq models failed")
-
-
-def call_gemini_fallback(prompt: str, temperature: float = 0.2) -> str:
-    """Gemini fallback — only called when Groq is unavailable."""
-    if not GEMINI_API_KEYS:
-        raise Exception("No GEMINI_API_KEY set")
-    import google.generativeai as genai
-    keys = list(GEMINI_API_KEYS)
-    random.shuffle(keys)
-    last_error = None
-    for model_name in ["gemini-2.0-flash", "gemini-1.5-flash-8b"]:
-        for key in keys:
-            try:
-                genai.configure(api_key=key)
-                model = genai.GenerativeModel(model_name)
-                resp = model.generate_content(prompt, generation_config={"temperature": temperature})
-                return resp.text.strip()
-            except Exception as e:
-                last_error = e
-                log.warning(f"Gemini {model_name} key {key[:8]}... failed: {e}")
-    raise last_error if last_error else Exception("All Gemini keys failed")
-
-
-def call_ai(prompt: str, temperature: float = 0.2) -> str:
-    """Primary AI caller: Groq first, Gemini as fallback."""
-    try:
-        return call_groq(prompt, temperature)
-    except Exception as e:
-        log.warning(f"Groq unavailable ({e}), falling back to Gemini...")
-        return call_gemini_fallback(prompt, temperature)
-
-
-def call_gemini(model_name, prompt, temperature=0.2):
-    """Legacy alias used by summarize route — now routes through call_ai."""
-    return call_ai(prompt, temperature)
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -133,7 +93,7 @@ def predict():
         import requests, urllib.parse, re
         from datetime import datetime
         
-        # Using call_gemini_with_retry below for robust rotation and error handling
+        # Using Groq (call_ai) for robust AI-powered search
 
         # 1. Extract search terms locally to save API quota (Halves usage!)
         search_query = ""
@@ -386,8 +346,7 @@ def summarize():
     if not text: return jsonify({"success": False, "message": "No text"}), 400
     
     try:
-        summary = call_gemini(
-            "gemini-2.0-flash",
+        summary = call_ai(
             f"Summarize this news article in exactly 3 concise bullet points or sentences:\n\n{text}",
         )
         return jsonify({
