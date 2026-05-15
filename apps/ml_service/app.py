@@ -105,45 +105,47 @@ def predict():
         news_context = ""
         sources = []
 
-        # 2. Wikipedia Search
+        # 2. Wikipedia Search (Expanded)
         try:
             if search_query:
-                url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(search_query)}&utf8=&format=json"
-                req = requests.get(url, headers={'User-Agent': 'TruthLensBot/1.0'}, timeout=5)
-                if req.status_code == 200:
-                    results = req.json().get('query', {}).get('search', [])
-                    snippets = []
-                    for r in results[:3]:
-                        title = r.get('title')
-                        snippet = re.sub('<[^<]+>', '', r.get('snippet', ''))
-                        snippets.append(f"- Wikipedia ({title}): {snippet}")
-                        sources.append(f"Wikipedia: {title}")
-                    if snippets: wiki_context = "Wikipedia Context:\n" + "\n".join(snippets)
+                # DUAL QUERY: Search claim AND historical fact (if year mentioned)
+                year_match = re.search(r'\b(19|20)\d{2}\b', text)
+                queries = [search_query]
+                if year_match:
+                    queries.append(f"who was the president of sri lanka in {year_match.group(0)}")
+                
+                for q in queries:
+                    url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(q)}&utf8=&format=json"
+                    req = requests.get(url, headers={'User-Agent': 'TruthLensBot/1.0'}, timeout=5)
+                    if req.status_code == 200:
+                        results = req.json().get('query', {}).get('search', [])
+                        for r in results[:5]: # More snippets for better coverage
+                            title = r.get('title')
+                            snippet = re.sub('<[^<]+>', '', r.get('snippet', ''))
+                            wiki_context += f"\n- Wikipedia ({title}): {snippet}"
+                            sources.append(f"Wikipedia: {title}")
         except Exception as e:
             log.warning(f"Wiki search failed: {e}")
 
-        # 3. Guardian News Search (Cross-Check)
+        # 3. Guardian News Search (Expanded)
         try:
             if search_query and GUARDIAN_API_KEY:
                 params = {
                     "q": search_query,
                     "api-key": GUARDIAN_API_KEY,
                     "show-fields": "headline,trailText",
-                    "page-size": 3,
+                    "page-size": 10, # More results for better accuracy
                     "order-by": "relevance"
                 }
                 r = requests.get(f"{GUARDIAN_BASE}/search", params=params, timeout=10)
                 if r.status_code == 200:
                     news_results = r.json().get("response", {}).get("results", [])
-                    news_snippets = []
                     for it in news_results:
                         f = it.get("fields", {})
                         headline = f.get("headline", "")
                         trail = f.get("trailText", "")
-                        url = it.get("webUrl", "")
-                        news_snippets.append(f"- Guardian: {headline} - {trail}")
+                        news_context += f"\n- Guardian: {headline} - {trail}"
                         sources.append(f"Guardian: {headline}")
-                    if news_snippets: news_context = "Recent News Context:\n" + "\n".join(news_snippets)
         except Exception as e:
             log.warning(f"News search failed: {e}")
             
@@ -190,16 +192,21 @@ def predict():
             match_count = sum(1 for w in all_words if w in combined_context.lower())
             score = (match_count / len(all_words)) if all_words else 0
             
-            # 2. Temporal Check (Very strict)
-            # If a year is mentioned, check if other subjects are associated with it in the context
+            # 2. Temporal Check (Stricter Sentence Linking)
             if years:
                 for year in years:
-                    # If the year is in context but the main subject words are NOT near it, be skeptical
                     if year in combined_context:
-                        # Find context snippets containing the year
+                        # Scan each sentence/line for the year
                         relevant_snippets = [s for s in combined_context.split('\n') if year in s]
-                        subject_match = sum(1 for w in all_words if any(w in s.lower() for s in relevant_snippets))
-                        if subject_match < 2: # High skepticism if year exists but subject doesn't match
+                        
+                        # Find unique names in the claim (excluding common context words)
+                        names = [w for w in all_words if w not in {'president', 'minister', 'lanka', 'india', 'goverment'}]
+                        
+                        # A name MUST be found in the SAME sentence as the year to be a match
+                        name_match = sum(1 for n in names if any(n in s.lower() for s in relevant_snippets))
+                        
+                        if name_match == 0:
+                            # If the year is found but NONE of the claim names are in the same sentence, it's FAKE
                             score = min(score, 0.4)
             
             # 3. Critical Event Check
@@ -211,7 +218,7 @@ def predict():
             return jsonify({
                 "label": "REAL" if score >= 0.5 else "FAKE",
                 "confidence": score,
-                "reason": f"Verified via temporal conflict analysis (AI limits reached). Match score: {round(score*100, 1)}%",
+                "reason": f"Verified via temporal context validation (AI limits reached). Match score: {round(score*100, 1)}%",
                 "sources": sources
             })
 
