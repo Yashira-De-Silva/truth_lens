@@ -255,15 +255,10 @@ def summarize():
     if not text: return jsonify({"success": False, "message": "No text"}), 400
     
     try:
-        import google.generativeai as genai
-        if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        
-        prompt = f"Summarize this news article in exactly 3 concise bullet points or sentences:\n\n{text}"
-        response = model.generate_content(prompt)
+        summary = call_gemini_with_retry("gemini-2.0-flash", f"Summarize this news article in exactly 3 concise bullet points or sentences:\n\n{text}")
         return jsonify({
             "success": True,
-            "summary": response.text.strip()
+            "summary": summary
         })
     except Exception as e:
         log.error(f"Summarize error: {e}")
@@ -285,7 +280,7 @@ def bot_ask():
     if not msg: return jsonify({"success": False}), 400
     try:
         import google.generativeai as genai
-        if GEMINI_API_KEY: genai.configure(api_key=GEMINI_API_KEY)
+        # Removed undefined GEMINI_API_KEY check
         
         # Strict system instruction to ensure bot only discusses news and verification
         # Prepending instead of using system_instruction parameter due to Gemma model limitations
