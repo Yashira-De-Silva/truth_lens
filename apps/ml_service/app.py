@@ -279,11 +279,35 @@ def bot_ask():
             "Stay concise, professional, and strictly news-oriented.\n\n"
         )
         
-        model = genai.GenerativeModel(model_name="gemini-2.5-flash")
+        model = genai.GenerativeModel(model_name="gemini-2.0-flash")
         full_prompt = f"{system_instruction}User Question: {msg}"
         
-        response = model.generate_content(full_prompt)
-        return jsonify({"success": True, "reply": response.text})
+        try:
+            response = model.generate_content(full_prompt)
+            return jsonify({
+                "success": True, 
+                "reply": response.text
+            })
+        except Exception as e:
+            if "429" in str(e) or "quota" in str(e).lower():
+                # FALLBACK: Use Wikipedia to get a basic answer if AI is at limit
+                try:
+                    search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(msg)}&utf8=&format=json"
+                    wiki_resp = requests.get(search_url, timeout=5).json()
+                    search_results = wiki_resp.get("query", {}).get("search", [])
+                    if search_results:
+                        snippet = re.sub(r'<[^>]*>', '', search_results[0].get("snippet", ""))
+                        return jsonify({
+                            "success": True,
+                            "reply": f"I've reached my AI limit for the moment, but here is what I found on Wikipedia about '{msg}': {snippet}... (Please try again later for a full AI analysis.)"
+                        })
+                except:
+                    pass
+                return jsonify({
+                    "success": True,
+                    "reply": "I'm currently at my usage limit, but I'll be back shortly! You can still use the 'Verify News' tool in the meantime."
+                })
+            raise e
     except Exception as e:
         log.error(f"Bot error: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
