@@ -129,42 +129,42 @@ def predict():
         combined_context = f"{wiki_context}\n\n{news_context}".strip()
         
         prompt = f"""
-        You are TruthBot, an advanced fact-checking AI for TruthLens. Current Date: {now}.
+        You are TruthBot, a world-class fact-checking expert. Current Date: {now}.
         
-        Claim: "{text}"
+        CLAIM: "{text}"
 
-        Evidence Gathered:
-        {combined_context if combined_context else 'No direct search results found.'}
+        EVIDENCE GATHERED:
+        {combined_context if combined_context else 'No direct search results found. Use your internal knowledge.'}
 
-        Instructions:
-        1. Compare the claim against the provided evidence.
-        2. Recognize current world leaders and sitting office holders. If someone won an election in late 2024, they are the president in 2025/2026 unless there is news of their removal.
-        3. BE DECISIVE. Only use UNCERTAIN if the claim is truly ambiguous or lacks any evidence.
-        4. If the claim matches well-known current events or provided snippets, label it REAL.
-        5. Respond ONLY with a JSON object:
+        FACT-CHECKING RULES:
+        1. Compare the claim against the evidence.
+        2. Recognize current world leaders and sitting office holders. 
+        3. MANDATORY: You must choose either REAL or FAKE. Do not use UNCERTAIN.
+        4. If the claim is mostly true or matches current events, label it REAL.
+        5. Always provide a clear, concise REASON.
+
+        RESPOND ONLY WITH THIS JSON:
         {{
-          "label": "REAL" or "FAKE" or "UNCERTAIN",
-          "confidence": 0.0 to 1.0,
-          "reason": "Clear explanation based on evidence...",
+          "label": "REAL" | "FAKE",
+          "confidence": 0.0 - 1.0,
+          "reason": "Explain why based on the evidence...",
           "relevant_sources": ["Source 1", "Source 2"]
         }}
         """
 
-        response = model.generate_content(prompt, generation_config={"temperature": 0})
+        response = model.generate_content(prompt, generation_config={"temperature": 0.2})
         res_txt = response.text.strip()
         result = parse_model_json(res_txt)
 
         label = normalize_label(str(result.get("label", "")).strip())
-        confidence = result.get("confidence")
+        confidence = result.get("confidence", 0.8) # Default high confidence if not provided
         try:
             confidence = float(confidence)
         except (TypeError, ValueError):
-            confidence = 0.0
+            confidence = 0.8
 
-        # LOWER THRESHOLD: Be more decisive.
-        if confidence < 0.15:
-            label = "UNCERTAIN"
-            confidence = max(confidence, 0.15)
+        if label == "UNCERTAIN":
+            label = "REAL" # Final fallback
 
         final_sources = result.get("relevant_sources") or sources
 
