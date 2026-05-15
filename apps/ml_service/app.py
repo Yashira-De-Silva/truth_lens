@@ -66,10 +66,10 @@ def home():
 @app.route("/api/health")
 def health():
     try:
-        import psutil
+        import psutil  # type: ignore
         process = psutil.Process(os.getpid())
         ram_usage = process.memory_info().rss / 1024 / 1024
-    except:
+    except Exception:
         ram_usage = 0
     return jsonify({
         "status": "ok", 
@@ -184,7 +184,8 @@ def predict():
         except Exception as e:
             # FALLBACK: Advanced Temporal, Event & Holistic Analysis
             all_words = [w for w in re.findall(r'\w+', text.lower()) if len(w) > 3]
-            years = re.findall(r'\b(19|20)\d{2}\b', text)
+            # IMPORTANT: non-capturing group so findall returns full years like '2025'
+            years = re.findall(r'\b(?:19|20)\d{2}\b', text)
             action_verbs = {'won', 'lost', 'fired', 'died', 'arrested', 'resigned', 'elected', 'appointed', 'destroyed', 'captured'}
             claim_actions = [w for w in all_words if w in action_verbs]
             
@@ -230,20 +231,30 @@ def predict():
             })
 
         label = normalize_label(str(result.get("label", "")).strip())
-        confidence = result.get("confidence", 0.8) # Default high confidence if not provided
+        # Don't assume high confidence when the model doesn't provide it.
+        confidence = result.get("confidence", None)
         try:
-            confidence = float(confidence)
+            confidence = float(confidence) if confidence is not None else None
         except (TypeError, ValueError):
-            confidence = 0.8
+            confidence = None
 
+        # If the model couldn't produce a valid label, don't force REAL.
         if label == "UNCERTAIN":
-            label = "REAL" # Final fallback
+            return jsonify({
+                "label": "UNCERTAIN",
+                "confidence": 0.5,
+                "reason": (
+                    (result.get("reason") or "The AI couldn't provide a definitive verdict for this claim.")
+                    .strip()
+                ),
+                "sources": sources
+            })
 
         final_sources = result.get("relevant_sources") or sources
 
         return jsonify({
             "label": label,
-            "confidence": min(max(confidence, 0.0), 1.0),
+            "confidence": min(max(confidence if confidence is not None else 0.6, 0.0), 1.0),
             "reason": result.get("reason", "Verified via AI analysis.").strip(),
             "sources": final_sources
         })
@@ -342,8 +353,10 @@ def bot_ask():
         except Exception as e:
             # FALLBACK: Use Wikipedia to get a basic answer if AI is at limit
             try:
+                import urllib.parse
+                import re
                 search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(msg)}&utf8=&format=json"
-                wiki_resp = requests.get(search_url, timeout=5).json()
+                wiki_resp = http_requests.get(search_url, timeout=5).json()
                 search_results = wiki_resp.get("query", {}).get("search", [])
                 if search_results:
                     snippet = re.sub(r'<[^>]*>', '', search_results[0].get("snippet", ""))
