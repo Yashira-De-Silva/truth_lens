@@ -234,9 +234,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Text(
-                                  'Premium User',
-                                  style: TextStyle(
+                                child: Text(
+                                  l10n.premiumUser,
+                                  style: const TextStyle(
                                     color: Color(0xFF1A1F3A),
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
@@ -271,16 +271,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     children: [
                       Expanded(
                         child: _buildSocialStatCard(
-                          'Followers',
+                          l10n.followers,
                           '${ref.watch(profileProvider).followersCount}',
                           Icons.people_outline,
                           () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const FollowsListScreen(
+                                builder: (context) => FollowsListScreen(
                                   type: FollowListType.followers,
-                                  title: 'Followers',
+                                  title: l10n.followers,
                                 ),
                               ),
                             );
@@ -290,16 +290,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildSocialStatCard(
-                          'Following',
+                          l10n.following,
                           '${ref.watch(profileProvider).followingCount}',
                           Icons.person_add_outlined,
                           () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const FollowsListScreen(
+                                builder: (context) => FollowsListScreen(
                                   type: FollowListType.following,
-                                  title: 'Following',
+                                  title: l10n.following,
                                 ),
                               ),
                             );
@@ -369,9 +369,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Preview My Profile',
-                                    style: TextStyle(
+                                  Text(
+                                    l10n.previewProfile,
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
@@ -379,7 +379,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'See how others view your profile',
+                                    l10n.seeProfilePreview,
                                     style: TextStyle(
                                       color: Colors.white.withValues(
                                         alpha: 0.6,
@@ -442,8 +442,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     children: [
                       _buildSettingTile(
                         icon: Icons.bookmark,
-                        title: 'Bookmarks',
-                        subtitle: 'View your saved articles',
+                        title: l10n.bookmarks,
+                        subtitle: l10n.viewSavedArticles,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -456,10 +456,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       _buildDivider(),
                       _buildSettingTile(
                         icon: Icons.workspace_premium,
-                        title: 'Subscription',
+                        title: l10n.subscription,
                         subtitle: _subscriptionPlan == 'premium'
-                            ? 'Premium Plan'
-                            : 'Basic Plan - Upgrade now',
+                            ? l10n.premiumPlan
+                            : l10n.basicPlanUpgrade,
                         iconColor: _subscriptionPlan == 'premium'
                             ? const Color(0xFFFFD700)
                             : null,
@@ -509,15 +509,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                _buildSectionHeader('Fun & Games'),
+                _buildSectionHeader(l10n.funGames),
                 const SizedBox(height: 12),
                 _buildGlassContainer(
                   child: Column(
                     children: [
                       _buildSettingTile(
                         icon: Icons.games,
-                        title: 'Fact vs Fiction',
-                        subtitle: 'Test your news verification skills',
+                        title: l10n.factVsFiction,
+                        subtitle: l10n.testVerificationSkills,
                         iconColor: const Color(0xFFFFD700),
                         onTap: () {
                           Navigator.push(
@@ -532,8 +532,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       _buildDivider(),
                       _buildSettingTile(
                         icon: Icons.quiz,
-                        title: 'News Quiz Challenge',
-                        subtitle: 'Test your news literacy knowledge',
+                        title: l10n.newsQuizChallenge,
+                        subtitle: l10n.testNewsLiteracy,
                         iconColor: const Color(0xFF6366F1),
                         onTap: () {
                           Navigator.push(
@@ -547,8 +547,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       _buildDivider(),
                       _buildSettingTile(
                         icon: Icons.extension,
-                        title: 'Chess Game',
-                        subtitle: 'Play a classic game of chess',
+                        title: l10n.chessGame,
+                        subtitle: l10n.playChess,
                         iconColor: const Color(0xFF8B5CF6),
                         onTap: () {
                           Navigator.push(
@@ -617,6 +617,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _showLogoutDialog(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.7),
@@ -664,9 +665,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
-                    'Log Out',
-                    style: TextStyle(
+                  Text(
+                    l10n.logout,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -675,7 +676,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Are you sure you want to log out of your account?',
+                    l10n.logoutConfirmDesc,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.65),

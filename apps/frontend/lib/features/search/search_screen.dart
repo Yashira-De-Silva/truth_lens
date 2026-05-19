@@ -8,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../news/article_model.dart';
 import '../news/bookmarks_provider.dart';
 import '../article/article_details_screen.dart';
+import '../profile/settings_provider.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -18,7 +19,7 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final NewsApiService _svc = NewsApiService();
+  NewsApiService get _svc => NewsApiService(lang: ref.read(settingsProvider).language);
 
   String _selectedCategory = 'All';
   String _searchQuery = '';
@@ -58,6 +59,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       case 'Sports': return 'sport';
       case 'Entertainment': return 'culture';
       default: return 'all';
+    }
+  }
+
+  String _translateCategory(String cat) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (cat) {
+      case 'All': return l10n.allCategories;
+      case 'Politics': return l10n.politics;
+      case 'Technology': return l10n.technology;
+      case 'Sports': return l10n.sports;
+      case 'Business': return l10n.business;
+      case 'Health': return l10n.health;
+      case 'Entertainment': return l10n.entertainment;
+      case 'Science': return l10n.science;
+      default: return cat;
     }
   }
 
@@ -175,7 +191,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Search for articles by keyword or category',
+                            l10n.exploreSubtitle,
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   color: Colors.white.withValues(alpha: 0.7),
@@ -244,6 +260,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildSearchBar() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF0B1220).withValues(alpha: 0.6),
@@ -266,7 +283,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             style: const TextStyle(color: Colors.white),
             onSubmitted: (_) => _performSearch(),
             decoration: InputDecoration(
-              hintText: 'Search by keyword',
+              hintText: l10n.searchByKeyword,
               hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
               prefixIcon: Icon(Icons.search, color: AppColors.secondary),
               suffixIcon: _searchController.text.isNotEmpty
@@ -295,6 +312,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildCategoryFilter() {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
@@ -332,7 +350,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         ),
                       ),
                       child: Text(
-                        cat,
+                        _translateCategory(cat),
                         style: TextStyle(
                           color: isSelected
                               ? AppColors.secondary
@@ -372,9 +390,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   children: [
                     Icon(Icons.tune, color: AppColors.secondary, size: 20),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Filter',
-                      style: TextStyle(
+                    Text(
+                      l10n.filter,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -446,6 +464,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildResultCard(Article article) {
+    final l10n = AppLocalizations.of(context)!;
     // Determine badge from ML label
     final isReal = article.label == 'REAL';
     final highConf = article.confidence >= 0.75;
@@ -453,13 +472,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     String badgeText;
     if (isReal && highConf) {
       badgeColor = AppColors.success;
-      badgeText = 'Verified';
+      badgeText = l10n.verified;
     } else if (!isReal && highConf) {
       badgeColor = AppColors.error;
-      badgeText = 'Fake';
+      badgeText = l10n.possiblyFake;
     } else {
       badgeColor = AppColors.accent;
-      badgeText = 'Uncertain';
+      badgeText = l10n.biased;
     }
 
     return Padding(
@@ -611,7 +630,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'ML classified',
+                          l10n.mlClassified,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.5),
                             fontSize: 12,
@@ -646,7 +665,7 @@ class _VerifyNewsSheet extends ConsumerStatefulWidget {
 class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
-  final NewsApiService _svc = NewsApiService();
+  NewsApiService get _svc => NewsApiService(lang: ref.read(settingsProvider).language);
   
   bool _isLoading = false;
   Map<String, dynamic>? _result;
@@ -660,9 +679,9 @@ class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
   }
 
   Future<void> _verify() async {
+    final l10n = AppLocalizations.of(context)!;
     final text = _contentController.text.trim();
     if (text.isEmpty) {
-      final l10n = AppLocalizations.of(context)!;
       AppSnackbar.showError(context, l10n.enterNewsContent);
       return;
     }
@@ -687,7 +706,7 @@ class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Verification failed. Make sure the ML service is running.';
+          _error = l10n.verificationFailed;
           _isLoading = false;
         });
       }
@@ -810,8 +829,8 @@ class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
         ? AppColors.success 
         : (isUncertain ? AppColors.accent : AppColors.error);
     final text = isReal 
-        ? 'True' 
-        : (isUncertain ? 'Uncertain' : 'Fake');
+        ? l10n.verified 
+        : (isUncertain ? l10n.biased : l10n.possiblyFake);
     final icon = isReal 
         ? Icons.check_circle 
         : (isUncertain ? Icons.help_outline : Icons.warning_rounded);
@@ -880,7 +899,7 @@ class _VerifyNewsSheetState extends ConsumerState<_VerifyNewsSheet> {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Sources: ${sources.join(", ")}',
+                '${l10n.sourceLabel}: ${sources.join(", ")}',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.5),
                   fontSize: 12,

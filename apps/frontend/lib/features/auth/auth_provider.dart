@@ -39,10 +39,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _restore();
   }
   Future<void> _restore() async {
-    final token = await svc.loadToken();
-    final user = await svc.loadUser();
+    // Run all storage reads in parallel to minimize startup latency
+    final results = await Future.wait([
+      svc.loadToken(),
+      svc.loadUser(),
+      svc.isSessionExpired(),
+    ]);
+    final token = results[0] as String?;
+    final user = results[1] as Map<String, dynamic>?;
+    final expired = results[2] as bool;
+
     if (token != null && user != null) {
-      final expired = await svc.isSessionExpired();
       if (expired) {
         await svc.clearToken();
         state = state.copyWith(status: AuthStatus.unauthenticated);

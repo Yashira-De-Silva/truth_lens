@@ -53,4 +53,30 @@ class Article {
     published: j['published'] as String?,
     isLive: j['is_live'] as bool? ?? false,
   );
+
+  Article copyWith({
+    int? id,
+    String? title,
+    String? summary,
+    String? fullText,
+    String? source,
+    String? label,
+    double? confidence,
+    String? url,
+    String? published,
+    bool? isLive,
+  }) {
+    return Article(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      summary: summary ?? this.summary,
+      fullText: fullText ?? this.fullText,
+      source: source ?? this.source,
+      label: label ?? this.label,
+      confidence: confidence ?? this.confidence,
+      url: url ?? this.url,
+      published: published ?? this.published,
+      isLive: isLive ?? this.isLive,
+    );
+  }
 }

@@ -624,4 +624,140 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confidenceScore => 'Confidence Score';
+
+  @override
+  String get viewSavedArticles => 'View your saved articles';
+
+  @override
+  String get premiumPlan => 'Premium Plan';
+
+  @override
+  String get basicPlanUpgrade => 'Basic Plan - Upgrade now';
+
+  @override
+  String get funGames => 'Fun & Games';
+
+  @override
+  String get factVsFiction => 'Fact vs Fiction';
+
+  @override
+  String get testVerificationSkills => 'Test your news verification skills';
+
+  @override
+  String get newsQuizChallenge => 'News Quiz Challenge';
+
+  @override
+  String get testNewsLiteracy => 'Test your news literacy knowledge';
+
+  @override
+  String get chessGame => 'Chess Game';
+
+  @override
+  String get playChess => 'Play a classic game of chess';
+
+  @override
+  String get followers => 'Followers';
+
+  @override
+  String get following => 'Following';
+
+  @override
+  String get previewProfile => 'Preview My Profile';
+
+  @override
+  String get seeProfilePreview => 'See how others view your profile';
+
+  @override
+  String get logoutConfirmDesc =>
+      'Are you sure you want to log out of your account?';
+
+  @override
+  String get contactUs => 'Contact Us';
+
+  @override
+  String get frequentlyAskedQuestions => 'Frequently Asked Questions';
+
+  @override
+  String get resources => 'Resources';
+
+  @override
+  String get faq1Q => 'How do I verify news articles?';
+
+  @override
+  String get faq1A =>
+      'Truth Lens uses advanced AI to analyze articles and provide credibility scores. Simply read any article and check the fact-check badge for verification status.';
+
+  @override
+  String get faq2Q => 'What is the Digest feature?';
+
+  @override
+  String get faq2A =>
+      'Digest provides personalized daily news summaries based on your interests and reading habits. It helps you stay informed without information overload.';
+
+  @override
+  String get faq3Q => 'How do I change my language?';
+
+  @override
+  String get faq3A =>
+      'Go to Profile > Language and select your preferred language. Truth Lens supports English, Sinhala, and Tamil.';
+
+  @override
+  String get faq4Q => 'How does the subscription work?';
+
+  @override
+  String get faq4A =>
+      'Premium subscription gives you unlimited access to all news sources, ad-free experience, advanced analytics, and priority support.';
+
+  @override
+  String get faq5Q => 'How do I delete my account?';
+
+  @override
+  String get faq5A =>
+      'Go to Profile > Privacy & Security > Manage Account to delete your account. Note that this action is permanent and cannot be undone.';
+
+  @override
+  String get findingTopVerifiedArticles => 'Finding top verified articles...';
+
+  @override
+  String get couldNotLoadDigest => 'Could not load digest';
+
+  @override
+  String get makeSureMlServiceRunning => 'Make sure the ML service is running';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get noVerifiedArticlesFound => 'No verified articles found';
+
+  @override
+  String get articles => 'Articles';
+
+  @override
+  String get avgConf => 'Avg Conf';
+
+  @override
+  String get live => 'Live';
+
+  @override
+  String get dataset => 'Dataset';
+
+  @override
+  String get liveNews => 'Live News';
+
+  @override
+  String get fake => 'Fake';
+
+  @override
+  String get uncertain => 'Uncertain';
+
+  @override
+  String get exploreSubtitle => 'Search for articles by keyword or category';
+
+  @override
+  String get verificationFailed =>
+      'Verification failed. Make sure the ML service is running.';
+
+  @override
+  String get mlClassified => 'ML classified';
 }

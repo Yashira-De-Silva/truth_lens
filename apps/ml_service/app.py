@@ -304,10 +304,119 @@ def predict():
         log.error(f"Predict error: {e}")
         return jsonify({"success": False, "message": f"ML Service Error: {str(e)}"}), 503
 
+def translate_articles(articles, target_lang):
+    if not articles or target_lang not in ["si", "ta"]:
+        return articles
+    
+    # 1. Try deep-translator first (extremely fast, 100% free, highly reliable, no API keys needed)
+    try:
+        from deep_translator import GoogleTranslator
+        translator = GoogleTranslator(source='en', target=target_lang)
+        for art in articles:
+            t = art.get("title", "")
+            s = art.get("summary", "")
+            if t:
+                art["title"] = translator.translate(t)
+            if s:
+                art["summary"] = translator.translate(s)
+        return articles
+    except Exception as e:
+        log.warning(f"deep-translator batch translation failed: {e}. Falling back to AI.")
+
+    # 2. Fallback to Groq/LLM translation
+    lang_name = "Sinhala" if target_lang == "si" else "Tamil"
+    
+    # Prepare batch text
+    batch_input = []
+    for idx, art in enumerate(articles):
+        # Escape any newlines or other characters in title/summary
+        t = str(art.get("title", "")).replace("\n", " ").strip()
+        s = str(art.get("summary", "")).replace("\n", " ").strip()
+        batch_input.append(f"ARTICLE {idx}:\nTITLE: {t}\nSUMMARY: {s}")
+    
+    prompt = f"""
+    Translate the following news titles and summaries into {lang_name}.
+    Respond ONLY with a valid JSON array of objects. Do not add any markdown formatting blocks (like ```json), notes, explanations, or quotes.
+    Each object in the array must have "index" (integer), "title" (translated string), and "summary" (translated string).
+    
+    INPUT ARTICLES:
+    {chr(10).join(batch_input)}
+    
+    REQUIRED RESPONSE FORMAT:
+    [
+      {{"index": 0, "title": "translated title", "summary": "translated summary"}},
+      ...
+    ]
+    """
+    try:
+        res_txt = call_ai(prompt, temperature=0.1)
+        # Parse output
+        if "```" in res_txt:
+            res_txt = res_txt.split("```")[-1].strip()
+        if res_txt.startswith("json"):
+            res_txt = res_txt[4:].strip()
+        if "```" in res_txt:
+            res_txt = res_txt.split("```")[0].strip()
+            
+        import json
+        translations = json.loads(res_txt)
+        if isinstance(translations, list):
+            for t in translations:
+                try:
+                    idx = int(t.get("index", -1))
+                    if 0 <= idx < len(articles):
+                        articles[idx]["title"] = t.get("title") or articles[idx]["title"]
+                        articles[idx]["summary"] = t.get("summary") or articles[idx]["summary"]
+                except Exception:
+                    pass
+    except Exception as err:
+        log.warning(f"Batch LLM translation failed: {err}")
+        
+    return articles
+
+@app.route("/api/news/translate", methods=["POST"])
+def api_translate_articles():
+    data = request.json or {}
+    articles = data.get("articles", [])
+    lang = data.get("lang", "en")
+    if not articles or lang not in ["si", "ta"]:
+        return jsonify({"success": True, "data": articles})
+    
+    translated = translate_articles(articles, lang)
+    return jsonify({"success": True, "data": translated})
+
+@app.route("/api/translate/text", methods=["POST"])
+def api_translate_text():
+    data = request.json or {}
+    text = data.get("text", "")
+    lang = data.get("lang", "en")
+    if not text or lang not in ["si", "ta"]:
+        return jsonify({"translated_text": text})
+    
+    # 1. Try deep-translator first (fast, free, no API keys)
+    try:
+        from deep_translator import GoogleTranslator
+        translator = GoogleTranslator(source='en', target=lang)
+        translated = translator.translate(text)
+        return jsonify({"translated_text": translated})
+    except Exception as e:
+        log.error(f"deep-translator text translation failed: {e}. Falling back to AI.")
+        
+        # 2. Fallback to Groq/LLM
+        lang_name = "Sinhala" if lang == "si" else "Tamil"
+        prompt = f"Translate the following English news text into fluent, professional {lang_name}. Respond ONLY with the translation. Do not add any quotes, markdown blocks, intro, or comments:\n\n{text}"
+        try:
+            translated = call_ai(prompt, temperature=0.1)
+            return jsonify({"translated_text": translated})
+        except Exception as err:
+            log.error(f"Translation fallback failed: {err}")
+            return jsonify({"translated_text": text})
+
 @app.route("/api/news/live")
 def get_live_news():
     section = request.args.get("section", "All")
     limit = min(int(request.args.get("limit", 5)), 20)
+    lang = request.args.get("lang", "en")
 
     try:
         params = {
@@ -333,6 +442,10 @@ def get_live_news():
                 "full_text": f.get("bodyText", ""), "label": "VERIFYING", "confidence": 0.5, "source": "The Guardian",
                 "published": it.get("webPublicationDate", ""), "is_live": True
             })
+            
+        if lang in ["si", "ta"]:
+            articles = translate_articles(articles, lang)
+            
         return jsonify({"success": True, "data": articles})
     except Exception as e:
         log.error(f"Live news error: {e}")
@@ -342,11 +455,13 @@ def get_live_news():
 def summarize():
     data = request.json or {}
     text = data.get("text", "").strip()
+    lang = data.get("lang", "en")
     if not text: return jsonify({"success": False, "message": "No text"}), 400
     
     try:
+        lang_name = "Sinhala" if lang == "si" else ("Tamil" if lang == "ta" else "English")
         summary = call_ai(
-            f"Summarize this news article in exactly 3 concise bullet points or sentences:\n\n{text}",
+            f"Summarize this news article in exactly 3 concise bullet points or sentences in {lang_name}:\n\n{text}",
         )
         return jsonify({
             "success": True,

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -73,12 +72,8 @@ class ChatsListScreen extends ConsumerWidget {
                 ),
               ),
               Expanded(
-                child: state.isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.secondary,
-                        ),
-                      )
+                child: state.isLoading && state.conversations.isEmpty
+                    ? _buildSkeletonList()
                     : !state.isAuthenticated
                     ? _buildNotLoggedIn(context)
                     : state.error != null && state.conversations.isEmpty
@@ -155,123 +150,126 @@ class ChatsListScreen extends ConsumerWidget {
                 : Colors.white.withValues(alpha: 0.1),
           ),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.secondary,
-                        AppColors.secondary.withValues(alpha: 0.6),
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      conv.otherUser.name[0].toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.secondary,
+                    AppColors.secondary.withValues(alpha: 0.6),
+                  ],
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  conv.otherUser.name[0].toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              conv.otherUser.name,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: conv.unreadCount > 0
-                                    ? FontWeight.bold
-                                    : FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                      Expanded(
+                        child: Text(
+                          conv.otherUser.name,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: conv.unreadCount > 0
+                                ? FontWeight.bold
+                                : FontWeight.w600,
                           ),
-                          Text(
-                            formattedTime,
-                            style: TextStyle(
-                              color: conv.unreadCount > 0
-                                  ? AppColors.secondary
-                                  : Colors.white.withValues(alpha: 0.5),
-                              fontSize: 12,
-                              fontWeight: conv.unreadCount > 0
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ],
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              displayMessage,
-                              style: TextStyle(
-                                color: conv.unreadCount > 0
-                                    ? Colors.white.withValues(alpha: 0.9)
-                                    : Colors.white.withValues(alpha: 0.6),
-                                fontSize: 14,
-                                fontWeight: conv.unreadCount > 0
-                                    ? FontWeight.w500
-                                    : FontWeight.normal,
-                                fontStyle: isItalic
-                                    ? FontStyle.italic
-                                    : FontStyle.normal,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (conv.unreadCount > 0) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.secondary,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                '${conv.unreadCount}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
+                      Text(
+                        formattedTime,
+                        style: TextStyle(
+                          color: conv.unreadCount > 0
+                              ? AppColors.secondary
+                              : Colors.white.withValues(alpha: 0.5),
+                          fontSize: 12,
+                          fontWeight: conv.unreadCount > 0
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          displayMessage,
+                          style: TextStyle(
+                            color: conv.unreadCount > 0
+                                ? Colors.white.withValues(alpha: 0.9)
+                                : Colors.white.withValues(alpha: 0.6),
+                            fontSize: 14,
+                            fontWeight: conv.unreadCount > 0
+                                ? FontWeight.w500
+                                : FontWeight.normal,
+                            fontStyle: isItalic
+                                ? FontStyle.italic
+                                : FontStyle.normal,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (conv.unreadCount > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondary,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${conv.unreadCount}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSkeletonList() {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: 6,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (_, __) => const _SkeletonCard(),
     );
   }
 
@@ -400,5 +398,88 @@ class ChatsListScreen extends ConsumerWidget {
     if (diff.inHours < 24) return '${diff.inHours}h';
     if (diff.inDays < 7) return '${diff.inDays}d';
     return DateFormat('MMM d').format(time.toLocal());
+  }
+}
+
+class _SkeletonCard extends StatefulWidget {
+  const _SkeletonCard();
+
+  @override
+  State<_SkeletonCard> createState() => _SkeletonCardState();
+}
+
+class _SkeletonCardState extends State<_SkeletonCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.25, end: 0.55).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: _anim.value),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 14,
+                    width: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: _anim.value),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    height: 12,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: _anim.value * 0.7),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

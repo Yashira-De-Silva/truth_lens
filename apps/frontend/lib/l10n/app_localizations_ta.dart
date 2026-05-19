@@ -611,23 +611,164 @@ class AppLocalizationsTa extends AppLocalizations {
   String get sourceLabel => 'ஆதாரம்';
 
   @override
-  String get verifyNews => 'Verify News';
+  String get verifyNews => 'செய்தியைச் சரிபார்';
 
   @override
-  String get newsTitle => 'News Title (Optional)';
+  String get newsTitle => 'செய்தித் தலைப்பு (விருப்பத்திற்குரியது)';
 
   @override
-  String get newsContent => 'News Content';
+  String get newsContent => 'செய்தி உள்ளடக்கம்';
 
   @override
-  String get checkAuthenticity => 'Check Authenticity';
+  String get checkAuthenticity => 'நம்பகத்தன்மையைச் சரிபார்';
 
   @override
-  String get enterNewsContent => 'Please enter the news content to verify';
+  String get enterNewsContent => 'சரிபார்க்க செய்தி உள்ளடக்கத்தை உள்ளிடவும்';
 
   @override
-  String get verificationResult => 'Verification Result';
+  String get verificationResult => 'சரிபார்ப்பு முடிவு';
 
   @override
-  String get confidenceScore => 'Confidence Score';
+  String get confidenceScore => 'நம்பிக்கை மதிப்பெண்';
+
+  @override
+  String get viewSavedArticles => 'உங்கள் சேமிக்கப்பட்ட கட்டுரைகளைக் காண்க';
+
+  @override
+  String get premiumPlan => 'பிரீமியம் திட்டம்';
+
+  @override
+  String get basicPlanUpgrade => 'அடிப்படை திட்டம் - இப்போது மேம்படுத்தவும்';
+
+  @override
+  String get funGames => 'வேடிக்கை மற்றும் விளையாட்டுகள்';
+
+  @override
+  String get factVsFiction => 'உண்மை மற்றும் புனைகதை';
+
+  @override
+  String get testVerificationSkills =>
+      'உங்கள் செய்தி சரிபார்ப்பு திறன்களை சோதிக்கவும்';
+
+  @override
+  String get newsQuizChallenge => 'செய்தி வினாடி வினா சவால்';
+
+  @override
+  String get testNewsLiteracy => 'உங்கள் செய்தி அறிவுத்திறனை சோதிக்கவும்';
+
+  @override
+  String get chessGame => 'சதுரங்க விளையாட்டு';
+
+  @override
+  String get playChess => 'ஒரு பாரம்பரிய சதுரங்க விளையாட்டை விளையாடுங்கள்';
+
+  @override
+  String get followers => 'பின்தொடர்பவர்கள்';
+
+  @override
+  String get following => 'பின்தொடர்வது';
+
+  @override
+  String get previewProfile => 'என் சுயவிவரத்தை முன்னோட்டம் செய்';
+
+  @override
+  String get seeProfilePreview =>
+      'மற்றவர்கள் உங்கள் சுயவிவரத்தை எவ்வாறு பார்க்கிறார்கள் என்று பாருங்கள்';
+
+  @override
+  String get logoutConfirmDesc =>
+      'உங்கள் கணக்கிலிருந்து வெளியேற விரும்புகிறீர்கள் என்பதில் உறுதியாக இருக்கிறீர்களா?';
+
+  @override
+  String get contactUs => 'எங்களைத் தொடர்பு கொள்ளவும்';
+
+  @override
+  String get frequentlyAskedQuestions => 'அடிக்கடி கேட்கப்படும் கேள்விகள்';
+
+  @override
+  String get resources => 'வளங்கள்';
+
+  @override
+  String get faq1Q => 'செய்திக் கட்டுரைகளை எவ்வாறு சரிபார்ப்பது?';
+
+  @override
+  String get faq1A =>
+      'Truth Lens கட்டுரைகளை பகுப்பாய்வு செய்து நம்பகத்தன்மை மதிப்பெண்களை வழங்க மேம்பட்ட AI ஐப் பயன்படுத்துகிறது. ஏதேனும் ஒரு கட்டுரையைப் படித்து, சரிபார்ப்பு நிலைக்கு உண்மைச் சரிபார்ப்பு பேட்ஜைச் சரிபார்க்கவும்.';
+
+  @override
+  String get faq2Q => 'Digest அம்சம் என்றால் என்ன?';
+
+  @override
+  String get faq2A =>
+      'Digest உங்கள் ஆர்வங்கள் மற்றும் வாசிப்புப் பழக்கங்களின் அடிப்படையில் தனிப்பயனாக்கப்பட்ட தினசரி செய்திச் சுருக்கங்களை வழங்குகிறது. தகவல் சுமை இல்லாமல் நீங்கள் தகவலறிந்து இருக்க இது உதவுகிறது.';
+
+  @override
+  String get faq3Q => 'எனது மொழியை எவ்வாறு மாற்றுவது?';
+
+  @override
+  String get faq3A =>
+      'சுயவிவரம் > மொழிக்குச் சென்று உங்களுக்கு விருப்பமான மொழியைத் தேர்ந்தெடுக்கவும். Truth Lens ஆங்கிலம், சிங்களம் மற்றும் தமிழ் மொழிகளை ஆதரிக்கிறது.';
+
+  @override
+  String get faq4Q => 'சந்தா எவ்வாறு செயல்படுகிறது?';
+
+  @override
+  String get faq4A =>
+      'பிரீமியம் சந்தா உங்களுக்கு அனைத்து செய்தி ஆதாரங்களுக்கும் வரம்பற்ற அணுகல், விளம்பரமில்லா அனுபவம், மேம்பட்ட பகுப்பாய்வு மற்றும் முன்னுரிமை ஆதரவை வழங்குகிறது.';
+
+  @override
+  String get faq5Q => 'எனது கணக்கை எவ்வாறு நீக்குவது?';
+
+  @override
+  String get faq5A =>
+      'உங்கள் கணக்கை நீக்க சுயவிவரம் > தனியுரிமை & பாதுகாப்பு > கணக்கை நிர்வகி என்பதற்குச் செல்லவும். இந்த நடவடிக்கை நிரந்தரமானது மற்றும் அதை செயல்தவிர்க்க முடியாது என்பதை நினைவில் கொள்க.';
+
+  @override
+  String get findingTopVerifiedArticles =>
+      'சிறந்த சரிபார்க்கப்பட்ட கட்டுரைகளைக் கண்டறிதல்...';
+
+  @override
+  String get couldNotLoadDigest => 'செய்திச் சுருக்கத்தை ஏற்ற முடியவில்லை';
+
+  @override
+  String get makeSureMlServiceRunning => 'ML சேவை இயங்குவதை உறுதிசெய்யவும்';
+
+  @override
+  String get retry => 'மீண்டும் முயற்சி செய்';
+
+  @override
+  String get noVerifiedArticlesFound =>
+      'சரிபார்க்கப்பட்ட கட்டுரைகள் எதுவும் கிடைக்கவில்லை';
+
+  @override
+  String get articles => 'கட்டுரைகள்';
+
+  @override
+  String get avgConf => 'சராசரி நம்பிக்கை';
+
+  @override
+  String get live => 'நேரலை';
+
+  @override
+  String get dataset => 'தரவுத்தொகுப்பு';
+
+  @override
+  String get liveNews => 'நேரடி செய்திகள்';
+
+  @override
+  String get fake => 'போலி';
+
+  @override
+  String get uncertain => 'சந்தேகத்திற்குரியது';
+
+  @override
+  String get exploreSubtitle =>
+      'முக்கிய சொல் அல்லது வகையின் மூலம் கட்டுரைகளைத் தேடுங்கள்';
+
+  @override
+  String get verificationFailed =>
+      'சரிபார்ப்பு தோல்வியுற்றது. ML சேவை இயங்குவதை உறுதிசெய்யவும்.';
+
+  @override
+  String get mlClassified => 'ML வகைப்படுத்தப்பட்டது';
 }
