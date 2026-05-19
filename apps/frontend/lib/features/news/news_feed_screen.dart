@@ -9,6 +9,7 @@ import '../../l10n/app_localizations.dart';
 import 'article_model.dart';
 import 'bookmarks_provider.dart';
 import '../article/article_details_screen.dart';
+import '../profile/settings_provider.dart';
 
 // ── State notifier for paginated + live news ──────────────────────────────────
 
@@ -139,7 +140,10 @@ class NewsFeedNotifier extends StateNotifier<NewsFeedState> {
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
-final _newsSvcProvider = Provider<NewsApiService>((ref) => NewsApiService());
+final _newsSvcProvider = Provider<NewsApiService>((ref) {
+  final lang = ref.watch(settingsProvider).language;
+  return NewsApiService(lang: lang);
+});
 
 final newsFeedProvider = StateNotifierProvider<NewsFeedNotifier, NewsFeedState>(
   (ref) => NewsFeedNotifier(ref.watch(_newsSvcProvider)),
@@ -439,12 +443,12 @@ class _ModeToggle extends StatelessWidget {
       child: Row(
         children: [
           _Tab(
-            label: 'Dataset',
+            label: AppLocalizations.of(context)!.dataset,
             selected: !isLive,
             onTap: () => onTap(false),
           ),
           _Tab(
-            label: 'Live News',
+            label: AppLocalizations.of(context)!.liveNews,
             selected: isLive,
             onTap: () => onTap(true),
           ),
@@ -531,7 +535,7 @@ class _ArticleCard extends ConsumerWidget {
       statusText = l10n.verified;
     } else if (isFake && highConf) {
       statusColor = AppColors.error;
-      statusText = 'Fake';
+      statusText = l10n.possiblyFake;
     } else {
       statusColor = AppColors.accent;
       statusText = l10n.biased;
@@ -670,19 +674,17 @@ class _ArticleCard extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Flexible(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          _ConfidenceBadge(
-                            text: statusText,
-                            color: statusColor,
-                            percent: confidencePct,
-                          ),
-                          const SizedBox(height: 8),
-                          _MoreMenu(article: article),
-                        ],
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _ConfidenceBadge(
+                          text: statusText,
+                          color: statusColor,
+                          percent: confidencePct,
+                        ),
+                        const SizedBox(height: 8),
+                        _MoreMenu(article: article),
+                      ],
                     ),
                   ],
                 ),

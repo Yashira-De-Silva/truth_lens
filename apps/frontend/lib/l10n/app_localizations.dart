@@ -1329,6 +1329,264 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confidence Score'**
   String get confidenceScore;
+
+  /// No description provided for @viewSavedArticles.
+  ///
+  /// In en, this message translates to:
+  /// **'View your saved articles'**
+  String get viewSavedArticles;
+
+  /// No description provided for @premiumPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium Plan'**
+  String get premiumPlan;
+
+  /// No description provided for @basicPlanUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic Plan - Upgrade now'**
+  String get basicPlanUpgrade;
+
+  /// No description provided for @funGames.
+  ///
+  /// In en, this message translates to:
+  /// **'Fun & Games'**
+  String get funGames;
+
+  /// No description provided for @factVsFiction.
+  ///
+  /// In en, this message translates to:
+  /// **'Fact vs Fiction'**
+  String get factVsFiction;
+
+  /// No description provided for @testVerificationSkills.
+  ///
+  /// In en, this message translates to:
+  /// **'Test your news verification skills'**
+  String get testVerificationSkills;
+
+  /// No description provided for @newsQuizChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'News Quiz Challenge'**
+  String get newsQuizChallenge;
+
+  /// No description provided for @testNewsLiteracy.
+  ///
+  /// In en, this message translates to:
+  /// **'Test your news literacy knowledge'**
+  String get testNewsLiteracy;
+
+  /// No description provided for @chessGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Chess Game'**
+  String get chessGame;
+
+  /// No description provided for @playChess.
+  ///
+  /// In en, this message translates to:
+  /// **'Play a classic game of chess'**
+  String get playChess;
+
+  /// No description provided for @followers.
+  ///
+  /// In en, this message translates to:
+  /// **'Followers'**
+  String get followers;
+
+  /// No description provided for @following.
+  ///
+  /// In en, this message translates to:
+  /// **'Following'**
+  String get following;
+
+  /// No description provided for @previewProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview My Profile'**
+  String get previewProfile;
+
+  /// No description provided for @seeProfilePreview.
+  ///
+  /// In en, this message translates to:
+  /// **'See how others view your profile'**
+  String get seeProfilePreview;
+
+  /// No description provided for @logoutConfirmDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to log out of your account?'**
+  String get logoutConfirmDesc;
+
+  /// No description provided for @contactUs.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Us'**
+  String get contactUs;
+
+  /// No description provided for @frequentlyAskedQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequently Asked Questions'**
+  String get frequentlyAskedQuestions;
+
+  /// No description provided for @resources.
+  ///
+  /// In en, this message translates to:
+  /// **'Resources'**
+  String get resources;
+
+  /// No description provided for @faq1Q.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I verify news articles?'**
+  String get faq1Q;
+
+  /// No description provided for @faq1A.
+  ///
+  /// In en, this message translates to:
+  /// **'Truth Lens uses advanced AI to analyze articles and provide credibility scores. Simply read any article and check the fact-check badge for verification status.'**
+  String get faq1A;
+
+  /// No description provided for @faq2Q.
+  ///
+  /// In en, this message translates to:
+  /// **'What is the Digest feature?'**
+  String get faq2Q;
+
+  /// No description provided for @faq2A.
+  ///
+  /// In en, this message translates to:
+  /// **'Digest provides personalized daily news summaries based on your interests and reading habits. It helps you stay informed without information overload.'**
+  String get faq2A;
+
+  /// No description provided for @faq3Q.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I change my language?'**
+  String get faq3Q;
+
+  /// No description provided for @faq3A.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Profile > Language and select your preferred language. Truth Lens supports English, Sinhala, and Tamil.'**
+  String get faq3A;
+
+  /// No description provided for @faq4Q.
+  ///
+  /// In en, this message translates to:
+  /// **'How does the subscription work?'**
+  String get faq4Q;
+
+  /// No description provided for @faq4A.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium subscription gives you unlimited access to all news sources, ad-free experience, advanced analytics, and priority support.'**
+  String get faq4A;
+
+  /// No description provided for @faq5Q.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I delete my account?'**
+  String get faq5Q;
+
+  /// No description provided for @faq5A.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Profile > Privacy & Security > Manage Account to delete your account. Note that this action is permanent and cannot be undone.'**
+  String get faq5A;
+
+  /// No description provided for @findingTopVerifiedArticles.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding top verified articles...'**
+  String get findingTopVerifiedArticles;
+
+  /// No description provided for @couldNotLoadDigest.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load digest'**
+  String get couldNotLoadDigest;
+
+  /// No description provided for @makeSureMlServiceRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Make sure the ML service is running'**
+  String get makeSureMlServiceRunning;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @noVerifiedArticlesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No verified articles found'**
+  String get noVerifiedArticlesFound;
+
+  /// No description provided for @articles.
+  ///
+  /// In en, this message translates to:
+  /// **'Articles'**
+  String get articles;
+
+  /// No description provided for @avgConf.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg Conf'**
+  String get avgConf;
+
+  /// No description provided for @live.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get live;
+
+  /// No description provided for @dataset.
+  ///
+  /// In en, this message translates to:
+  /// **'Dataset'**
+  String get dataset;
+
+  /// No description provided for @liveNews.
+  ///
+  /// In en, this message translates to:
+  /// **'Live News'**
+  String get liveNews;
+
+  /// No description provided for @fake.
+  ///
+  /// In en, this message translates to:
+  /// **'Fake'**
+  String get fake;
+
+  /// No description provided for @uncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncertain'**
+  String get uncertain;
+
+  /// No description provided for @exploreSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for articles by keyword or category'**
+  String get exploreSubtitle;
+
+  /// No description provided for @verificationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification failed. Make sure the ML service is running.'**
+  String get verificationFailed;
+
+  /// No description provided for @mlClassified.
+  ///
+  /// In en, this message translates to:
+  /// **'ML classified'**
+  String get mlClassified;
 }
 
 class _AppLocalizationsDelegate

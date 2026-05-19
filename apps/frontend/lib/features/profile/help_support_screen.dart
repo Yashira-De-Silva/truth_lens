@@ -2,15 +2,16 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
 
-  void _copyToClipboard(BuildContext context, String text, String label) {
+  void _copyToClipboard(BuildContext context, String text, String label, String copiedMsg) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$label copied to clipboard'),
+        content: Text('$label $copiedMsg'),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
@@ -20,6 +21,7 @@ class HelpSupportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -61,7 +63,7 @@ class HelpSupportScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Help & Support',
+                            l10n.help,
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineSmall
@@ -72,7 +74,7 @@ class HelpSupportScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Get help and support',
+                            l10n.getHelp,
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
@@ -93,30 +95,32 @@ class HelpSupportScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionHeader(context, 'Contact Us'),
+                      _buildSectionHeader(context, l10n.contactUs),
                       const SizedBox(height: 12),
                       _buildGlassContainer(
                         child: Column(
                           children: [
                             _buildContactTile(
                               icon: Icons.email_outlined,
-                              title: 'Email Support',
+                              title: l10n.emailSupport,
                               subtitle: 'support@truthlens.com',
                               onTap: () => _copyToClipboard(
                                 context,
                                 'support@truthlens.com',
-                                'Email',
+                                l10n.emailSupport,
+                                l10n.copiedToClipboard,
                               ),
                             ),
                             _buildDivider(),
                             _buildContactTile(
                               icon: Icons.language,
-                              title: 'Visit Website',
+                              title: l10n.visitWebsite,
                               subtitle: 'www.truthlens.com',
                               onTap: () => _copyToClipboard(
                                 context,
                                 'www.truthlens.com',
-                                'Website',
+                                l10n.visitWebsite,
+                                l10n.copiedToClipboard,
                               ),
                             ),
                           ],
@@ -124,68 +128,68 @@ class HelpSupportScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
 
-                      _buildSectionHeader(context, 'Frequently Asked Questions'),
+                      _buildSectionHeader(context, l10n.frequentlyAskedQuestions),
                       const SizedBox(height: 12),
                       _buildGlassContainer(
                         child: Column(
                           children: [
                             _buildFAQTile(
                               context,
-                              question: 'How do I verify news articles?',
-                              answer: 'Truth Lens uses advanced AI to analyze articles and provide credibility scores. Simply read any article and check the fact-check badge for verification status.',
+                              question: l10n.faq1Q,
+                              answer: l10n.faq1A,
                             ),
                             _buildDivider(),
                             _buildFAQTile(
                               context,
-                              question: 'What is the Digest feature?',
-                              answer: 'Digest provides personalized daily news summaries based on your interests and reading habits. It helps you stay informed without information overload.',
+                              question: l10n.faq2Q,
+                              answer: l10n.faq2A,
                             ),
                             _buildDivider(),
                             _buildFAQTile(
                               context,
-                              question: 'How do I change my language?',
-                              answer: 'Go to Profile > Language and select your preferred language. Truth Lens supports English, Sinhala, and Tamil.',
+                              question: l10n.faq3Q,
+                              answer: l10n.faq3A,
                             ),
                             _buildDivider(),
                             _buildFAQTile(
                               context,
-                              question: 'How does the subscription work?',
-                              answer: 'Premium subscription gives you unlimited access to all news sources, ad-free experience, advanced analytics, and priority support.',
+                              question: l10n.faq4Q,
+                              answer: l10n.faq4A,
                             ),
                             _buildDivider(),
                             _buildFAQTile(
                               context,
-                              question: 'How do I delete my account?',
-                              answer: 'Go to Profile > Privacy & Security > Manage Account to delete your account. Note that this action is permanent and cannot be undone.',
+                              question: l10n.faq5Q,
+                              answer: l10n.faq5A,
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
 
-                      _buildSectionHeader(context, 'Resources'),
+                      _buildSectionHeader(context, l10n.resources),
                       const SizedBox(height: 12),
                       _buildGlassContainer(
                         child: Column(
                           children: [
                             _buildResourceTile(
                               icon: Icons.menu_book,
-                              title: 'User Guide',
-                              subtitle: 'Learn how to use Truth Lens',
+                              title: l10n.userGuide,
+                              subtitle: l10n.learnHowToUse,
                               onTap: () {},
                             ),
                             _buildDivider(),
                             _buildResourceTile(
                               icon: Icons.privacy_tip_outlined,
-                              title: 'Privacy Policy',
-                              subtitle: 'Read our privacy policy',
+                              title: l10n.privacyPolicy,
+                              subtitle: l10n.readPrivacyPolicy,
                               onTap: () {},
                             ),
                             _buildDivider(),
                             _buildResourceTile(
                               icon: Icons.description_outlined,
-                              title: 'Terms of Service',
-                              subtitle: 'Read our terms of service',
+                              title: l10n.termsOfService,
+                              subtitle: l10n.readTermsOfService,
                               onTap: () {},
                             ),
                           ],

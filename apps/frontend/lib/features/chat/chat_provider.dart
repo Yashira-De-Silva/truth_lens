@@ -42,14 +42,16 @@ class ConversationsNotifier extends StateNotifier<ConversationsState> {
   final String token;
   final AuthStatus authStatus;
   Timer? _pollTimer;
-  static const _pollInterval = Duration(seconds: 15);
+  static const _pollInterval = Duration(seconds: 8);
 
   ConversationsNotifier(this.token, this.authStatus)
     : super(const ConversationsState(isLoading: true)) {
-    if (authStatus == AuthStatus.initial) {
+    if (authStatus == AuthStatus.initial || authStatus == AuthStatus.loading) {
+      // Auth is still restoring from storage — don't show error, just wait.
+      // The provider will rebuild with the correct token once auth settles.
       state = const ConversationsState(isLoading: true, isAuthenticated: true);
-    } else if (token.isEmpty) {
-      state = const ConversationsState(isAuthenticated: false);
+    } else if (token.isEmpty || authStatus == AuthStatus.unauthenticated) {
+      state = const ConversationsState(isLoading: false, isAuthenticated: false);
     } else {
       load();
       _startPolling();
@@ -65,11 +67,21 @@ class ConversationsNotifier extends StateNotifier<ConversationsState> {
     if (token.isEmpty) return;
     try {
       final convs = await svc.getConversations(token);
-      if (mounted) {
+      if (!mounted) return;
+      // Compare by last-message id or unread count to detect real changes
+      final hasChanges = convs.length != state.conversations.length ||
+          convs.asMap().entries.any((e) {
+            final old = state.conversations.length > e.key
+                ? state.conversations[e.key]
+                : null;
+            if (old == null) return true;
+            return e.value.lastMessage?.id != old.lastMessage?.id ||
+                e.value.unreadCount != old.unreadCount;
+          });
+      if (hasChanges) {
         state = state.copyWith(conversations: convs, clearError: true);
       }
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   Future<void> load() async {
@@ -77,15 +89,20 @@ class ConversationsNotifier extends StateNotifier<ConversationsState> {
       state = const ConversationsState(isAuthenticated: false);
       return;
     }
-    state = state.copyWith(isLoading: true, clearError: true);
+    // Only show spinner on the very first load (no conversations yet)
+    if (state.conversations.isEmpty) {
+      state = state.copyWith(isLoading: true, clearError: true);
+    }
     try {
       final convs = await svc.getConversations(token);
+      if (!mounted) return;
       state = state.copyWith(
         conversations: convs,
         isLoading: false,
         isAuthenticated: true,
       );
     } catch (e) {
+      if (!mounted) return;
       final errStr = e.toString();
       final isAuth =
           !errStr.contains('401') && !errStr.contains('Unauthenticated');
@@ -156,7 +173,12 @@ class MessagesNotifier extends StateNotifier<MessagesState> {
     if (token.isEmpty) return;
     try {
       final msgs = await svc.getMessages(token, conversationId);
-      if (mounted && msgs.length != state.messages.length) {
+      if (!mounted) return;
+      // Detect new messages or edits/deletions by checking last id
+      final lastNew = msgs.isNotEmpty ? msgs.last.id : null;
+      final lastOld =
+          state.messages.isNotEmpty ? state.messages.last.id : null;
+      if (lastNew != lastOld || msgs.length != state.messages.length) {
         state = state.copyWith(messages: msgs, clearError: true);
       }
     } catch (_) {}

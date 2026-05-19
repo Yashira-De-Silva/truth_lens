@@ -157,40 +157,50 @@ class _ModernNavBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _NavItem(
-            icon: Icons.article_outlined,
-            activeIcon: Icons.article,
-            label: AppLocalizations.of(context)!.news,
-            isActive: currentIndex == 0,
-            onTap: () => onTap(0),
+          Expanded(
+            child: _NavItem(
+              icon: Icons.article_outlined,
+              activeIcon: Icons.article,
+              label: AppLocalizations.of(context)!.news,
+              isActive: currentIndex == 0,
+              onTap: () => onTap(0),
+            ),
           ),
-          _NavItem(
-            icon: Icons.search_outlined,
-            activeIcon: Icons.search,
-            label: AppLocalizations.of(context)!.explore,
-            isActive: currentIndex == 1,
-            onTap: () => onTap(1),
+          Expanded(
+            child: _NavItem(
+              icon: Icons.search_outlined,
+              activeIcon: Icons.search,
+              label: AppLocalizations.of(context)!.explore,
+              isActive: currentIndex == 1,
+              onTap: () => onTap(1),
+            ),
           ),
-          _NavItem(
-            icon: Icons.dashboard_outlined,
-            activeIcon: Icons.dashboard,
-            label: AppLocalizations.of(context)!.digest,
-            isActive: currentIndex == 2,
-            onTap: () => onTap(2),
+          Expanded(
+            child: _NavItem(
+              icon: Icons.dashboard_outlined,
+              activeIcon: Icons.dashboard,
+              label: AppLocalizations.of(context)!.digest,
+              isActive: currentIndex == 2,
+              onTap: () => onTap(2),
+            ),
           ),
-          _NavItem(
-            icon: Icons.chat_bubble_outline,
-            activeIcon: Icons.chat_bubble,
-            label: AppLocalizations.of(context)!.chat,
-            isActive: currentIndex == 3,
-            onTap: () => onTap(3),
+          Expanded(
+            child: _NavItem(
+              icon: Icons.chat_bubble_outline,
+              activeIcon: Icons.chat_bubble,
+              label: AppLocalizations.of(context)!.chat,
+              isActive: currentIndex == 3,
+              onTap: () => onTap(3),
+            ),
           ),
-          _NavItem(
-            icon: Icons.person_outline,
-            activeIcon: Icons.person,
-            label: AppLocalizations.of(context)!.profile,
-            isActive: currentIndex == 4,
-            onTap: () => onTap(4),
+          Expanded(
+            child: _NavItem(
+              icon: Icons.person_outline,
+              activeIcon: Icons.person,
+              label: AppLocalizations.of(context)!.profile,
+              isActive: currentIndex == 4,
+              onTap: () => onTap(4),
+            ),
           ),
         ],
       ),
@@ -218,10 +228,10 @@ class _NavItem extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
 
     final iconSize = screenWidth > 600 ? 26.0 : 24.0;
-    final fontSize = screenWidth > 600 ? 12.0 : 11.0;
+    final fontSize = screenWidth > 600 ? 12.0 : 10.0;
     final horizontalPadding = screenWidth > 600
         ? 18.0
-        : (isActive ? 16.0 : 12.0);
+        : (isActive ? 8.0 : 4.0);
 
     return GestureDetector(
       onTap: onTap,

@@ -8,8 +8,12 @@ import '../news/article_model.dart';
 import '../article/article_details_screen.dart';
 import '../news/bookmarks_provider.dart';
 import '../../core/widgets/app_snackbar.dart';
+import '../profile/settings_provider.dart';
 
-final _digestSvcProvider = Provider<NewsApiService>((ref) => NewsApiService());
+final _digestSvcProvider = Provider<NewsApiService>((ref) {
+  final lang = ref.watch(settingsProvider).language;
+  return NewsApiService(lang: lang);
+});
 final digestProvider = FutureProvider.autoDispose<List<Article>>((ref) async {
   final svc = ref.watch(_digestSvcProvider);
   final live = await svc.fetchLiveNews(limit: 30);
@@ -148,9 +152,9 @@ class DigestScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 14),
                     asyncDigest.when(
-                      data: (articles) => _buildStatsRow(articles, isLive),
-                      loading: () => _buildStatsRow([], false),
-                      error: (_, __) => _buildStatsRow([], false),
+                      data: (articles) => _buildStatsRow(context, articles, isLive),
+                      loading: () => _buildStatsRow(context, [], false),
+                      error: (_, __) => _buildStatsRow(context, [], false),
                     ),
                   ],
                 ),
@@ -164,7 +168,7 @@ class DigestScreen extends ConsumerWidget {
                         CircularProgressIndicator(color: AppColors.success),
                         const SizedBox(height: 16),
                         Text(
-                          'Finding top verified articles…',
+                          l10n.findingTopVerifiedArticles,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.7),
                           ),
@@ -182,9 +186,9 @@ class DigestScreen extends ConsumerWidget {
                           size: 48,
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          'Could not load digest',
-                          style: TextStyle(
+                        Text(
+                          l10n.couldNotLoadDigest,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -192,7 +196,7 @@ class DigestScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Make sure the ML service is running',
+                          l10n.makeSureMlServiceRunning,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.6),
                             fontSize: 13,
@@ -215,9 +219,9 @@ class DigestScreen extends ConsumerWidget {
                               ),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Text(
-                              'Retry',
-                              style: TextStyle(
+                            child: Text(
+                              l10n.retry,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -230,7 +234,7 @@ class DigestScreen extends ConsumerWidget {
                   data: (articles) => articles.isEmpty
                       ? Center(
                           child: Text(
-                            'No verified articles found',
+                            l10n.noVerifiedArticlesFound,
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.6),
                             ),
@@ -253,7 +257,8 @@ class DigestScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsRow(List<Article> articles, bool isLive) {
+  Widget _buildStatsRow(BuildContext context, List<Article> articles, bool isLive) {
+    final l10n = AppLocalizations.of(context)!;
     final count = articles.isEmpty ? '—' : '${articles.length}';
     final avgConf = articles.isEmpty
         ? 0
@@ -265,14 +270,14 @@ class DigestScreen extends ConsumerWidget {
 
     return Row(
       children: [
-        _statChip(Icons.article, count, 'Articles'),
+        _statChip(Icons.article, count, l10n.articles),
         const SizedBox(width: 8),
-        _statChip(Icons.verified_user, confText, 'Avg Conf'),
+        _statChip(Icons.verified_user, confText, l10n.avgConf),
         const SizedBox(width: 8),
         _statChip(
           isLive ? Icons.cell_tower : Icons.psychology,
-          isLive ? 'Live' : 'Dataset',
-          'Source',
+          isLive ? l10n.live : l10n.dataset,
+          l10n.sourceLabel,
           accent: isLive ? Colors.redAccent : AppColors.secondary,
         ),
       ],
@@ -422,18 +427,18 @@ class _DigestCard extends ConsumerWidget {
                                       ),
                                     ),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(
+                                      const Icon(
                                         Icons.fiber_manual_record,
                                         color: Colors.redAccent,
                                         size: 8,
                                       ),
-                                      SizedBox(width: 4),
+                                      const SizedBox(width: 4),
                                       Text(
-                                        'LIVE',
-                                        style: TextStyle(
+                                        l10n.live.toUpperCase(),
+                                        style: const TextStyle(
                                           color: Colors.redAccent,
                                           fontSize: 10,
                                           fontWeight: FontWeight.w800,
@@ -464,7 +469,7 @@ class _DigestCard extends ConsumerWidget {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Verified · $confidencePct%',
+                                      '${l10n.verified} · $confidencePct%',
                                       style: TextStyle(
                                         color: AppColors.success,
                                         fontSize: 11,
