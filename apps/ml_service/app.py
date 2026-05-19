@@ -308,6 +308,22 @@ def translate_articles(articles, target_lang):
     if not articles or target_lang not in ["si", "ta"]:
         return articles
     
+    # 1. Try deep-translator first (extremely fast, 100% free, highly reliable, no API keys needed)
+    try:
+        from deep_translator import GoogleTranslator
+        translator = GoogleTranslator(source='en', target=target_lang)
+        for art in articles:
+            t = art.get("title", "")
+            s = art.get("summary", "")
+            if t:
+                art["title"] = translator.translate(t)
+            if s:
+                art["summary"] = translator.translate(s)
+        return articles
+    except Exception as e:
+        log.warning(f"deep-translator batch translation failed: {e}. Falling back to AI.")
+
+    # 2. Fallback to Groq/LLM translation
     lang_name = "Sinhala" if target_lang == "si" else "Tamil"
     
     # Prepare batch text
@@ -353,8 +369,8 @@ def translate_articles(articles, target_lang):
                         articles[idx]["summary"] = t.get("summary") or articles[idx]["summary"]
                 except Exception:
                     pass
-    except Exception as e:
-        log.warning(f"Batch translation failed: {e}")
+    except Exception as err:
+        log.warning(f"Batch LLM translation failed: {err}")
         
     return articles
 
@@ -377,14 +393,24 @@ def api_translate_text():
     if not text or lang not in ["si", "ta"]:
         return jsonify({"translated_text": text})
     
-    lang_name = "Sinhala" if lang == "si" else "Tamil"
-    prompt = f"Translate the following English news text into fluent, professional {lang_name}. Respond ONLY with the translation. Do not add any quotes, markdown blocks, intro, or comments:\n\n{text}"
+    # 1. Try deep-translator first (fast, free, no API keys)
     try:
-        translated = call_ai(prompt, temperature=0.1)
+        from deep_translator import GoogleTranslator
+        translator = GoogleTranslator(source='en', target=lang)
+        translated = translator.translate(text)
         return jsonify({"translated_text": translated})
     except Exception as e:
-        log.error(f"Translation failed: {e}")
-        return jsonify({"translated_text": text})
+        log.error(f"deep-translator text translation failed: {e}. Falling back to AI.")
+        
+        # 2. Fallback to Groq/LLM
+        lang_name = "Sinhala" if lang == "si" else "Tamil"
+        prompt = f"Translate the following English news text into fluent, professional {lang_name}. Respond ONLY with the translation. Do not add any quotes, markdown blocks, intro, or comments:\n\n{text}"
+        try:
+            translated = call_ai(prompt, temperature=0.1)
+            return jsonify({"translated_text": translated})
+        except Exception as err:
+            log.error(f"Translation fallback failed: {err}")
+            return jsonify({"translated_text": text})
 
 @app.route("/api/news/live")
 def get_live_news():

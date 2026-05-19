@@ -26,7 +26,7 @@ class NewsApiService {
         uri,
         headers: {'Content-Type': 'application/json'},
         body: body,
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 60));
       
       if (res.statusCode == 200) {
         final resBody = jsonDecode(res.body) as Map<String, dynamic>;
@@ -67,7 +67,7 @@ class NewsApiService {
         uri,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'text': text, 'lang': lang}),
-      ).timeout(const Duration(seconds: 25));
+      ).timeout(const Duration(seconds: 40));
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body) as Map<String, dynamic>;
         return body['translated_text'] ?? text;
@@ -80,7 +80,7 @@ class NewsApiService {
   Future<NewsResponse> fetchNews({int limit = 20, int offset = 0}) async {
     final baseUrl = ApiConfig.baseUrl; // Use Laravel
     final uri = Uri.parse('$baseUrl/news?limit=$limit&offset=$offset&lang=$lang');
-    final res = await http.get(uri).timeout(const Duration(seconds: 15));
+    final res = await http.get(uri).timeout(const Duration(seconds: 30));
     if (res.statusCode != 200)
       throw Exception('Backend error: ${res.statusCode}');
     final body = jsonDecode(res.body) as Map<String, dynamic>;
@@ -96,7 +96,7 @@ class NewsApiService {
   Future<List<Article>> fetchDigest({int limit = 3}) async {
     final baseUrl = ApiConfig.baseUrl; // Use Laravel
     final uri = Uri.parse('$baseUrl/news/digest?limit=$limit&lang=$lang');
-    final res = await http.get(uri).timeout(const Duration(seconds: 15));
+    final res = await http.get(uri).timeout(const Duration(seconds: 30));
     if (res.statusCode != 200)
       throw Exception('Backend error: ${res.statusCode}');
     final body = jsonDecode(res.body) as Map<String, dynamic>;
@@ -118,7 +118,7 @@ class NewsApiService {
       '$baseUrl/news/search?q=${Uri.encodeQueryComponent(query)}'
       '&category=${Uri.encodeQueryComponent(category)}&limit=$limit&lang=$lang',
     );
-    final res = await http.get(uri).timeout(const Duration(seconds: 15));
+    final res = await http.get(uri).timeout(const Duration(seconds: 30));
     if (res.statusCode != 200)
       throw Exception('Backend error: ${res.statusCode}');
     final body = jsonDecode(res.body) as Map<String, dynamic>;
