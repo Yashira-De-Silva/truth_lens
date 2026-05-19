@@ -677,12 +677,14 @@ class _ArticleCard extends ConsumerWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        _ConfidenceBadge(
-                          text: statusText,
-                          color: statusColor,
-                          percent: confidencePct,
-                        ),
-                        const SizedBox(height: 8),
+                        if (!article.isLive) ...[
+                          _ConfidenceBadge(
+                            text: statusText,
+                            color: statusColor,
+                            percent: confidencePct,
+                          ),
+                          const SizedBox(height: 8),
+                        ],
                         _MoreMenu(article: article),
                       ],
                     ),
