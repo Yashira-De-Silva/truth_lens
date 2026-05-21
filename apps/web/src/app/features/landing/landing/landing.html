@@ -1,0 +1,261 @@
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<section class="hero" id="hero">
+  <div class="hero__bg-grid"></div>
+  <div class="hero__orb hero__orb--cyan"></div>
+  <div class="hero__orb hero__orb--purple"></div>
+
+  <div class="container hero__inner">
+    <div class="hero__content">
+      <div class="badge badge-cyan hero__badge" id="hero-badge">
+        <span class="hero__badge-dot"></span>
+        AI-Powered · Gemini · Real-Time
+      </div>
+
+      <h1 class="hero__title" id="hero-title">
+        Know What's<br>
+        <span class="gradient-text">{{ typedText }}</span><span class="hero__cursor">|</span>
+      </h1>
+
+      <p class="hero__subtitle" id="hero-subtitle">
+        TruthLens harnesses Google Gemini, The Guardian, and Wikipedia to
+        verify any news claim in seconds — with transparent evidence and
+        confidence scores you can trust.
+      </p>
+
+      <div class="hero__actions">
+        <a href="/assets/TruthLens.apk" download class="btn btn-primary" id="hero-cta-primary">
+          Download APK
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+          </svg>
+        </a>
+        <a routerLink="/how-it-works" class="btn btn-ghost" id="hero-cta-secondary">
+          See How It Works
+        </a>
+      </div>
+
+      <div class="hero__trust">
+        <span>Trusted by</span>
+        <div class="hero__trust-logos">
+          <span class="hero__trust-badge">🎓 Universities</span>
+          <span class="hero__trust-badge">📰 Journalists</span>
+          <span class="hero__trust-badge">🔬 Researchers</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Demo Card -->
+    <div class="hero__demo" id="hero-demo">
+      <div class="hero__demo-card card-glass">
+        <div class="hero__demo-header">
+          <span class="hero__demo-dot hero__demo-dot--red"></span>
+          <span class="hero__demo-dot hero__demo-dot--yellow"></span>
+          <span class="hero__demo-dot hero__demo-dot--green"></span>
+          <span class="hero__demo-label">TruthLens Verification</span>
+        </div>
+        <div class="hero__demo-body">
+          <div class="hero__demo-claim">
+            <div class="hero__demo-claim-label">Claim</div>
+            <p>{{ verificationDemo.claim }}</p>
+          </div>
+          <div class="hero__demo-verdict">
+            <div class="hero__demo-verdict-badge verdict--real">
+              ✓ {{ verificationDemo.status }}
+            </div>
+            <div class="hero__demo-confidence">
+              <span>Confidence</span>
+              <div class="hero__demo-bar">
+                <div class="hero__demo-bar-fill" [style.width.%]="verificationDemo.confidence"></div>
+              </div>
+              <span>{{ verificationDemo.confidence }}%</span>
+            </div>
+          </div>
+          <div class="hero__demo-reason">
+            <div class="hero__demo-reason-label">AI Reasoning</div>
+            <p>{{ verificationDemo.reason }}</p>
+          </div>
+          <div class="hero__demo-sources">
+            <div class="hero__demo-sources-label">Sources</div>
+            <div class="hero__demo-sources-list">
+              <span *ngFor="let src of verificationDemo.sources" class="hero__demo-source-chip">
+                {{ src }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ STATS ═══════════════════════ -->
+<section class="stats" id="stats">
+  <div class="container">
+    <div class="stats__grid">
+      <div class="stats__item card-glass" *ngFor="let stat of stats; let i = index" [id]="'stat-' + i">
+        <div class="stats__icon">{{ stat.icon }}</div>
+        <div class="stats__value gradient-text">{{ stat.value }}</div>
+        <div class="stats__label">{{ stat.label }}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ FEATURES ═══════════════════════ -->
+<section class="section features-section" id="features">
+  <div class="features-section__glow"></div>
+  <div class="container">
+    <div class="section-header">
+      <div class="badge badge-purple section-eyebrow">✦ Everything You Need</div>
+      <h2>Built for the Age of <span class="gradient-text">Misinformation</span></h2>
+      <p>A complete ecosystem for news verification, social discovery, and AI-powered media literacy.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card card-glass"
+           *ngFor="let f of features; let i = index"
+           [id]="'feature-card-' + i"
+           [style.background]="f.gradient">
+        <div class="feature-card__icon">{{ f.icon }}</div>
+        <div class="feature-card__top">
+          <h3>{{ f.title }}</h3>
+          <span *ngIf="f.badge" class="badge badge-cyan">{{ f.badge }}</span>
+        </div>
+        <p>{{ f.description }}</p>
+      </div>
+    </div>
+    <div class="features-section__cta">
+      <a routerLink="/features" class="btn btn-outline" id="features-see-all">
+        Explore All Features →
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ HOW IT WORKS ═══════════════════════ -->
+<section class="section how-section" id="how-it-works">
+  <div class="container">
+    <div class="section-header">
+      <div class="badge badge-green section-eyebrow">⚡ The Pipeline</div>
+      <h2>Verification in <span class="gradient-text">4 Steps</span></h2>
+      <p>Transparent, repeatable, and powered by multiple independent evidence sources.</p>
+    </div>
+    <div class="steps-container">
+      <div class="steps__connector"></div>
+      <div class="steps-grid">
+        <div class="step-card card-glass"
+             *ngFor="let step of steps; let i = index"
+             [id]="'step-' + i">
+          <div class="step-card__number">{{ step.number }}</div>
+          <div class="step-card__icon">{{ step.icon }}</div>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.description }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="how-section__cta">
+      <a routerLink="/how-it-works" class="btn btn-primary" id="how-learn-more">
+        Deep Dive Into the Tech →
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ TECHNOLOGY STRIP ═══════════════════════ -->
+<section class="tech-strip" id="tech-stack">
+  <div class="container">
+    <p class="tech-strip__label">POWERED BY</p>
+    <div class="tech-strip__logos">
+      <div class="tech-chip" id="tech-gemini">
+        <span class="tech-chip__icon">🤖</span>
+        <span>Google Gemini</span>
+      </div>
+      <div class="tech-chip" id="tech-guardian">
+        <span class="tech-chip__icon">📰</span>
+        <span>The Guardian</span>
+      </div>
+      <div class="tech-chip" id="tech-wikipedia">
+        <span class="tech-chip__icon">📚</span>
+        <span>Wikipedia</span>
+      </div>
+      <div class="tech-chip" id="tech-flutter">
+        <span class="tech-chip__icon">📱</span>
+        <span>Flutter</span>
+      </div>
+      <div class="tech-chip" id="tech-laravel">
+        <span class="tech-chip__icon">⚙️</span>
+        <span>Laravel</span>
+      </div>
+      <div class="tech-chip" id="tech-flask">
+        <span class="tech-chip__icon">🐍</span>
+        <span>Flask</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ TESTIMONIALS ═══════════════════════ -->
+<section class="section testimonials-section" id="testimonials">
+  <div class="container">
+    <div class="section-header">
+      <div class="badge badge-cyan section-eyebrow">💬 Trusted Voices</div>
+      <h2>Loved by Those Who <span class="gradient-text">Seek Truth</span></h2>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card card-glass"
+           *ngFor="let t of testimonials; let i = index"
+           [id]="'testimonial-' + i">
+        <div class="testimonial-card__stars">
+          <span *ngFor="let s of getStars(t.rating)">⭐</span>
+        </div>
+        <p class="testimonial-card__text">"{{ t.text }}"</p>
+        <div class="testimonial-card__author">
+          <div class="testimonial-card__avatar">{{ t.avatar }}</div>
+          <div>
+            <div class="testimonial-card__name">{{ t.name }}</div>
+            <div class="testimonial-card__role">{{ t.role }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ CTA BANNER ═══════════════════════ -->
+<section class="cta-banner" id="cta">
+  <div class="cta-banner__orb cta-banner__orb--left"></div>
+  <div class="cta-banner__orb cta-banner__orb--right"></div>
+  <div class="container cta-banner__inner">
+    <div class="cta-banner__content">
+      <div class="badge badge-cyan">🚀 Free to Start</div>
+      <h2>Ready to Stop <span class="gradient-text">Guessing</span>?</h2>
+      <p>
+        Join thousands of users who verify before they share.
+        Download the app directly or wait for our store releases!
+      </p>
+      <div class="cta-banner__actions">
+        <a href="/assets/TruthLens.apk" download class="btn btn-primary" id="cta-get-started">
+          Download APK
+        </a>
+        <a routerLink="/pricing" class="btn btn-ghost" id="cta-see-plans">
+          See Plans
+        </a>
+      </div>
+    </div>
+    <div class="cta-banner__app-badges">
+      <div class="app-badge disabled" id="cta-app-store">
+        <div class="app-badge__icon">🍎</div>
+        <div>
+          <div class="app-badge__sub">Coming Soon</div>
+          <div class="app-badge__name">App Store</div>
+        </div>
+      </div>
+      <div class="app-badge disabled" id="cta-play-store">
+        <div class="app-badge__icon">▶</div>
+        <div>
+          <div class="app-badge__sub">Coming Soon</div>
+          <div class="app-badge__name">Google Play</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

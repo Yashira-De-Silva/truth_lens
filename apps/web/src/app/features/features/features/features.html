@@ -1,0 +1,39 @@
+<div class="page-hero features-hero">
+  <div class="page-hero__orb page-hero__orb--cyan"></div>
+  <div class="container page-hero__inner">
+    <div class="badge badge-purple">✦ All Features</div>
+    <h1>Everything <span class="gradient-text">TruthLens</span> Can Do</h1>
+    <p>A complete platform for AI-powered fact-checking, social discovery, and media literacy — available on mobile and web.</p>
+  </div>
+</div>
+
+<section class="section features-page" id="features-page">
+  <div class="container">
+    <div class="features-page__grid">
+      <div class="feature-detail-card"
+           *ngFor="let f of features; let i = index"
+           [id]="'feature-detail-' + i"
+           [style.background]="f.gradient"
+           [style.border-color]="f.accentColor + '30'">
+        <div class="feature-detail-card__header">
+          <div class="feature-detail-card__icon" [style.background]="f.accentColor + '20'">
+            {{ f.icon }}
+          </div>
+          <div>
+            <div class="feature-detail-card__category" [style.color]="f.accentColor">
+              {{ f.category }}
+            </div>
+            <h2>{{ f.title }}</h2>
+          </div>
+        </div>
+        <p class="feature-detail-card__desc">{{ f.description }}</p>
+        <ul class="feature-detail-card__bullets">
+          <li *ngFor="let b of f.bullets; let j = index" [id]="'feature-' + i + '-bullet-' + j">
+            <span class="feature-detail-card__check" [style.color]="f.accentColor">✓</span>
+            {{ b }}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
