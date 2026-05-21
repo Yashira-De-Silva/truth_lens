@@ -21,7 +21,11 @@
         <div class="pipeline__connector" *ngIf="!last"></div>
         <div class="pipeline__step-card card-glass">
           <div class="pipeline__step-number" [style.color]="step.color">{{ step.number }}</div>
-          <div class="pipeline__step-icon" [style.background]="step.color + '20'">{{ step.icon }}</div>
+          <div class="pipeline__icon" [style.color]="step.color">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path *ngFor="let p of step.iconPaths" [attr.d]="p"></path>
+            </svg>
+          </div>
           <div class="pipeline__step-body">
             <h3 [style.color]="step.color">{{ step.title }}</h3>
             <p>{{ step.description }}</p>
@@ -54,7 +58,11 @@
            *ngFor="let block of architecture; let i = index"
            [id]="'arch-block-' + i"
            [style.border-top-color]="block.color">
-        <div class="arch-card__icon" [style.color]="block.color">{{ block.icon }}</div>
+        <div class="arch-block__icon" [style.color]="block.color">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path *ngFor="let p of block.iconPaths" [attr.d]="p"></path>
+          </svg>
+        </div>
         <h3>{{ block.name }}</h3>
         <div class="arch-card__tech" [style.color]="block.color">{{ block.tech }}</div>
         <p>{{ block.description }}</p>

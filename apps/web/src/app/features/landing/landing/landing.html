@@ -93,7 +93,11 @@
   <div class="container">
     <div class="stats__grid">
       <div class="stats__item card-glass" *ngFor="let stat of stats; let i = index" [id]="'stat-' + i">
-        <div class="stats__icon">{{ stat.icon }}</div>
+        <div class="stats__icon" style="color: var(--color-accent-cyan);">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path *ngFor="let p of stat.iconPaths" [attr.d]="p"></path>
+          </svg>
+        </div>
         <div class="stats__value gradient-text">{{ stat.value }}</div>
         <div class="stats__label">{{ stat.label }}</div>
       </div>
@@ -115,7 +119,11 @@
            *ngFor="let f of features; let i = index"
            [id]="'feature-card-' + i"
            [style.background]="f.gradient">
-        <div class="feature-card__icon">{{ f.icon }}</div>
+        <div class="feature-card__icon" style="color: var(--color-accent-purple);">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path *ngFor="let p of f.iconPaths" [attr.d]="p"></path>
+          </svg>
+        </div>
         <div class="feature-card__top">
           <h3>{{ f.title }}</h3>
           <span *ngIf="f.badge" class="badge badge-cyan">{{ f.badge }}</span>
@@ -146,7 +154,11 @@
              *ngFor="let step of steps; let i = index"
              [id]="'step-' + i">
           <div class="step-card__number">{{ step.number }}</div>
-          <div class="step-card__icon">{{ step.icon }}</div>
+          <div class="step-card__icon" style="color: var(--color-accent-cyan);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path *ngFor="let p of step.iconPaths" [attr.d]="p"></path>
+            </svg>
+          </div>
           <h3>{{ step.title }}</h3>
           <p>{{ step.description }}</p>
         </div>
@@ -166,27 +178,51 @@
     <p class="tech-strip__label">POWERED BY</p>
     <div class="tech-strip__logos">
       <div class="tech-chip" id="tech-gemini">
-        <span class="tech-chip__icon">🤖</span>
+        <span class="tech-chip__icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"></path><path d="M9 13h.01"></path><path d="M15 13h.01"></path>
+          </svg>
+        </span>
         <span>Google Gemini</span>
       </div>
       <div class="tech-chip" id="tech-guardian">
-        <span class="tech-chip__icon">📰</span>
+        <span class="tech-chip__icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16"></path><path d="M3 21h18"></path><path d="M7 9h10"></path><path d="M7 13h10"></path><path d="M7 17h6"></path>
+          </svg>
+        </span>
         <span>The Guardian</span>
       </div>
       <div class="tech-chip" id="tech-wikipedia">
-        <span class="tech-chip__icon">📚</span>
+        <span class="tech-chip__icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
+          </svg>
+        </span>
         <span>Wikipedia</span>
       </div>
       <div class="tech-chip" id="tech-flutter">
-        <span class="tech-chip__icon">📱</span>
+        <span class="tech-chip__icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 2h14a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><path d="M12 18h.01"></path>
+          </svg>
+        </span>
         <span>Flutter</span>
       </div>
       <div class="tech-chip" id="tech-laravel">
-        <span class="tech-chip__icon">⚙️</span>
+        <span class="tech-chip__icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path>
+          </svg>
+        </span>
         <span>Laravel</span>
       </div>
       <div class="tech-chip" id="tech-flask">
-        <span class="tech-chip__icon">🐍</span>
+        <span class="tech-chip__icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+          </svg>
+        </span>
         <span>Flask</span>
       </div>
     </div>

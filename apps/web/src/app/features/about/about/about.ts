@@ -10,7 +10,7 @@ interface TeamMember {
 }
 
 interface Value {
-  icon: string;
+  iconPaths: string[];
   title: string;
   description: string;
 }
@@ -28,10 +28,10 @@ export class AboutComponent {
   ];
 
   values: Value[] = [
-    { icon: '🔍', title: 'Radical Transparency', description: 'Every verdict comes with its reasoning and sources. No black boxes. You should always know why TruthLens says REAL or FAKE.' },
-    { icon: '🧠', title: 'Evidence-First', description: 'We never label a claim without evidence. The pipeline is grounded in Wikipedia and The Guardian — reducing AI hallucinations to near zero.' },
-    { icon: '🌍', title: 'Open Knowledge', description: 'Built on open-source foundations. We believe the tools to fight misinformation should be accessible to everyone, everywhere.' },
-    { icon: '🎮', title: 'Learning Through Play', description: 'Fact-checking is a skill. Our games and quizzes make developing media literacy enjoyable and habit-forming.' }
+    { iconPaths: ['M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z', 'M21 21l-4.35-4.35'], title: 'Radical Transparency', description: 'Every verdict comes with its reasoning and sources. No black boxes. You should always know why TruthLens says REAL or FAKE.' },
+    { iconPaths: ['M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z', 'M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z'], title: 'Evidence-First', description: 'We never label a claim without evidence. The pipeline is grounded in Wikipedia and The Guardian — reducing AI hallucinations to near zero.' },
+    { iconPaths: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z', 'M2 12h20', 'M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z'], title: 'Open Knowledge', description: 'Built on open-source foundations. We believe the tools to fight misinformation should be accessible to everyone, everywhere.' },
+    { iconPaths: ['M6 12h4', 'M8 10v4', 'M15 13h.01', 'M18 11h.01', 'M22 12a10 10 0 0 0-20 0 2 2 0 0 0 2 2h2a2 2 0 0 1 2 2 2 2 0 0 0 2 2h4a2 2 0 0 0 2-2 2 2 0 0 1 2-2h2a2 2 0 0 0 2-2z'], title: 'Learning Through Play', description: 'Fact-checking is a skill. Our games and quizzes make developing media literacy enjoyable and habit-forming.' }
   ];
 
   timeline = [

@@ -16,9 +16,11 @@
            [style.background]="f.gradient"
            [style.border-color]="f.accentColor + '30'">
         <div class="feature-detail-card__header">
-          <div class="feature-detail-card__icon" [style.background]="f.accentColor + '20'">
-            {{ f.icon }}
-          </div>
+          <div class="feature-card__icon" [style.color]="f.accentColor">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path *ngFor="let p of f.iconPaths" [attr.d]="p"></path>
+          </svg>
+        </div>
           <div>
             <div class="feature-detail-card__category" [style.color]="f.accentColor">
               {{ f.category }}
