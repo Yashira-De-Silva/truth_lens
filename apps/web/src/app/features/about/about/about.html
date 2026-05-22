@@ -1,0 +1,117 @@
+<div class="page-hero">
+  <div class="page-hero__orb page-hero__orb--purple"></div>
+  <div class="container page-hero__inner">
+    <div class="badge badge-purple">🌍 Our Story</div>
+    <h1>Built to Fight <span class="gradient-text">Misinformation</span></h1>
+    <p>TruthLens is a final-year university project born from a simple belief: everyone deserves access to the truth.</p>
+  </div>
+</div>
+
+<!-- Mission -->
+<section class="section mission-section" id="mission">
+  <div class="container">
+    <div class="mission-grid">
+      <div class="mission-text">
+        <div class="badge badge-cyan section-eyebrow">🎯 Our Mission</div>
+        <h2>Empowering the <span class="gradient-text">Informed Citizen</span></h2>
+        <p>
+          We live in an era of information overload. Misinformation spreads faster than truth,
+          and the average person lacks the tools to tell the difference.
+        </p>
+        <p>
+          TruthLens was built to change that. By combining the power of Google Gemini,
+          The Guardian's journalism, and Wikipedia's encyclopaedic depth, we've created
+          a verification pipeline that anyone can trust.
+        </p>
+        <p>
+          Our goal isn't just to label claims — it's to explain <em>why</em>, so you become
+          a more critical news consumer over time.
+        </p>
+      </div>
+      <div class="mission-stats">
+        <div class="mission-stat card-glass" id="about-stat-0">
+          <div class="mission-stat__value gradient-text">95%</div>
+          <div class="mission-stat__label">Verification Accuracy</div>
+        </div>
+        <div class="mission-stat card-glass" id="about-stat-1">
+          <div class="mission-stat__value gradient-text">3</div>
+          <div class="mission-stat__label">Independent Evidence Sources</div>
+        </div>
+        <div class="mission-stat card-glass" id="about-stat-2">
+          <div class="mission-stat__value gradient-text">0</div>
+          <div class="mission-stat__label">Black-Box Decisions</div>
+        </div>
+        <div class="mission-stat card-glass" id="about-stat-3">
+          <div class="mission-stat__value gradient-text">∞</div>
+          <div class="mission-stat__label">Curiosity Encouraged</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Values -->
+<section class="section values-section" id="values">
+  <div class="container">
+    <div class="section-header">
+      <div class="badge badge-green section-eyebrow">💡 Our Values</div>
+      <h2>What We <span class="gradient-text">Stand For</span></h2>
+    </div>
+    <div class="values-grid">
+      <div class="value-card card-glass"
+           *ngFor="let v of values; let i = index"
+           [id]="'value-' + i">
+        <div class="value-card__icon" style="color: var(--color-accent-cyan);">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path *ngFor="let p of v.iconPaths" [attr.d]="p"></path>
+          </svg>
+        </div>
+        <h3>{{ v.title }}</h3>
+        <p>{{ v.description }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Timeline -->
+<section class="section timeline-section" id="timeline">
+  <div class="container">
+    <div class="section-header">
+      <div class="badge badge-cyan section-eyebrow">🗓️ Journey</div>
+      <h2>How We <span class="gradient-text">Got Here</span></h2>
+    </div>
+    <div class="timeline">
+      <div class="timeline__item"
+           *ngFor="let t of timeline; let i = index"
+           [id]="'timeline-' + i">
+        <div class="timeline__dot"></div>
+        <div class="timeline__content card-glass">
+          <div class="timeline__year gradient-text">{{ t.year }}</div>
+          <p>{{ t.event }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Team -->
+<section class="section team-section" id="team">
+  <div class="container">
+    <div class="section-header">
+      <div class="badge badge-purple section-eyebrow">👤 Team</div>
+      <h2>The People <span class="gradient-text">Behind TruthLens</span></h2>
+    </div>
+    <div class="team-grid">
+      <div class="team-card card-glass"
+           *ngFor="let member of team; let i = index"
+           [id]="'team-member-' + i">
+        <div class="team-card__avatar" [style.background]="member.gradient">
+          {{ member.initials }}
+        </div>
+        <h3>{{ member.name }}</h3>
+        <div class="team-card__role">{{ member.role }}</div>
+        <p>{{ member.bio }}</p>
+      </div>
+    </div>
+  </div>
+</section>

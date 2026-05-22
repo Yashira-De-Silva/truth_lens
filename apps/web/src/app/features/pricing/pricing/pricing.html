@@ -1,0 +1,66 @@
+<div class="page-hero">
+  <div class="page-hero__orb page-hero__orb--cyan"></div>
+  <div class="container page-hero__inner">
+    <div class="badge badge-cyan">💎 Pricing</div>
+    <h1>Simple, <span class="gradient-text">Honest</span> Pricing</h1>
+    <p>Start free. Upgrade when you need it. No hidden fees, no complicated tiers.</p>
+  </div>
+</div>
+
+<!-- Plans -->
+<section class="section pricing-section" id="pricing-plans">
+  <div class="container">
+    <div class="pricing-grid">
+      <div class="plan-card card-glass"
+           *ngFor="let plan of plans; let i = index"
+           [id]="'plan-' + plan.name.toLowerCase()"
+           [class.plan-card--highlighted]="plan.highlighted"
+           [style.background]="plan.gradient">
+
+        <div class="plan-card__badge" *ngIf="plan.badge">{{ plan.badge }}</div>
+
+        <div class="plan-card__header">
+          <div class="plan-card__name">{{ plan.name }}</div>
+          <div class="plan-card__price">
+            <span class="plan-card__amount">{{ plan.price }}</span>
+            <span class="plan-card__period">{{ plan.period }}</span>
+          </div>
+          <p class="plan-card__desc">{{ plan.description }}</p>
+        </div>
+
+        <ul class="plan-card__features">
+          <li *ngFor="let feature of plan.features; let j = index"
+              [id]="'plan-' + i + '-feature-' + j">
+            <span class="plan-card__check">✓</span>
+            {{ feature }}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section faq-section" id="faq">
+  <div class="container">
+    <div class="section-header">
+      <div class="badge badge-purple section-eyebrow">❓ FAQ</div>
+      <h2>Common <span class="gradient-text">Questions</span></h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item card-glass"
+           *ngFor="let faq of faqs; let i = index"
+           [id]="'faq-' + i"
+           [class.open]="openFaq === i"
+           (click)="toggleFaq(i)">
+        <div class="faq-item__question">
+          <span>{{ faq.q }}</span>
+          <span class="faq-item__arrow" [class.rotated]="openFaq === i">▾</span>
+        </div>
+        <div class="faq-item__answer" [class.visible]="openFaq === i">
+          <p>{{ faq.a }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

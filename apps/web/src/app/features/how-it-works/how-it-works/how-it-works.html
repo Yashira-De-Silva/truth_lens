@@ -1,0 +1,72 @@
+<div class="page-hero">
+  <div class="page-hero__orb page-hero__orb--purple"></div>
+  <div class="container page-hero__inner">
+    <div class="badge badge-green">⚡ The Pipeline</div>
+    <h1>How <span class="gradient-text">TruthLens</span> Works</h1>
+    <p>A transparent, multi-source verification pipeline powered by Gemini, Wikipedia, and The Guardian.</p>
+  </div>
+</div>
+
+<!-- Pipeline -->
+<section class="section pipeline-section" id="pipeline">
+  <div class="container">
+    <div class="section-header">
+      <h2>The Verification <span class="gradient-text">Pipeline</span></h2>
+      <p>Five deterministic steps from claim to verdict — no black boxes, every decision is explainable.</p>
+    </div>
+    <div class="pipeline">
+      <div class="pipeline__step"
+           *ngFor="let step of pipeline; let i = index; let last = last"
+           [id]="'pipeline-step-' + i">
+        <div class="pipeline__connector" *ngIf="!last"></div>
+        <div class="pipeline__step-card card-glass">
+          <div class="pipeline__step-number" [style.color]="step.color">{{ step.number }}</div>
+          <div class="pipeline__icon" [style.color]="step.color">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path *ngFor="let p of step.iconPaths" [attr.d]="p"></path>
+            </svg>
+          </div>
+          <div class="pipeline__step-body">
+            <h3 [style.color]="step.color">{{ step.title }}</h3>
+            <p>{{ step.description }}</p>
+            <div class="pipeline__step-tech">
+              <span *ngFor="let t of step.tech; let j = index"
+                    class="tech-tag"
+                    [id]="'pipeline-tech-' + i + '-' + j"
+                    [style.border-color]="step.color + '40'"
+                    [style.color]="step.color">
+                {{ t }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section class="section arch-section" id="architecture">
+  <div class="container">
+    <div class="section-header">
+      <div class="badge badge-purple section-eyebrow">🏗️ Architecture</div>
+      <h2>Three-Service <span class="gradient-text">Architecture</span></h2>
+      <p>Each service is independently deployable via Docker, hosted on Render with CI/CD-ready configuration.</p>
+    </div>
+    <div class="arch-grid">
+      <div class="arch-card card-glass"
+           *ngFor="let block of architecture; let i = index"
+           [id]="'arch-block-' + i"
+           [style.border-top-color]="block.color">
+        <div class="arch-block__icon" [style.color]="block.color">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path *ngFor="let p of block.iconPaths" [attr.d]="p"></path>
+          </svg>
+        </div>
+        <h3>{{ block.name }}</h3>
+        <div class="arch-card__tech" [style.color]="block.color">{{ block.tech }}</div>
+        <p>{{ block.description }}</p>
+      </div>
+    </div>
+  </div>
+</section>
